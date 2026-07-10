@@ -16,7 +16,8 @@ export async function inspectCommonRuntimes(options = {}) {
       installations,
       active: installations.find((item) => item.active) || null,
       distinctVersions: [...new Set(installations.flatMap((item) => item.versions?.length ? item.versions : [item.version]).filter(Boolean))],
-      discoveryEvidence: summarizeDiscoveryEvidence(installations)
+      discoveryEvidence: summarizeDiscoveryEvidence(installations),
+      ...(definition.id === "java" ? { runtimeMetadata: summarizeJavaMetadata(installations) } : {})
     }];
   }));
   return Object.fromEntries(entries);
@@ -30,6 +31,17 @@ export function summarizeDiscoveryEvidence(installations = []) {
     knownRootCount: installations.filter((item) => item.discovery === "known-root").length,
     osNativeCount: installations.filter((item) => item.discovery === "os-native").length,
     rule: "Discovery source is inventory provenance, not permission to modify or remove the runtime."
+  };
+}
+
+export function summarizeJavaMetadata(installations = []) {
+  return {
+    vendors: [...new Set(installations.map((item) => item.vendor).filter(Boolean))].sort(),
+    architectures: [...new Set(installations.map((item) => item.architecture).filter(Boolean))].sort(),
+    runtimeKinds: [...new Set(installations.map((item) => item.runtimeKind).filter(Boolean))].sort(),
+    propertyEvidenceCount: installations.filter((item) => item.propertyEvidence === "collected").length,
+    compilerCount: installations.filter((item) => item.hasCompiler === true).length,
+    rule: "Runtime metadata comes from Java system properties and sibling javac evidence; it does not authorize changes."
   };
 }
 
@@ -152,11 +164,31 @@ async function inspectRuntimeDetails(id, executable, options) {
   const dir = path.dirname(executable);
   if (id === "java") {
     const javac = path.join(dir, process.platform === "win32" ? "javac.exe" : "javac");
+    const [compilerVersion, propertyResult] = await Promise.all([
+      commandVersion(javac, ["-version"]),
+      commandResult(executable, ["-XshowSettings:properties", "-version"], { timeout: 5000, maxBuffer: 2 * 1024 * 1024 })
+    ]);
+    const properties = parseJavaProperties(`${propertyResult.stdout}\n${propertyResult.stderr}`);
+    const computedJavaHome = path.dirname(dir);
+    const reportedJavaHome = properties.javaHome || "";
+    const javaHome = reportedJavaHome || computedJavaHome;
     return {
-      javaHome: displayPath(path.dirname(dir), options),
-      compilerVersion: await commandVersion(javac, ["-version"]),
+      javaHome: displayPath(javaHome, options),
+      computedJavaHome: displayPath(computedJavaHome, options),
+      javaHomeSource: reportedJavaHome ? "java-system-property" : "executable-parent",
+      compilerVersion,
+      hasCompiler: Boolean(compilerVersion),
+      runtimeKind: compilerVersion ? "jdk" : "jre-or-runtime-image",
+      vendor: properties.vendor,
+      vendorVersion: properties.vendorVersion,
+      architecture: properties.architecture,
+      runtimeName: properties.runtimeName,
+      runtimeVersion: properties.runtimeVersion,
+      vmName: properties.vmName,
+      vmVendor: properties.vmVendor,
+      propertyEvidence: Object.values(properties).some(Boolean) ? "collected" : "unavailable",
       javaHomeMatchesEnvironment: process.env.JAVA_HOME
-        ? normalize(path.dirname(dir)) === normalize(process.env.JAVA_HOME)
+        ? normalize(javaHome) === normalize(process.env.JAVA_HOME)
         : null
     };
   }
@@ -177,6 +209,25 @@ async function inspectRuntimeDetails(id, executable, options) {
     return { gemHome: displayPath(await commandOutput("gem", ["env", "home"], { timeout: 5000 }), options) };
   }
   return {};
+}
+
+export function parseJavaProperties(raw) {
+  const values = {};
+  for (const line of String(raw || "").split(/\r?\n/)) {
+    const match = line.match(/^\s*([\w.]+)\s*=\s*(.*?)\s*$/);
+    if (match) values[match[1]] = match[2];
+  }
+  return {
+    javaHome: values["java.home"] || "",
+    vendor: values["java.vendor"] || "",
+    vendorVersion: values["java.vendor.version"] || "",
+    runtimeName: values["java.runtime.name"] || "",
+    runtimeVersion: values["java.runtime.version"] || values["java.version"] || "",
+    vmName: values["java.vm.name"] || "",
+    vmVendor: values["java.vm.vendor"] || "",
+    architecture: values["os.arch"] || "",
+    osName: values["os.name"] || ""
+  };
 }
 
 export function parseVersionLines(raw) {

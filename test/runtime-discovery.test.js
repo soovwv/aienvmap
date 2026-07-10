@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { analyzeCommonRuntimes, parseDotnetRuntimes, parseLinuxJavaAlternatives, parseMacJavaHomes, parseRustToolchains, parseVersionLines, parseWindowsJavaRegistry, summarizeDiscoveryEvidence } from "../src/runtime-discovery.js";
+import { analyzeCommonRuntimes, parseDotnetRuntimes, parseJavaProperties, parseLinuxJavaAlternatives, parseMacJavaHomes, parseRustToolchains, parseVersionLines, parseWindowsJavaRegistry, summarizeDiscoveryEvidence, summarizeJavaMetadata } from "../src/runtime-discovery.js";
 
 test("parseVersionLines extracts installed SDK versions", () => {
   assert.deepEqual(parseVersionLines("8.0.410 [C:\\dotnet\\sdk]\n9.0.100-preview.1 [C:\\dotnet\\sdk]\n"), ["8.0.410", "9.0.100-preview.1"]);
@@ -80,4 +80,44 @@ test("runtime discovery evidence distinguishes PATH, roots, and OS-native source
   assert.equal(evidence.knownRootCount, 1);
   assert.equal(evidence.osNativeCount, 1);
   assert.match(evidence.rule, /not permission/);
+});
+
+test("Java property parser extracts only stable runtime identity fields", () => {
+  const raw = [
+    "Property settings:",
+    "    java.home = C:\\Program Files\\Microsoft\\jdk-21",
+    "    java.vendor = Microsoft",
+    "    java.vendor.version = microsoft-123",
+    "    java.runtime.name = OpenJDK Runtime Environment",
+    "    java.runtime.version = 21.0.5+11-LTS",
+    "    java.vm.name = OpenJDK 64-Bit Server VM",
+    "    java.vm.vendor = Microsoft",
+    "    os.arch = amd64",
+    "    os.name = Windows 11",
+    "    user.home = C:\\Users\\secret"
+  ].join("\n");
+  assert.deepEqual(parseJavaProperties(raw), {
+    javaHome: "C:\\Program Files\\Microsoft\\jdk-21",
+    vendor: "Microsoft",
+    vendorVersion: "microsoft-123",
+    runtimeName: "OpenJDK Runtime Environment",
+    runtimeVersion: "21.0.5+11-LTS",
+    vmName: "OpenJDK 64-Bit Server VM",
+    vmVendor: "Microsoft",
+    architecture: "amd64",
+    osName: "Windows 11"
+  });
+});
+
+test("Java metadata summary exposes vendor, architecture, and JDK coverage", () => {
+  const summary = summarizeJavaMetadata([
+    { vendor: "Microsoft", architecture: "amd64", runtimeKind: "jdk", propertyEvidence: "collected", hasCompiler: true },
+    { vendor: "Eclipse Adoptium", architecture: "aarch64", runtimeKind: "jre-or-runtime-image", propertyEvidence: "collected", hasCompiler: false }
+  ]);
+  assert.deepEqual(summary.vendors, ["Eclipse Adoptium", "Microsoft"]);
+  assert.deepEqual(summary.architectures, ["aarch64", "amd64"]);
+  assert.deepEqual(summary.runtimeKinds, ["jdk", "jre-or-runtime-image"]);
+  assert.equal(summary.propertyEvidenceCount, 2);
+  assert.equal(summary.compilerCount, 1);
+  assert.match(summary.rule, /does not authorize/);
 });
