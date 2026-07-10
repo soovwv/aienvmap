@@ -121,6 +121,9 @@ export function summarizeJavaMetadata(installations = []) {
     runtimeKinds: [...new Set(installations.map((item) => item.runtimeKind).filter(Boolean))].sort(),
     propertyEvidenceCount: installations.filter((item) => item.propertyEvidence === "collected").length,
     compilerCount: installations.filter((item) => item.hasCompiler === true).length,
+    managers: [...new Set(installations.map((item) => item.managerEvidence?.manager).filter((item) => item && item !== "unknown"))].sort(),
+    managedInstallCount: installations.filter((item) => item.managerEvidence?.ownershipProven === true).length,
+    routingManagedCount: installations.filter((item) => item.managerEvidence?.routingManaged === true).length,
     rule: "Runtime metadata comes from Java system properties and sibling javac evidence; it does not authorize changes."
   };
 }
@@ -257,8 +260,49 @@ async function inspectRuntimeCandidate(definition, candidate, options) {
     source: candidate.source,
     scope: candidate.scope,
     discovery: candidate.discovery,
-    ...details
+    ...details,
+    ...(definition.id === "java" ? { managerEvidence: javaManagerEvidence(candidate, details, options) } : {})
   };
+}
+
+export function javaManagerEvidence(candidate = {}, details = {}, options = {}) {
+  const sourceManager = ["sdkman", "mise", "jenv"].includes(candidate.source) ? candidate.source : "unknown";
+  const roots = javaManagerRoots(options.env || process.env, options.home || os.homedir(), options.platform || process.platform)
+    .map((item) => ({ ...item, displayPath: displayPath(item.path, options) }));
+  const canonicalRoot = roots.find((item) => item.source !== "jenv" && pathIsWithin(details.javaHome, item.displayPath));
+  const manager = canonicalRoot?.source || sourceManager;
+  const base = {
+    manager,
+    relationship: "unconfirmed",
+    confidence: "none",
+    ownershipProven: false,
+    routingManaged: false,
+    proofScope: "none",
+    removalAuthorized: false
+  };
+  if (manager === "unknown") return base;
+  if (manager === "jenv") return {
+    ...base,
+    relationship: "registered-runtime-routing",
+    confidence: "medium",
+    routingManaged: true,
+    proofScope: "jenv-routing-only"
+  };
+  const insideManagedRoot = canonicalRoot?.source === manager;
+  return {
+    ...base,
+    relationship: insideManagedRoot ? "canonical-home-in-install-root" : "registered-or-shimmed-runtime",
+    confidence: insideManagedRoot ? "strong" : "medium",
+    ownershipProven: insideManagedRoot,
+    routingManaged: true,
+    proofScope: insideManagedRoot ? `${manager}-install-root` : `${manager}-routing-only`
+  };
+}
+
+function pathIsWithin(value, root) {
+  if (!value || !root) return false;
+  const relative = path.relative(path.normalize(root), path.normalize(value));
+  return relative === "" || (!relative.startsWith("..") && !path.isAbsolute(relative));
 }
 
 async function inspectRuntimeDetails(id, executable, options) {
@@ -357,7 +401,7 @@ function runtimeDefinitions(env, home) {
     {
       id: "java", label: "Java", names: [exe("java")], versionArgs: ["-version"],
       direct: env.JAVA_HOME ? [{ path: path.join(env.JAVA_HOME, "bin", exe("java")), source: "JAVA_HOME", scope: "configured" }] : [],
-      roots: win ? javaWindowsRoots(env) : javaUnixRoots()
+      roots: [...(win ? javaWindowsRoots(env) : javaUnixRoots()), ...javaManagerRoots(env, home, process.platform)]
     },
     {
       id: "dotnet", label: ".NET SDK", names: [exe("dotnet")], versionArgs: ["--version"], listArgs: ["--list-sdks"],
@@ -393,13 +437,23 @@ function javaWindowsRoots(env) {
 
 function javaUnixRoots() {
   const home = os.homedir();
-  const shared = [
-    { path: path.join(home, ".sdkman", "candidates", "java"), depth: 5, source: "sdkman", scope: "user" },
-    { path: path.join(home, ".local", "share", "mise", "installs", "java"), depth: 5, source: "mise", scope: "user" }
-  ];
   return process.platform === "darwin"
-    ? [{ path: "/Library/Java/JavaVirtualMachines", depth: 6, source: "java-framework", scope: "host" }, ...shared]
-    : [{ path: "/usr/lib/jvm", depth: 5, source: "system", scope: "host" }, ...shared];
+    ? [{ path: "/Library/Java/JavaVirtualMachines", depth: 6, source: "java-framework", scope: "host" }]
+    : [{ path: "/usr/lib/jvm", depth: 5, source: "system", scope: "host" }];
+}
+
+function javaManagerRoots(env, home, platform) {
+  const win = platform === "win32";
+  const miseInstalls = env.MISE_INSTALLS_DIR || (win
+    ? path.join(env.LOCALAPPDATA || path.join(home, "AppData", "Local"), "mise", "installs")
+    : path.join(home, ".local", "share", "mise", "installs"));
+  const sdkmanCandidates = env.SDKMAN_CANDIDATES_DIR || path.join(home, ".sdkman", "candidates");
+  const jenvRoot = env.JENV_ROOT || path.join(home, ".jenv");
+  return [
+    { path: path.join(sdkmanCandidates, "java"), depth: 5, source: "sdkman", scope: "user" },
+    { path: path.join(miseInstalls, "java"), depth: 5, source: "mise", scope: "user" },
+    { path: path.join(jenvRoot, "versions"), depth: 6, source: "jenv", scope: "user" }
+  ];
 }
 
 async function namedFilesBelow(root, depth, names) {
