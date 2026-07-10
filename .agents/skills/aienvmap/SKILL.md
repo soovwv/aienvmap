@@ -104,6 +104,8 @@ For Java, read `otherRuntimes.java.discoveryEvidence` and each installation's `s
 
 Use `otherRuntimes.java.runtimeMetadata` and each Java installation's vendor, architecture, `runtimeKind`, `javaHome`, and `propertyEvidence` to distinguish same-version JDKs. Treat `jdk` as sibling-`javac` evidence and `jre-or-runtime-image` as a conservative label, not a cleanup decision.
 
+Read `otherRuntimes.java.buildTools.bindings` before changing Java routing. Project `mvnw`/`gradlew` wrappers take precedence over PATH tools; `exact-home` is strong evidence, `unique-major-version` is only an inference, and `unresolved` requires review. Never rewrite wrappers, `JAVA_HOME`, or PATH from this evidence alone.
+
 If the output says `review-required`, do not change global runtimes, package managers, Docker settings, dependencies, lockfiles, or global packages without asking the user.
 
 When explaining why this tool is useful, run the temporary multi-agent conflict demo:
