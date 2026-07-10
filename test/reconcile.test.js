@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
-import { analyzeNodeInstallations, analyzeNpmInstallations, analyzePythonCommandRouting, analyzePythonInstallations, buildAiDecision, compareNpmGlobalPackages, comparePythonPackages, findPythonCandidates, parsePackageManager, parsePipList, parsePipVersion, summarizePythonPackages } from "../src/package-managers.js";
+import { analyzeNodeInstallations, analyzeNpmInstallations, analyzePythonCommandRouting, analyzePythonInstallations, analyzeRuntimeLinks, buildAiDecision, compareNpmGlobalPackages, comparePythonPackages, findPythonCandidates, linkNodeNpmRuntimes, linkPythonPipRuntimes, parsePackageManager, parsePipList, parsePipVersion, summarizePythonPackages } from "../src/package-managers.js";
 
 test("parsePackageManager separates package manager and pinned version", () => {
   assert.deepEqual(parsePackageManager("npm@10.8.2"), { name: "npm", version: "10.8.2" });
@@ -70,6 +70,49 @@ test("Python command routing warns when bare pip targets another interpreter", (
   );
   assert.equal(findings[0].code, "python-pip-routing-mismatch");
   assert.match(findings[0].action, /-m pip/);
+});
+
+test("Node/npm runtime links distinguish co-location from PATH inference", () => {
+  const links = linkNodeNpmRuntimes([
+    { path: path.join("tools", "node24", "node"), version: "24.1.0", active: true },
+    { path: path.join("tools", "node20", "node"), version: "20.19.0", active: false }
+  ], [
+    { path: path.join("tools", "node20", "npm"), version: "10.8.2", active: false },
+    { path: path.join("other", "npm"), version: "11.0.0", active: true }
+  ]);
+  assert.equal(links[0].runtimeVersion, "20.19.0");
+  assert.equal(links[0].relationship, "co-located-executables");
+  assert.equal(links[0].confidence, "strong");
+  assert.equal(links[0].ownershipProven, false);
+  assert.equal(links[1].runtimeVersion, "24.1.0");
+  assert.equal(links[1].relationship, "path-precedence-inference");
+  assert.equal(links[1].confidence, "medium");
+});
+
+test("Python/pip runtime links prefer package-location evidence and expose ambiguity", () => {
+  const py312Packages = path.join("opt", "python312", "lib", "site-packages");
+  const links = linkPythonPipRuntimes([
+    { path: path.join("opt", "python312", "python"), version: "3.12.1", packageLocations: [py312Packages] },
+    { path: path.join("other", "python312", "python"), version: "3.12.2", packageLocations: [path.join("other", "site-packages")] }
+  ], [
+    { path: path.join("opt", "python312", "pip"), version: "25.1", pythonVersion: "3.12", packageLocation: path.join(py312Packages, "pip") },
+    { path: path.join("unknown", "pip"), version: "25.1", pythonVersion: "3.12", packageLocation: path.join("unknown", "site-packages", "pip") }
+  ]);
+  assert.equal(links[0].relationship, "package-location-match");
+  assert.equal(links[0].confidence, "strong");
+  assert.equal(links[1].relationship, "ambiguous-version-match");
+  assert.equal(links[1].confidence, "none");
+});
+
+test("uncertain active runtime links create review findings only with multiple runtimes", () => {
+  const findings = analyzeRuntimeLinks(
+    [{ confidence: "medium" }],
+    [{ confidence: "none" }],
+    [{}, {}],
+    [{}, {}]
+  );
+  assert.deepEqual(findings.map((item) => item.code), ["npm-node-runtime-link-uncertain", "pip-python-runtime-link-uncertain"]);
+  assert.ok(findings.every((item) => item.severity === "review"));
 });
 
 test("Python package summaries are compact unless full evidence is requested", () => {

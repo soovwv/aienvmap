@@ -49,11 +49,14 @@ export async function inspectPackageManagers(dir, options = {}) {
   const pythonInstallations = await inspectPythonCandidates(pythonCandidates, options);
   const pipCommands = await inspectPipCandidates(pipCandidates, options);
   const nodeInstallations = await inspectNodeCandidates(nodeCandidates, options);
+  const npmRuntimeLinks = linkNodeNpmRuntimes(nodeInstallations, installations);
+  const pipRuntimeLinks = linkPythonPipRuntimes(pythonInstallations, pipCommands);
   const findings = [
     ...analyzeNodeInstallations(nodeInstallations, project),
     ...analyzeNpmInstallations(installations, project),
     ...analyzePythonInstallations(pythonInstallations, project),
     ...analyzePythonCommandRouting(pythonInstallations, pipCommands),
+    ...analyzeRuntimeLinks(npmRuntimeLinks, pipRuntimeLinks, nodeInstallations, pythonInstallations),
     ...analyzeCommonRuntimes(commonRuntimes)
   ];
   const aiDecision = buildAiDecision({ node: nodeInstallations, npm: installations, python: pythonInstallations, project, findings });
@@ -81,7 +84,8 @@ export async function inspectPackageManagers(dir, options = {}) {
       active: installations.find((item) => item.active) || null,
       distinctVersions: [...new Set(installations.map((item) => item.version))],
       distinctGlobalRoots: [...new Set(installations.map((item) => item.globalRoot).filter(Boolean))],
-      globalPackageComparisons: compareNpmGlobalPackages(installations)
+      globalPackageComparisons: compareNpmGlobalPackages(installations),
+      runtimeLinks: npmRuntimeLinks
     },
     python: {
       packageDetail: options.quick ? "not collected in quick mode; rerun without --quick or use --full-packages" : options.fullPackages ? "full" : "summary; rerun with --full-packages when package-level comparison is required",
@@ -90,6 +94,7 @@ export async function inspectPackageManagers(dir, options = {}) {
       distinctVersions: [...new Set(pythonInstallations.map((item) => item.version))],
       packageLocations: [...new Set(pythonInstallations.flatMap((item) => item.packageLocations || []).filter(Boolean))],
       pipCommands,
+      runtimeLinks: pipRuntimeLinks,
       packageComparisons: comparePythonPackages(pythonInstallations)
     },
     otherRuntimes: commonRuntimes,
@@ -97,6 +102,66 @@ export async function inspectPackageManagers(dir, options = {}) {
     decision: findings.some((item) => item.severity === "review") ? "review" : "clear",
     aiDecision
   };
+}
+
+export function linkNodeNpmRuntimes(nodeInstallations = [], npmInstallations = []) {
+  return npmInstallations.map((npm) => {
+    const colocated = nodeInstallations.find((node) => sameDirectory(node.path, npm.path));
+    const active = nodeInstallations.find((node) => node.active);
+    const matched = colocated || (npm.active ? active : null);
+    return {
+      managerPath: npm.path,
+      managerVersion: npm.version,
+      runtimePath: matched?.path || "",
+      runtimeVersion: matched?.version || "",
+      relationship: colocated ? "co-located-executables" : matched ? "path-precedence-inference" : "unresolved",
+      confidence: colocated ? "strong" : matched ? "medium" : "none",
+      evidence: colocated
+        ? "npm and Node executables are in the same directory"
+        : matched ? "active npm is paired with the active PATH-precedence Node" : "no candidate Node runtime could be linked",
+      ownershipProven: false
+    };
+  });
+}
+
+export function linkPythonPipRuntimes(pythonInstallations = [], pipCommands = []) {
+  return pipCommands.map((pip) => {
+    const locationMatches = pythonInstallations.filter((python) => (python.packageLocations || []).some((location) => pathContains(location, pip.packageLocation)));
+    const versionMatches = pythonInstallations.filter((python) => majorMinor(python.version) && majorMinor(python.version) === majorMinor(pip.pythonVersion));
+    const matched = locationMatches.length === 1 ? locationMatches[0] : versionMatches.length === 1 ? versionMatches[0] : null;
+    return {
+      managerPath: pip.path,
+      managerVersion: pip.version,
+      runtimePath: matched?.path || "",
+      runtimeVersion: matched?.version || pip.pythonVersion || "",
+      relationship: locationMatches.length === 1 ? "package-location-match" : versionMatches.length === 1 ? "unique-version-match" : versionMatches.length > 1 ? "ambiguous-version-match" : "unresolved",
+      confidence: locationMatches.length === 1 ? "strong" : versionMatches.length === 1 ? "medium" : "none",
+      evidence: locationMatches.length === 1
+        ? "pip package location is inside a package location reported by this Python"
+        : versionMatches.length === 1 ? "exactly one detected Python has pip's reported major/minor version"
+          : versionMatches.length > 1 ? "multiple detected Python runtimes share pip's reported major/minor version" : "no detected Python matches pip's reported version or package location",
+      ownershipProven: false
+    };
+  });
+}
+
+export function analyzeRuntimeLinks(npmLinks = [], pipLinks = [], nodeInstallations = [], pythonInstallations = []) {
+  const findings = [];
+  const activeNpm = npmLinks[0];
+  if (activeNpm && nodeInstallations.length > 1 && activeNpm.confidence !== "strong") findings.push({
+    code: "npm-node-runtime-link-uncertain",
+    severity: "review",
+    message: "Active npm could not be strongly linked to one of the detected Node runtimes.",
+    action: "Review npm.runtimeLinks and the runtime manager before changing Node, npm, PATH, or global packages."
+  });
+  const activePip = pipLinks[0];
+  if (activePip && pythonInstallations.length > 1 && activePip.confidence !== "strong") findings.push({
+    code: "pip-python-runtime-link-uncertain",
+    severity: "review",
+    message: "Active pip could not be strongly linked to one of the detected Python runtimes.",
+    action: "Use the selected Python with `-m pip`; review python.runtimeLinks before changing or removing an interpreter."
+  });
+  return findings;
 }
 
 export async function findPipCandidates(options = {}) {
@@ -657,6 +722,17 @@ function chooseCanonical(installations, expected) {
 
 function normalizeCompare(value) {
   return path.normalize(String(value || "")).toLowerCase();
+}
+
+function sameDirectory(left, right) {
+  return Boolean(left && right && normalizeCompare(path.dirname(left)) === normalizeCompare(path.dirname(right)));
+}
+
+function pathContains(parent, child) {
+  if (!parent || !child) return false;
+  const base = normalizeCompare(parent).replace(/[\\/]+$/, "");
+  const target = normalizeCompare(child);
+  return target === base || target.startsWith(`${base}${path.sep}`);
 }
 
 function majorMinor(value) {
