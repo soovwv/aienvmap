@@ -13,13 +13,14 @@ const pythonNames = process.platform === "win32" ? ["python.exe", "python3.exe"]
 const pipNames = process.platform === "win32" ? ["pip.exe", "pip3.exe"] : ["pip3", "pip"];
 
 export async function inspectPackageManagers(dir, options = {}) {
-  const [candidates, nodeCandidates, pythonCandidates, pipCandidates, commonRuntimes, project] = await Promise.all([
+  const [candidates, nodeCandidates, pythonCandidates, pipCandidates, commonRuntimes, project, uvPythonManager] = await Promise.all([
     findNpmCandidates(options),
     findNodeCandidates(options),
     findPythonCandidates({ ...options, projectDir: dir }),
     findPipCandidates({ ...options, projectDir: dir }),
     inspectCommonRuntimes(options),
-    readProjectExpectation(dir)
+    readProjectExpectation(dir),
+    inspectUvPythonManager(options)
   ]);
   const inspected = await Promise.all(candidates.map(async (candidate, index) => {
     const version = await npmCandidateVersion(candidate.path);
@@ -46,7 +47,8 @@ export async function inspectPackageManagers(dir, options = {}) {
     ...item,
     active: index === 0
   })).map(({ candidateOrder: _candidateOrder, ...item }) => item);
-  const pythonInstallations = await inspectPythonCandidates(pythonCandidates, options);
+  const inspectedPythonInstallations = await inspectPythonCandidates(pythonCandidates, options);
+  const pythonInstallations = attachUvManagerEvidence(inspectedPythonInstallations, uvPythonManager);
   const pipCommands = await inspectPipCandidates(pipCandidates, options);
   const nodeInstallations = await inspectNodeCandidates(nodeCandidates, options);
   const npmRuntimeLinks = linkNodeNpmRuntimes(nodeInstallations, installations);
@@ -95,13 +97,92 @@ export async function inspectPackageManagers(dir, options = {}) {
       packageLocations: [...new Set(pythonInstallations.flatMap((item) => item.packageLocations || []).filter(Boolean))],
       pipCommands,
       runtimeLinks: pipRuntimeLinks,
-      packageComparisons: comparePythonPackages(pythonInstallations)
+      packageComparisons: comparePythonPackages(pythonInstallations),
+      managerEvidence: uvPythonManager
     },
     otherRuntimes: commonRuntimes,
     findings,
     decision: findings.some((item) => item.severity === "review") ? "review" : "clear",
     aiDecision
   };
+}
+
+export async function inspectUvPythonManager(options = {}) {
+  if (!options.fullPackages) return {
+    collection: "not-requested",
+    reason: "Use --full-packages for uv-managed interpreter evidence."
+  };
+  const command = process.platform === "win32" ? "uv.exe" : "uv";
+  const [version, managedRoot, raw] = await Promise.all([
+    commandVersion(command),
+    commandOutput(command, ["python", "dir", "--no-config"], { timeout: 5000 }),
+    commandOutput(command, ["python", "list", "--only-installed", "--managed-python", "--output-format", "json", "--no-config"], { timeout: 8000, maxBuffer: 2 * 1024 * 1024 })
+  ]);
+  if (!version || !managedRoot) return {
+    collection: "unavailable",
+    reason: "uv was not available or did not report its managed Python directory."
+  };
+  let parsed;
+  try { parsed = JSON.parse(raw); } catch {
+    return { collection: "unsupported-or-failed", manager: "uv", version, reason: "uv did not return its managed Python JSON list." };
+  }
+  const installations = Array.isArray(parsed) ? parsed.slice(0, 100).map((item) => ({
+    key: String(item.key || ""),
+    version: String(item.version || ""),
+    path: displayPath(item.path || "", options),
+    implementation: String(item.implementation || ""),
+    arch: String(item.arch || ""),
+    os: String(item.os || "")
+  })).filter((item) => item.path) : [];
+  return {
+    collection: "collected",
+    manager: "uv",
+    version,
+    managedRoot: displayPath(managedRoot, options),
+    installationCount: installations.length,
+    installations,
+    semantics: "uv --managed-python inventory; proves uv reports the interpreter as managed, but does not authorize removal."
+  };
+}
+
+export function attachUvManagerEvidence(pythonInstallations = [], uv = {}) {
+  return pythonInstallations.map((python) => {
+    const managed = uv.collection === "collected" && (uv.installations || []).find((item) =>
+      item.version === python.version && (normalizeCompare(item.path) === normalizeCompare(python.path) || pathContains(uv.managedRoot, python.path))
+    );
+    const inferred = python.source === "uv" || (uv.managedRoot && pathContains(uv.managedRoot, python.path));
+    return {
+      ...python,
+      managerEvidence: managed ? {
+        manager: "uv",
+        managerVersion: uv.version,
+        relationship: "managed-python-list-match",
+        confidence: "strong",
+        ownershipProven: true,
+        proofScope: "uv-managed-interpreter",
+        matchedKey: managed.key,
+        removalAuthorized: false
+      } : inferred ? {
+        manager: "uv",
+        managerVersion: uv.version || "",
+        relationship: "managed-root-inference",
+        confidence: "medium",
+        ownershipProven: false,
+        proofScope: "path-only",
+        matchedKey: "",
+        removalAuthorized: false
+      } : {
+        manager: "unknown",
+        managerVersion: "",
+        relationship: "unconfirmed",
+        confidence: "none",
+        ownershipProven: false,
+        proofScope: "none",
+        matchedKey: "",
+        removalAuthorized: false
+      }
+    };
+  });
 }
 
 export function linkNodeNpmRuntimes(nodeInstallations = [], npmInstallations = []) {
