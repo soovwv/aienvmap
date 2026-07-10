@@ -336,6 +336,8 @@ test("reconcile CLI is read-only and returns machine-readable package-manager st
   assert.ok(Array.isArray(json.npm.runtimeLinks));
   assert.ok(Array.isArray(json.python.runtimeLinks));
   assert.equal(json.python.managerEvidence.collection, "not-requested");
+  assert.equal(json.python.managerInventories.uv.collection, "not-requested");
+  assert.equal(json.python.managerInventories.pyenv.collection, "not-requested");
   assert.ok(json.python.installations.every((item) => item.managerEvidence));
   assert.ok(json.otherRuntimes.java);
   assert.ok(json.otherRuntimes.dotnet);
@@ -357,6 +359,7 @@ test("reconcile --full-packages exposes package-level evidence on demand", async
   const json = JSON.parse(result.stdout);
   assert.equal(json.python.packageDetail, "full");
   assert.ok(["collected", "unavailable", "unsupported-or-failed"].includes(json.python.managerEvidence.collection));
+  assert.ok(["collected", "unavailable", "unsupported-or-failed"].includes(json.python.managerInventories.pyenv.collection));
   assert.ok(json.python.installations.every((item) => Array.isArray(item.packages)));
   assert.ok(json.python.installations.every((item) => ["collected", "unsupported-or-failed"].includes(item.installerEvidence.collection)));
   assert.equal(json.aiDecision.pythonInstallerEvidence.notRequestedRuntimes, 0);

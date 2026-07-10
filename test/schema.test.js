@@ -23,6 +23,8 @@ test("schemaContract describes stable AI output contracts", () => {
   assert.ok(schema.outputs.reconcile.managerEvidenceFields.includes("ownershipProven"));
   assert.ok(schema.outputs.reconcile.managerEvidenceFields.includes("removalAuthorized"));
   assert.ok(schema.outputs.reconcile.uvManagerEvidenceFields.includes("managedRoot"));
+  assert.ok(schema.outputs.reconcile.pyenvManagerEvidenceFields.includes("truncated"));
+  assert.match(schema.outputs.reconcile.pythonManagerInventories, /uv and pyenv/);
   assert.match(schema.outputs.reconcile.rule, /never authorize removal/);
   assert.deepEqual(schema.outputs.reconcile.detailedToolchains, ["node/npm", "python/pip"]);
   assert.ok(schema.outputs.reconcile.discoveryEvidenceFields.includes("osNativeCount"));
