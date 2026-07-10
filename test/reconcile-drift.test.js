@@ -84,6 +84,16 @@ test("compareReconciliation detects Python manager ownership evidence drift", ()
   assert.match(result.drift.changes.map((item) => item.field).join(" "), /python\.managerEvidence/);
 });
 
+test("compareReconciliation detects pyenv inventory drift", () => {
+  const baseline = report();
+  baseline.python.managerInventories = { pyenv: { collection: "collected", managedRoot: "$HOME/.pyenv/versions", installations: [{ key: "3.11.9" }] } };
+  const current = report();
+  current.python.managerInventories = { pyenv: { collection: "collected", managedRoot: "$HOME/.pyenv/versions", installations: [{ key: "3.12.4" }] } };
+  const result = compareReconciliation(baseline, current);
+  assert.equal(result.drift.detected, true);
+  assert.match(result.drift.changes.map((item) => item.field).join(" "), /python\.managerInventories\.pyenv/);
+});
+
 test("compareReconciliation detects OS-native Java discovery evidence drift", () => {
   const baseline = report();
   baseline.otherRuntimes.java = { installations: [], distinctVersions: [], discoveryEvidence: { sources: [], osNativeCount: 0 } };

@@ -545,6 +545,8 @@ export function schemaContract() {
         installerEvidenceFields: ["collection", "formatVersion", "pipVersion", "packageCount", "installerCounts", "requestedCount", "editableCount", "digest", "metadataSample", "semantics"],
         managerEvidenceFields: ["manager", "managerVersion", "relationship", "confidence", "ownershipProven", "proofScope", "matchedKey", "removalAuthorized"],
         uvManagerEvidenceFields: ["collection", "manager", "version", "managedRoot", "installationCount", "installations", "semantics"],
+        pyenvManagerEvidenceFields: ["collection", "manager", "version", "managedRoot", "installationCount", "installations", "truncated", "semantics"],
+        pythonManagerInventories: "python.managerInventories contains uv and pyenv; python.managerEvidence remains the uv inventory compatibility alias",
         detailedToolchains: ["node/npm", "python/pip"],
         informationOnlyRuntimes: ["java", "dotnet", "ruby", "go", "rust"],
         discoveryEvidenceFields: ["sources", "pathCount", "configuredCount", "knownRootCount", "osNativeCount", "rule"],

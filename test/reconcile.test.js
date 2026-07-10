@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
-import { analyzeNodeInstallations, analyzeNpmInstallations, analyzePythonCommandRouting, analyzePythonInstallations, analyzeRuntimeLinks, attachUvManagerEvidence, buildAiDecision, compareNpmGlobalPackages, comparePythonPackages, findPythonCandidates, linkNodeNpmRuntimes, linkPythonPipRuntimes, parsePackageManager, parsePipList, parsePipVersion, summarizePipInspect, summarizePythonPackages } from "../src/package-managers.js";
+import { analyzeNodeInstallations, analyzeNpmInstallations, analyzePythonCommandRouting, analyzePythonInstallations, analyzeRuntimeLinks, attachPyenvManagerEvidence, attachUvManagerEvidence, buildAiDecision, compareNpmGlobalPackages, comparePythonPackages, findPythonCandidates, inspectPyenvPythonManager, linkNodeNpmRuntimes, linkPythonPipRuntimes, parsePackageManager, parsePipList, parsePipVersion, parsePyenvVersions, summarizePipInspect, summarizePythonPackages } from "../src/package-managers.js";
 
 test("parsePackageManager separates package manager and pinned version", () => {
   assert.deepEqual(parsePackageManager("npm@10.8.2"), { name: "npm", version: "10.8.2" });
@@ -159,6 +159,56 @@ test("uv known-root evidence remains an inference when deep collection was not r
   assert.equal(python.managerEvidence.ownershipProven, false);
 });
 
+test("pyenv inventory parser keeps bounded version keys only", () => {
+  assert.deepEqual(parsePyenvVersions("system\n* 3.12.4 (set by /repo/.python-version)\n3.11.9\n3.12.4\n3.12/envs/app\n"), ["3.12.4", "3.11.9"]);
+});
+
+test("pyenv exact prefix evidence proves management without removal permission", () => {
+  const root = path.join("home", ".pyenv", "versions");
+  const inventory = {
+    collection: "collected",
+    manager: "pyenv",
+    version: "2.5.3",
+    managedRoot: root,
+    installations: [{ key: "3.12.4", prefix: path.join(root, "3.12.4") }]
+  };
+  const [managed, inferred] = attachPyenvManagerEvidence([
+    { path: path.join(root, "3.12.4", "bin", "python"), prefix: path.join(root, "3.12.4"), basePrefix: path.join(root, "3.12.4"), source: "pyenv", managerEvidence: { ownershipProven: false } },
+    { path: path.join(root, "3.11.9", "bin", "python"), prefix: path.join(root, "3.11.9"), basePrefix: path.join(root, "3.11.9"), source: "pyenv", managerEvidence: { ownershipProven: false } }
+  ], inventory);
+  assert.equal(managed.managerEvidence.relationship, "managed-prefix-list-match");
+  assert.equal(managed.managerEvidence.ownershipProven, true);
+  assert.equal(managed.managerEvidence.matchedKey, "3.12.4");
+  assert.equal(managed.managerEvidence.removalAuthorized, false);
+  assert.equal(inferred.managerEvidence.relationship, "managed-root-inference");
+  assert.equal(inferred.managerEvidence.ownershipProven, false);
+});
+
+test("pyenv evidence does not replace stronger uv ownership proof", () => {
+  const python = { prefix: "/pyenv/3.12", managerEvidence: { manager: "uv", ownershipProven: true, confidence: "strong" } };
+  assert.equal(attachPyenvManagerEvidence([python], { collection: "collected", installations: [{ key: "3.12", prefix: "/pyenv/3.12" }] })[0].managerEvidence.manager, "uv");
+});
+
+test("Windows pyenv batch inventory is collected read-only", { skip: process.platform !== "win32" }, async () => {
+  const dir = await fs.mkdtemp(path.join(os.tmpdir(), "aienvmap pyenv "));
+  try {
+    const command = path.join(dir, "pyenv.bat");
+    await fs.writeFile(command, [
+      "@echo off",
+      "if \"%1\"==\"--version\" echo pyenv 3.1.1",
+      `if \"%1\"==\"root\" echo ${dir}`,
+      "if \"%1\"==\"versions\" echo 3.12.4"
+    ].join("\r\n"));
+    const result = await inspectPyenvPythonManager({ fullPackages: true, pyenvCommand: command, platform: "win32", showPaths: true });
+    assert.equal(result.collection, "collected");
+    assert.equal(result.version, "3.1.1");
+    assert.equal(result.installationCount, 1);
+    assert.equal(result.installations[0].key, "3.12.4");
+  } finally {
+    await fs.rm(dir, { recursive: true, force: true });
+  }
+});
+
 test("uncertain active runtime links create review findings only with multiple runtimes", () => {
   const findings = analyzeRuntimeLinks(
     [{ confidence: "medium" }],
@@ -286,6 +336,8 @@ test("reconcile CLI is read-only and returns machine-readable package-manager st
   assert.ok(Array.isArray(json.npm.runtimeLinks));
   assert.ok(Array.isArray(json.python.runtimeLinks));
   assert.equal(json.python.managerEvidence.collection, "not-requested");
+  assert.equal(json.python.managerInventories.uv.collection, "not-requested");
+  assert.equal(json.python.managerInventories.pyenv.collection, "not-requested");
   assert.ok(json.python.installations.every((item) => item.managerEvidence));
   assert.ok(json.otherRuntimes.java);
   assert.ok(json.otherRuntimes.dotnet);
@@ -307,6 +359,7 @@ test("reconcile --full-packages exposes package-level evidence on demand", async
   const json = JSON.parse(result.stdout);
   assert.equal(json.python.packageDetail, "full");
   assert.ok(["collected", "unavailable", "unsupported-or-failed"].includes(json.python.managerEvidence.collection));
+  assert.ok(["collected", "unavailable", "unsupported-or-failed"].includes(json.python.managerInventories.pyenv.collection));
   assert.ok(json.python.installations.every((item) => Array.isArray(item.packages)));
   assert.ok(json.python.installations.every((item) => ["collected", "unsupported-or-failed"].includes(item.installerEvidence.collection)));
   assert.equal(json.aiDecision.pythonInstallerEvidence.notRequestedRuntimes, 0);

@@ -2,7 +2,7 @@ import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { createHash } from "node:crypto";
-import { commandOutput, commandVersion, firstVersion } from "./shell.js";
+import { commandOutput, commandVersion, firstVersion, portableCommandResult } from "./shell.js";
 import { exists } from "./fsutil.js";
 import { parseNpmGlobal } from "./inventory.js";
 import { analyzeCommonRuntimes, analyzeJavaBuildTools, inspectCommonRuntimes } from "./runtime-discovery.js";
@@ -13,14 +13,15 @@ const pythonNames = process.platform === "win32" ? ["python.exe", "python3.exe"]
 const pipNames = process.platform === "win32" ? ["pip.exe", "pip3.exe"] : ["pip3", "pip"];
 
 export async function inspectPackageManagers(dir, options = {}) {
-  const [candidates, nodeCandidates, pythonCandidates, pipCandidates, commonRuntimes, project, uvPythonManager] = await Promise.all([
+  const [candidates, nodeCandidates, pythonCandidates, pipCandidates, commonRuntimes, project, uvPythonManager, pyenvPythonManager] = await Promise.all([
     findNpmCandidates(options),
     findNodeCandidates(options),
     findPythonCandidates({ ...options, projectDir: dir }),
     findPipCandidates({ ...options, projectDir: dir }),
     inspectCommonRuntimes({ ...options, projectDir: dir }),
     readProjectExpectation(dir),
-    inspectUvPythonManager(options)
+    inspectUvPythonManager(options),
+    inspectPyenvPythonManager(options)
   ]);
   const inspected = await Promise.all(candidates.map(async (candidate, index) => {
     const version = await npmCandidateVersion(candidate.path);
@@ -48,7 +49,7 @@ export async function inspectPackageManagers(dir, options = {}) {
     active: index === 0
   })).map(({ candidateOrder: _candidateOrder, ...item }) => item);
   const inspectedPythonInstallations = await inspectPythonCandidates(pythonCandidates, options);
-  const pythonInstallations = attachUvManagerEvidence(inspectedPythonInstallations, uvPythonManager);
+  const pythonInstallations = attachPyenvManagerEvidence(attachUvManagerEvidence(inspectedPythonInstallations, uvPythonManager), pyenvPythonManager);
   const pipCommands = await inspectPipCandidates(pipCandidates, options);
   const nodeInstallations = await inspectNodeCandidates(nodeCandidates, options);
   const npmRuntimeLinks = linkNodeNpmRuntimes(nodeInstallations, installations);
@@ -99,13 +100,70 @@ export async function inspectPackageManagers(dir, options = {}) {
       pipCommands,
       runtimeLinks: pipRuntimeLinks,
       packageComparisons: comparePythonPackages(pythonInstallations),
-      managerEvidence: uvPythonManager
+      managerEvidence: uvPythonManager,
+      managerInventories: { uv: uvPythonManager, pyenv: pyenvPythonManager }
     },
     otherRuntimes: commonRuntimes,
     findings,
     decision: findings.some((item) => item.severity === "review") ? "review" : "clear",
     aiDecision
   };
+}
+
+export async function inspectPyenvPythonManager(options = {}) {
+  if (!options.fullPackages) return {
+    collection: "not-requested",
+    reason: "Use --full-packages for pyenv-managed interpreter evidence."
+  };
+  const platform = options.platform || process.platform;
+  const commands = options.pyenvCommand
+    ? [options.pyenvCommand]
+    : platform === "win32" ? ["pyenv.bat", "pyenv.cmd", "pyenv.exe"] : ["pyenv"];
+  let command = "";
+  let managerVersion = "";
+  for (const candidate of commands) {
+    const result = await portableCommandResult(candidate, ["--version"], { timeout: 3500, platform });
+    const version = firstVersion(`${result.stdout}\n${result.stderr}`);
+    if (result.ok && version) {
+      command = candidate;
+      managerVersion = version;
+      break;
+    }
+  }
+  if (!command) return { collection: "unavailable", manager: "pyenv", reason: "pyenv was not available." };
+  const [rootResult, preferredVersionsResult] = await Promise.all([
+    portableCommandResult(command, ["root"], { timeout: 3500, platform }),
+    portableCommandResult(command, ["versions", "--bare", "--skip-aliases"], { timeout: 5000, maxBuffer: 1024 * 1024, platform })
+  ]);
+  const root = rootResult.stdout.split(/\r?\n/)[0]?.trim() || "";
+  if (!rootResult.ok || !path.isAbsolute(root)) return {
+    collection: "unsupported-or-failed", manager: "pyenv", version: managerVersion, reason: "pyenv did not report its root."
+  };
+  const versionsResult = preferredVersionsResult.ok
+    ? preferredVersionsResult
+    : await portableCommandResult(command, ["versions", "--bare"], { timeout: 5000, maxBuffer: 1024 * 1024, platform });
+  const names = versionsResult.ok ? parsePyenvVersions(versionsResult.stdout) : [];
+  const managedRoot = path.join(root, "versions");
+  const installations = names.slice(0, 100).map((name) => ({
+    key: name,
+    prefix: displayPath(path.join(managedRoot, name), options)
+  }));
+  return {
+    collection: versionsResult.ok ? "collected" : "unsupported-or-failed",
+    manager: "pyenv",
+    version: managerVersion,
+    managedRoot: displayPath(managedRoot, options),
+    installationCount: installations.length,
+    installations,
+    truncated: names.length > 100,
+    semantics: "pyenv root plus local version inventory; exact prefix matches prove pyenv management, never removal authorization."
+  };
+}
+
+export function parsePyenvVersions(raw) {
+  return [...new Set(String(raw || "").split(/\r?\n/)
+    .map((line) => line.trim().replace(/^\*\s*/, "").replace(/\s+\(set by .+\)$/, ""))
+    .filter((line) => line && line !== "system" && !/[\\/]/.test(line)))];
 }
 
 export async function inspectUvPythonManager(options = {}) {
@@ -179,6 +237,39 @@ export function attachUvManagerEvidence(pythonInstallations = [], uv = {}) {
         confidence: "none",
         ownershipProven: false,
         proofScope: "none",
+        matchedKey: "",
+        removalAuthorized: false
+      }
+    };
+  });
+}
+
+export function attachPyenvManagerEvidence(pythonInstallations = [], pyenv = {}) {
+  return pythonInstallations.map((python) => {
+    if (python.managerEvidence?.ownershipProven === true) return python;
+    const matched = pyenv.collection === "collected" && (pyenv.installations || []).find((item) =>
+      normalizeCompare(item.prefix) === normalizeCompare(python.prefix) || normalizeCompare(item.prefix) === normalizeCompare(python.basePrefix)
+    );
+    const inferred = python.source === "pyenv" || (pyenv.managedRoot && (pathContains(pyenv.managedRoot, python.prefix) || pathContains(pyenv.managedRoot, python.basePrefix)));
+    if (!matched && !inferred) return python;
+    return {
+      ...python,
+      managerEvidence: matched ? {
+        manager: "pyenv",
+        managerVersion: pyenv.version,
+        relationship: "managed-prefix-list-match",
+        confidence: "strong",
+        ownershipProven: true,
+        proofScope: "pyenv-managed-interpreter",
+        matchedKey: matched.key,
+        removalAuthorized: false
+      } : {
+        manager: "pyenv",
+        managerVersion: pyenv.version || "",
+        relationship: "managed-root-inference",
+        confidence: "medium",
+        ownershipProven: false,
+        proofScope: "path-only",
         matchedKey: "",
         removalAuthorized: false
       }

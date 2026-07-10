@@ -22,6 +22,8 @@ test("packaged aienvmap skill points AI agents to current startup contracts", as
   assert.match(skill, /--full-packages/);
   assert.match(skill, /installerEvidence/);
   assert.match(skill, /managerEvidence/);
+  assert.match(skill, /python\.managerInventories/);
+  assert.match(skill, /uv\/pyenv manager-native interpreter evidence/);
   assert.match(skill, /ownershipProven: true/);
   assert.match(skill, /removalAuthorized: false/);
   assert.match(skill, /otherRuntimes\.java\.discoveryEvidence/);

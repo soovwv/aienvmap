@@ -2,7 +2,7 @@ import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { exists } from "./fsutil.js";
-import { commandOutput, commandResult, commandVersion } from "./shell.js";
+import { commandOutput, commandResult, commandVersion, portableCommandResult } from "./shell.js";
 
 export async function inspectCommonRuntimes(options = {}) {
   const definitions = runtimeDefinitions(options.env || process.env, options.home || os.homedir());
@@ -63,9 +63,7 @@ export async function inspectJavaBuildTools(installations = [], options = {}) {
 }
 
 async function javaBuildToolResult(command, args, options, win) {
-  if (!win || !/\.(?:cmd|bat)$/i.test(command)) return commandResult(command, args, options);
-  const comspec = process.env.ComSpec || "cmd.exe";
-  return commandResult(comspec, ["/d", "/c", command, ...args], options);
+  return portableCommandResult(command, args, { ...options, platform: win ? "win32" : process.platform });
 }
 
 export function parseMavenVersion(raw) {
