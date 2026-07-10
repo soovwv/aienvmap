@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Added opt-in `pip inspect` installer evidence summaries to `reconcile --full-packages`, including Windows UTF-8 subprocess handling, bounded redacted metadata, AI aggregation, and drift detection without changing default scan cost.
 - Added conservative npm-to-Node and pip-to-Python `runtimeLinks` with explicit evidence/confidence, AI summaries, drift detection, and `ownershipProven: false` safeguards.
 - Added opt-in `reconcile --check` host-state drift detection with AI-readable differences and stable exit code `2`, plus an off-by-default GitHub Action input for stable/self-hosted runners.
 - Added optional compare-and-swap coordination: `status --json` exposes `coordinationRevision`, while `intent` and `resolve --if-revision` atomically reject stale multi-AI writes without a daemon or dependency.

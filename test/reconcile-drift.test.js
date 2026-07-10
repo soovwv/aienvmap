@@ -56,3 +56,17 @@ test("compareReconciliation detects a package-manager runtime routing change", (
   assert.ok(result.drift.changedSections.includes("npm"));
   assert.match(result.drift.changes.map((item) => item.field).join(" "), /npm\.runtimeLinks/);
 });
+
+test("compareReconciliation detects Python installer evidence drift", () => {
+  const baseline = report();
+  baseline.python.installations = [{ path: "$HOME/python", version: "3.12", installerEvidence: { collection: "collected", installerCounts: { pip: 2 }, digest: "one" } }];
+  const current = report();
+  current.python.installations = [{ path: "$HOME/python", version: "3.12", installerEvidence: { collection: "collected", installerCounts: { pip: 1, uv: 1 }, digest: "two" } }];
+  const result = compareReconciliation(baseline, current);
+  assert.equal(result.decision, "review");
+  assert.ok(result.drift.changedSections.includes("python"));
+  const installationChange = result.drift.changes.find((item) => item.field === "python.installations");
+  assert.ok(installationChange);
+  assert.deepEqual(installationChange.before[0].installerEvidence.installerCounts, { pip: 2 });
+  assert.deepEqual(installationChange.after[0].installerEvidence.installerCounts, { pip: 1, uv: 1 });
+});

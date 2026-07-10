@@ -71,7 +71,7 @@ function pythonSection(section = {}) {
   return {
     ...runtimeSection(section),
     packageLocations: sorted(section.packageLocations || []),
-    installations: normalizeInstallations(section.installations, ["virtualEnvironment", "prefix", "basePrefix", "packageLocations", "packageCount", "packageDigest", "packageCollection", "pipAvailable"]),
+    installations: normalizeInstallations(section.installations, ["virtualEnvironment", "prefix", "basePrefix", "packageLocations", "packageCount", "packageDigest", "packageCollection", "pipAvailable", "installerEvidence"]),
     pipCommands: normalizeInstallations(section.pipCommands, ["pythonVersion", "packageLocation"]),
     runtimeLinks: normalizeRuntimeLinks(section.runtimeLinks)
   };

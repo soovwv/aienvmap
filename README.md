@@ -16,6 +16,7 @@
 - Start: run `npx aienvmap start`; it creates the env map, light SBOM, status, summary, discovery entry, and dashboard when missing or stale.
 - Existing environment: run `npx aienvmap reconcile`; it reports visible Node/npm and Python/pip installations, package locations, inventory digests/samples, project expectations, and lockfile conflicts without changing anything. Add `--write` to save the AI-readable report or `--full-packages` for package-level comparison.
 - Runtime routing evidence: `npm.runtimeLinks` and `python.runtimeLinks` connect package-manager commands to likely runtimes using co-location, package locations, or explicit PATH inference. Every link keeps `ownershipProven: false`; AI must not treat it as removal permission.
+- Deep Python evidence: `reconcile --full-packages` optionally summarizes the stable `pip inspect` report into installer counts, requested/editable counts, a digest, and a bounded redacted metadata sample. Default and quick scans do not run it.
 - Java, .NET, Ruby, Go, and Rust stay information-only: reconciliation reports visible executable paths and versions but does not inspect their packages or propose automatic cleanup.
 - Optional drift gate: save a reviewed baseline with `aienvmap reconcile --write`, then use `aienvmap reconcile --check --json` before environment-sensitive PR work. Exit `2` means review; it never authorizes cleanup.
 

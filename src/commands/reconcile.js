@@ -52,6 +52,7 @@ export async function reconcileWorkspace(args = {}) {
     console.log(`python: ${item.version} ${item.active ? "[active]" : "[inactive]"} ${item.source}/${item.scope} ${item.path}`);
     const packageSummary = item.packageCollection === "skipped-quick" ? "not collected (quick)" : `${item.packageCount}; digest: ${item.packageDigest.slice(0, 12)}`;
     console.log(`  environment: ${item.virtualEnvironment ? "virtual" : "base"}; packages: ${packageSummary}; pip: ${item.pipAvailable ? "available" : "unavailable-or-empty"}`);
+    if (item.installerEvidence?.collection === "collected") console.log(`  installers: ${Object.entries(item.installerEvidence.installerCounts || {}).map(([name, count]) => `${name}=${count}`).join(", ") || "unknown"}; requested: ${item.installerEvidence.requestedCount}; editable: ${item.installerEvidence.editableCount}`);
     if (item.packageLocations.length) console.log(`  package locations: ${item.packageLocations.join(", ")}`);
   }
   for (const item of result.python.pipCommands) console.log(`pip: ${item.version} -> Python ${item.pythonVersion} ${item.active ? "[active]" : "[inactive]"} ${item.path}`);
@@ -98,6 +99,11 @@ export function summarizeReconciliation(value = {}) {
       npmStrong: (value.npm?.runtimeLinks || []).filter((item) => item.confidence === "strong").length,
       pipStrong: (value.python?.runtimeLinks || []).filter((item) => item.confidence === "strong").length,
       review: [...(value.npm?.runtimeLinks || []), ...(value.python?.runtimeLinks || [])].filter((item) => item.confidence !== "strong").length
+    },
+    installerEvidence: {
+      collected: (value.python?.installations || []).filter((item) => item.installerEvidence?.collection === "collected").length,
+      notRequested: (value.python?.installations || []).filter((item) => item.installerEvidence?.collection === "not-requested").length,
+      failed: (value.python?.installations || []).filter((item) => item.installerEvidence?.collection === "unsupported-or-failed").length
     },
     nextCommand: value.decision === "review" ? "aienvmap reconcile --json --full-packages" : "aienvmap status --json",
     rule: "Read the report before runtime or package-manager changes; removal still requires explicit human approval."

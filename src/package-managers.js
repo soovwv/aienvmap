@@ -309,6 +309,13 @@ async function inspectPythonCandidates(candidates, options) {
       ? await commandOutput(candidate.path, ["-m", "pip", "--version"], { timeout: 5000 })
       : await commandOutput(candidate.path, ["-m", "pip", "list", "--format=json", "--disable-pip-version-check"], { timeout: 8000, maxBuffer: 2 * 1024 * 1024 });
     const packages = options.quick ? [] : parsePipList(pipRaw);
+    const pipInspectRaw = options.fullPackages
+      ? await commandOutput(candidate.path, ["-m", "pip", "inspect", "--local", "--disable-pip-version-check"], {
+        timeout: 12000,
+        maxBuffer: 8 * 1024 * 1024,
+        env: { ...process.env, PYTHONUTF8: "1", PYTHONIOENCODING: "utf-8" }
+      })
+      : "";
     return {
       runtime: "python",
       version,
@@ -321,6 +328,9 @@ async function inspectPythonCandidates(candidates, options) {
       virtualEnvironment: Boolean(details.prefix && details.basePrefix && normalizeCompare(details.prefix) !== normalizeCompare(details.basePrefix)),
       packageLocations: [...(details.packages || []), details.userSite].filter(Boolean).map((item) => displayPath(item, options)),
       packages,
+      installerEvidence: options.fullPackages
+        ? summarizePipInspect(pipInspectRaw, options)
+        : { collection: "not-requested", reason: "Use --full-packages for installer metadata evidence." },
       packageSemantics: "packages visible to this interpreter; not proof of installation ownership",
       packageCollection: options.quick ? "skipped-quick" : "collected",
       pipAvailable: options.quick ? /^pip\s+/i.test(pipRaw) : packages.length > 0
@@ -402,6 +412,7 @@ export function buildAiDecision({ node = [], npm = [], python = [], project = {}
       pip: summarizeRuntimeLinkConfidence(runtimeLinks.pip),
       rule: "Runtime links are routing evidence, not proof of installation ownership or permission to remove software."
     },
+    pythonInstallerEvidence: summarizeInstallerEvidence(python),
     safeCommands: {
       pythonPackageCheck: "<selected-python> -m pip list --format=json",
       pythonInstallRule: "Use <selected-python> -m pip instead of bare pip so the target interpreter is explicit.",
@@ -415,6 +426,21 @@ export function buildAiDecision({ node = [], npm = [], python = [], project = {}
       "A removal candidate requires project ownership checks, package comparison, a rollback plan, and explicit human approval.",
       "If package digests differ and package-level evidence is needed, rerun `aienvmap reconcile --json --full-packages` before deciding."
     ]
+  };
+}
+
+function summarizeInstallerEvidence(installations = []) {
+  const evidence = installations.map((item) => item.installerEvidence || { collection: "not-requested" });
+  const installerCounts = {};
+  for (const item of evidence) for (const [name, count] of Object.entries(item.installerCounts || {})) installerCounts[name] = (installerCounts[name] || 0) + Number(count || 0);
+  return {
+    collectedRuntimes: evidence.filter((item) => item.collection === "collected").length,
+    notRequestedRuntimes: evidence.filter((item) => item.collection === "not-requested").length,
+    failedRuntimes: evidence.filter((item) => item.collection === "unsupported-or-failed").length,
+    installerCounts: Object.fromEntries(Object.entries(installerCounts).sort(([a], [b]) => a.localeCompare(b))),
+    requestedPackages: evidence.reduce((sum, item) => sum + Number(item.requestedCount || 0), 0),
+    editablePackages: evidence.reduce((sum, item) => sum + Number(item.editableCount || 0), 0),
+    rule: "Installer evidence describes Python distributions only; it does not prove who owns or may remove the interpreter."
   };
 }
 
@@ -665,6 +691,39 @@ export function parsePipList(raw) {
   } catch {
     return [];
   }
+}
+
+export function summarizePipInspect(raw, options = {}) {
+  let report;
+  try { report = JSON.parse(String(raw || "")); } catch {
+    return { collection: "unsupported-or-failed", reason: "pip inspect did not return its stable JSON report." };
+  }
+  if (!report || !Array.isArray(report.installed)) {
+    return { collection: "unsupported-or-failed", reason: "pip inspect JSON did not contain an installed array." };
+  }
+  const items = report.installed.map((item) => ({
+    name: String(item.metadata?.name || ""),
+    version: String(item.metadata?.version || "unknown"),
+    installer: String(item.installer || "unknown"),
+    requested: item.requested === true,
+    editable: item.direct_url?.dir_info?.editable === true,
+    metadataLocation: displayPath(item.metadata_location || "", options)
+  })).filter((item) => item.name).sort((a, b) => a.name.localeCompare(b.name));
+  const installerCounts = {};
+  for (const item of items) installerCounts[item.installer] = (installerCounts[item.installer] || 0) + 1;
+  const digestLines = items.map((item) => `${item.name.toLowerCase()}@${item.version}|${item.installer}|${item.requested}|${item.editable}|${item.metadataLocation}`);
+  return {
+    collection: "collected",
+    formatVersion: String(report.version || "unknown"),
+    pipVersion: String(report.pip_version || "unknown"),
+    packageCount: items.length,
+    installerCounts: Object.fromEntries(Object.entries(installerCounts).sort(([a], [b]) => a.localeCompare(b))),
+    requestedCount: items.filter((item) => item.requested).length,
+    editableCount: items.filter((item) => item.editable).length,
+    digest: createHash("sha256").update(digestLines.join("\n")).digest("hex"),
+    metadataSample: items.slice(0, 12),
+    semantics: "Installer metadata reported by pip inspect; it describes distributions, not ownership of the Python runtime."
+  };
 }
 
 export function summarizePythonPackages(item, full) {
