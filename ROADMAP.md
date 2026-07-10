@@ -15,7 +15,7 @@ The default remains advisory and lightweight: observe existing state, explain co
 - Information-only runtime coverage stays lightweight: Java includes `java`/`javac`/`JAVA_HOME` plus standard JDK roots, .NET includes SDK/runtime lists, Rust includes rustup toolchains, Go includes core env paths, and Ruby includes gem home; package enumeration remains out of scope for these runtimes.
 - Current shared-server safety: distinguish project, current-user, and visible-host facts, redact user paths by default, atomically replace generated artifacts, serialize concurrent JSONL writes with stale-lock recovery, and optionally reject stale intent/resolution writes with `coordinationRevision` plus `--if-revision`.
 - Next shared-server safety: add explicit actor/session ownership and lease expiry before claiming complete concurrent multi-user coordination.
-- Next lifecycle integration: surface a compact reconciliation decision in AI startup/status, then add optional PR drift checks; do not run environment cleanup or package installation automatically.
+- Current lifecycle integration: startup/status surface a compact reconciliation decision, and `reconcile --check` provides an opt-in exit-code drift gate for stable or self-hosted PR environments; no cleanup or installation runs automatically.
 - SBOM boundary: keep manifest-derived light SBOM as coordination context and import Syft/Trivy/Grype evidence rather than building a competing vulnerability database.
 
 Acceptance gates: cross-platform fixtures for every manager, no writes in default reconciliation, explicit evidence and limitations in JSON, bounded scan time, no version bump as part of feature development, and full test/smoke/pack verification before release review.

@@ -35,6 +35,14 @@ inputs:
     description: Write compact Markdown summary and append it to GitHub Step Summary
     required: false
     default: "true"
+  reconcile-check:
+    description: Fail with exit code 2 when a stable or self-hosted runner drifts from a saved reconciliation baseline
+    required: false
+    default: "off"
+  reconcile-baseline:
+    description: Baseline path relative to the selected workspace directory
+    required: false
+    default: ".aienvmap/reconcile.json"
 
 runs:
   using: composite
@@ -42,6 +50,13 @@ runs:
     - name: Sync environment map
       shell: bash
       run: node "$GITHUB_ACTION_PATH/bin/aienvmap.js" sync --dir "${{ inputs.directory }}" --quiet
+
+    - name: Check reconciliation drift
+      shell: bash
+      run: |
+        if [ "${{ inputs.reconcile-check }}" = "true" ]; then
+          node "$GITHUB_ACTION_PATH/bin/aienvmap.js" reconcile --dir "${{ inputs.directory }}" --baseline "${{ inputs.reconcile-baseline }}" --check --json
+        fi
 
     - name: Write AI plan
       shell: bash

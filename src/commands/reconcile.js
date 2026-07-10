@@ -3,12 +3,13 @@ import { reconcileJsonPath, workspaceDir } from "../paths.js";
 import { writeJson } from "../fsutil.js";
 import { readJson } from "../fsutil.js";
 import { compareReconciliation } from "../reconcile-drift.js";
+import path from "node:path";
 
 export async function reconcileWorkspace(args = {}) {
   if (args.quick && args.full_packages) throw new Error("use either --quick or --full-packages, not both");
   if (args.check && args.write) throw new Error("use either --check or --write, not both; checking must not replace its baseline");
   const dir = workspaceDir(args);
-  const baselinePath = args.baseline || reconcileJsonPath(dir);
+  const baselinePath = args.baseline ? path.resolve(dir, String(args.baseline)) : reconcileJsonPath(dir);
   const baseline = args.check ? await readJson(baselinePath, null) : null;
   if (args.check && !baseline) throw new Error(`missing reconciliation baseline at ${baselinePath}; run \`aienvmap reconcile --write\` first`);
   const scanMode = args.quick || args.full_packages ? null : baseline?.scanMode;

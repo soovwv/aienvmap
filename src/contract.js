@@ -448,7 +448,7 @@ export function schemaContract() {
       contractReview: {
         status: "pending-0.2.0-review",
         command: "node bin/aienvmap.js schema --json",
-        surfaces: ["discover", "start", "discovery", "status", "context", "handoff", "plan", "manifest", "reconcile", "sbom", "cyclonedxLite", "demo"],
+        surfaces: ["discover", "start", "discovery", "status", "context", "handoff", "plan", "manifest", "reconcile", "reconcileCheck", "sbom", "cyclonedxLite", "demo"],
         reviewFields: ["outputs.*.rootFields", "outputs.*Fields", "compatibility.additiveRule", "stableContractRule"],
         rule: "Before 0.2.0, review documented rootFields as the compatibility floor; after 0.2.0, add fields only additively unless contractVersion changes."
       },
@@ -544,6 +544,14 @@ export function schemaContract() {
         detailedToolchains: ["node/npm", "python/pip"],
         informationOnlyRuntimes: ["java", "dotnet", "ruby", "go", "rust"],
         rule: "AI agents may propose consolidation from this evidence, but removal or PATH changes require explicit human approval and a rollback plan."
+      },
+      reconcileCheck: {
+        command: "aienvmap reconcile --check --json",
+        mode: "read-only opt-in drift gate; exit 0 means unchanged, exit 2 means review",
+        baseline: ".aienvmap/reconcile.json",
+        rootFields: ["schemaName", "schemaVersion", "generatedAt", "mode", "baseline", "current", "drift", "decision", "exitCode", "aiDecision"],
+        driftFields: ["detected", "changeCount", "changedSections", "changes", "truncated"],
+        rule: "Use on stable workstations or self-hosted runners; ephemeral hosted runners may differ by design."
       },
       sbom: {
         file: ".aienvmap/sbom.json",
