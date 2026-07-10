@@ -3,7 +3,6 @@
 [![CI](https://github.com/soovwv/aienvmap/actions/workflows/ci.yml/badge.svg)](https://github.com/soovwv/aienvmap/actions/workflows/ci.yml)
 [![License](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
 [![Node](https://img.shields.io/badge/node-%3E%3D18-339933.svg)](package.json)
-
 **AI-first env map + light SBOM coordination tool for shared development environments.**
 
 `aienvmap` helps multiple AI agents safely share one development environment with a lightweight env map, light SBOM, intent log, timeline, and handoff. Use it on shared servers, repos, laptops, or CI workspaces where people or AI agents need the same environment truth without heavy locks, backed by a dependency-free install.
