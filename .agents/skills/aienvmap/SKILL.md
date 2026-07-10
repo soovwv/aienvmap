@@ -98,7 +98,7 @@ npx aienvmap context --json
 
 Before dependency, lockfile, security remediation, or release-affecting dependency work, read `.aienvmap/sbom.json` or `npx aienvmap sbom --json` and follow `dependencyQuickCheck`.
 
-Before consolidating runtimes or package managers on an existing machine, read `.aienvmap/reconcile.json` or run `npx aienvmap reconcile --json`. Use `--full-packages` only when package-level and Python installer metadata evidence is required. Treat `runtimeLinks` and `installerEvidence` as evidence, never as permission to remove an interpreter or toolchain.
+Before consolidating runtimes or package managers on an existing machine, read `.aienvmap/reconcile.json` or run `npx aienvmap reconcile --json`. Use `--full-packages` only when package-level, Python installer metadata, or uv-managed interpreter evidence is required. Treat `runtimeLinks`, `installerEvidence`, and `managerEvidence` as evidence; even `ownershipProven: true` never overrides `removalAuthorized: false` or human approval.
 
 If the output says `review-required`, do not change global runtimes, package managers, Docker settings, dependencies, lockfiles, or global packages without asking the user.
 
