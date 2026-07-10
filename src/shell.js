@@ -21,6 +21,7 @@ export async function commandOutput(command, args = [], options = {}) {
       timeout: options.timeout || 2500,
       maxBuffer: options.maxBuffer || 1024 * 1024,
       cwd: options.cwd,
+      env: options.env,
       windowsHide: true
     });
     return stdout.trim();

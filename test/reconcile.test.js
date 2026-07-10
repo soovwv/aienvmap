@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
-import { analyzeNodeInstallations, analyzeNpmInstallations, analyzePythonCommandRouting, analyzePythonInstallations, analyzeRuntimeLinks, buildAiDecision, compareNpmGlobalPackages, comparePythonPackages, findPythonCandidates, linkNodeNpmRuntimes, linkPythonPipRuntimes, parsePackageManager, parsePipList, parsePipVersion, summarizePythonPackages } from "../src/package-managers.js";
+import { analyzeNodeInstallations, analyzeNpmInstallations, analyzePythonCommandRouting, analyzePythonInstallations, analyzeRuntimeLinks, buildAiDecision, compareNpmGlobalPackages, comparePythonPackages, findPythonCandidates, linkNodeNpmRuntimes, linkPythonPipRuntimes, parsePackageManager, parsePipList, parsePipVersion, summarizePipInspect, summarizePythonPackages } from "../src/package-managers.js";
 
 test("parsePackageManager separates package manager and pinned version", () => {
   assert.deepEqual(parsePackageManager("npm@10.8.2"), { name: "npm", version: "10.8.2" });
@@ -53,6 +53,35 @@ test("parsePipList normalizes Python package inventories", () => {
     { name: "ruff", version: "0.9.1" }
   ]);
   assert.deepEqual(parsePipList("not-json"), []);
+});
+
+test("pip inspect summary keeps installer evidence compact and redacted", () => {
+  const raw = JSON.stringify({
+    version: "1",
+    pip_version: "26.0.1",
+    installed: [
+      { metadata: { name: "pip", version: "26.0.1" }, metadata_location: path.join(os.homedir(), "venv", "pip.dist-info"), installer: "pip", requested: true },
+      { metadata: { name: "demo", version: "1.0" }, metadata_location: path.join(os.homedir(), "venv", "demo.dist-info"), installer: "uv", requested: false, direct_url: { dir_info: { editable: true } } }
+    ]
+  });
+  const summary = summarizePipInspect(raw);
+  assert.equal(summary.collection, "collected");
+  assert.equal(summary.formatVersion, "1");
+  assert.equal(summary.packageCount, 2);
+  assert.deepEqual(summary.installerCounts, { pip: 1, uv: 1 });
+  assert.equal(summary.requestedCount, 1);
+  assert.equal(summary.editableCount, 1);
+  assert.equal(summary.digest.length, 64);
+  assert.ok(summary.metadataSample.every((item) => item.metadataLocation.startsWith("$HOME")));
+  assert.equal(summary.metadataSample.some((item) => item.name === "demo" && item.editable), true);
+  assert.match(summary.semantics, /not ownership of the Python runtime/);
+});
+
+test("pip inspect summary reports unsupported output without guessing", () => {
+  assert.deepEqual(summarizePipInspect("not-json"), {
+    collection: "unsupported-or-failed",
+    reason: "pip inspect did not return its stable JSON report."
+  });
 });
 
 test("parsePipVersion links a pip entry point to its Python version", () => {
@@ -215,6 +244,7 @@ test("reconcile CLI is read-only and returns machine-readable package-manager st
   assert.ok(json.aiDecision.runtimeLinkSummary);
   assert.equal(json.python.packageDetail.startsWith("summary"), true);
   assert.ok(json.python.installations.every((item) => item.packages === undefined));
+  assert.ok(json.python.installations.every((item) => item.installerEvidence.collection === "not-requested"));
   assert.ok(json.python.installations.every((item) => typeof item.packageDigest === "string"));
   assert.ok(["clear", "review"].includes(json.decision));
   assert.equal((await fs.readdir(dir)).sort().join(","), "package.json");
@@ -228,6 +258,7 @@ test("reconcile --full-packages exposes package-level evidence on demand", async
   const json = JSON.parse(result.stdout);
   assert.equal(json.python.packageDetail, "full");
   assert.ok(json.python.installations.every((item) => Array.isArray(item.packages)));
+  assert.ok(json.python.installations.every((item) => ["collected", "unsupported-or-failed"].includes(item.installerEvidence.collection)));
 });
 
 test("reconcile --quick keeps startup evidence compact", async () => {

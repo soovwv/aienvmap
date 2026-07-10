@@ -309,6 +309,13 @@ async function inspectPythonCandidates(candidates, options) {
       ? await commandOutput(candidate.path, ["-m", "pip", "--version"], { timeout: 5000 })
       : await commandOutput(candidate.path, ["-m", "pip", "list", "--format=json", "--disable-pip-version-check"], { timeout: 8000, maxBuffer: 2 * 1024 * 1024 });
     const packages = options.quick ? [] : parsePipList(pipRaw);
+    const pipInspectRaw = options.fullPackages
+      ? await commandOutput(candidate.path, ["-m", "pip", "inspect", "--local", "--disable-pip-version-check"], {
+        timeout: 12000,
+        maxBuffer: 8 * 1024 * 1024,
+        env: { ...process.env, PYTHONUTF8: "1", PYTHONIOENCODING: "utf-8" }
+      })
+      : "";
     return {
       runtime: "python",
       version,
@@ -321,6 +328,9 @@ async function inspectPythonCandidates(candidates, options) {
       virtualEnvironment: Boolean(details.prefix && details.basePrefix && normalizeCompare(details.prefix) !== normalizeCompare(details.basePrefix)),
       packageLocations: [...(details.packages || []), details.userSite].filter(Boolean).map((item) => displayPath(item, options)),
       packages,
+      installerEvidence: options.fullPackages
+        ? summarizePipInspect(pipInspectRaw, options)
+        : { collection: "not-requested", reason: "Use --full-packages for installer metadata evidence." },
       packageSemantics: "packages visible to this interpreter; not proof of installation ownership",
       packageCollection: options.quick ? "skipped-quick" : "collected",
       pipAvailable: options.quick ? /^pip\s+/i.test(pipRaw) : packages.length > 0
@@ -665,6 +675,39 @@ export function parsePipList(raw) {
   } catch {
     return [];
   }
+}
+
+export function summarizePipInspect(raw, options = {}) {
+  let report;
+  try { report = JSON.parse(String(raw || "")); } catch {
+    return { collection: "unsupported-or-failed", reason: "pip inspect did not return its stable JSON report." };
+  }
+  if (!report || !Array.isArray(report.installed)) {
+    return { collection: "unsupported-or-failed", reason: "pip inspect JSON did not contain an installed array." };
+  }
+  const items = report.installed.map((item) => ({
+    name: String(item.metadata?.name || ""),
+    version: String(item.metadata?.version || "unknown"),
+    installer: String(item.installer || "unknown"),
+    requested: item.requested === true,
+    editable: item.direct_url?.dir_info?.editable === true,
+    metadataLocation: displayPath(item.metadata_location || "", options)
+  })).filter((item) => item.name).sort((a, b) => a.name.localeCompare(b.name));
+  const installerCounts = {};
+  for (const item of items) installerCounts[item.installer] = (installerCounts[item.installer] || 0) + 1;
+  const digestLines = items.map((item) => `${item.name.toLowerCase()}@${item.version}|${item.installer}|${item.requested}|${item.editable}|${item.metadataLocation}`);
+  return {
+    collection: "collected",
+    formatVersion: String(report.version || "unknown"),
+    pipVersion: String(report.pip_version || "unknown"),
+    packageCount: items.length,
+    installerCounts: Object.fromEntries(Object.entries(installerCounts).sort(([a], [b]) => a.localeCompare(b))),
+    requestedCount: items.filter((item) => item.requested).length,
+    editableCount: items.filter((item) => item.editable).length,
+    digest: createHash("sha256").update(digestLines.join("\n")).digest("hex"),
+    metadataSample: items.slice(0, 12),
+    semantics: "Installer metadata reported by pip inspect; it describes distributions, not ownership of the Python runtime."
+  };
 }
 
 export function summarizePythonPackages(item, full) {
