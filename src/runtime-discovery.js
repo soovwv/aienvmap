@@ -15,10 +15,22 @@ export async function inspectCommonRuntimes(options = {}) {
       detailLevel: "path-and-version-only",
       installations,
       active: installations.find((item) => item.active) || null,
-      distinctVersions: [...new Set(installations.flatMap((item) => item.versions?.length ? item.versions : [item.version]).filter(Boolean))]
+      distinctVersions: [...new Set(installations.flatMap((item) => item.versions?.length ? item.versions : [item.version]).filter(Boolean))],
+      discoveryEvidence: summarizeDiscoveryEvidence(installations)
     }];
   }));
   return Object.fromEntries(entries);
+}
+
+export function summarizeDiscoveryEvidence(installations = []) {
+  return {
+    sources: [...new Set(installations.map((item) => item.source).filter(Boolean))].sort(),
+    pathCount: installations.filter((item) => item.discovery === "PATH").length,
+    configuredCount: installations.filter((item) => item.discovery === "known-path").length,
+    knownRootCount: installations.filter((item) => item.discovery === "known-root").length,
+    osNativeCount: installations.filter((item) => item.discovery === "os-native").length,
+    rule: "Discovery source is inventory provenance, not permission to modify or remove the runtime."
+  };
 }
 
 export async function findRuntimeCandidates(definition, options = {}) {

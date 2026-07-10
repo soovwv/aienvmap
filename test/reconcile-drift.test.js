@@ -83,3 +83,18 @@ test("compareReconciliation detects Python manager ownership evidence drift", ()
   assert.ok(result.drift.changedSections.includes("python"));
   assert.match(result.drift.changes.map((item) => item.field).join(" "), /python\.managerEvidence/);
 });
+
+test("compareReconciliation detects OS-native Java discovery evidence drift", () => {
+  const baseline = report();
+  baseline.otherRuntimes.java = { installations: [], distinctVersions: [], discoveryEvidence: { sources: [], osNativeCount: 0 } };
+  const current = report();
+  current.otherRuntimes.java = {
+    installations: [{ runtime: "java", path: "/usr/lib/jvm/java-21/bin/java", version: "21", source: "linux-alternatives", discovery: "os-native" }],
+    distinctVersions: ["21"],
+    discoveryEvidence: { sources: ["linux-alternatives"], osNativeCount: 1 }
+  };
+  const result = compareReconciliation(baseline, current);
+  assert.equal(result.decision, "review");
+  assert.ok(result.drift.changedSections.includes("otherRuntimes"));
+  assert.match(result.drift.changes.map((item) => item.field).join(" "), /otherRuntimes\.java/);
+});

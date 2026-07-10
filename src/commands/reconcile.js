@@ -96,6 +96,7 @@ export function summarizeReconciliation(value = {}) {
       pip: value.python?.pipCommands?.length || 0
     },
     informationOnlyRuntimes: Object.fromEntries(Object.entries(value.otherRuntimes || {}).map(([name, item]) => [name, item.installations?.length || 0])),
+    osNativeEvidence: Object.fromEntries(Object.entries(value.otherRuntimes || {}).map(([name, item]) => [name, item.discoveryEvidence?.osNativeCount || 0])),
     runtimeLinks: {
       npmStrong: (value.npm?.runtimeLinks || []).filter((item) => item.confidence === "strong").length,
       pipStrong: (value.python?.runtimeLinks || []).filter((item) => item.confidence === "strong").length,

@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { analyzeCommonRuntimes, parseDotnetRuntimes, parseLinuxJavaAlternatives, parseMacJavaHomes, parseRustToolchains, parseVersionLines, parseWindowsJavaRegistry } from "../src/runtime-discovery.js";
+import { analyzeCommonRuntimes, parseDotnetRuntimes, parseLinuxJavaAlternatives, parseMacJavaHomes, parseRustToolchains, parseVersionLines, parseWindowsJavaRegistry, summarizeDiscoveryEvidence } from "../src/runtime-discovery.js";
 
 test("parseVersionLines extracts installed SDK versions", () => {
   assert.deepEqual(parseVersionLines("8.0.410 [C:\\dotnet\\sdk]\n9.0.100-preview.1 [C:\\dotnet\\sdk]\n"), ["8.0.410", "9.0.100-preview.1"]);
@@ -65,4 +65,19 @@ test("Linux alternatives parser accepts only absolute java executables", () => {
     "/usr/lib/jvm/java-17/bin/java",
     "/usr/lib/jvm/java-21/bin/java"
   ]);
+});
+
+test("runtime discovery evidence distinguishes PATH, roots, and OS-native sources", () => {
+  const evidence = summarizeDiscoveryEvidence([
+    { source: "system", discovery: "PATH" },
+    { source: "java-framework", discovery: "known-root" },
+    { source: "macos-java-home", discovery: "os-native" },
+    { source: "JAVA_HOME", discovery: "known-path" }
+  ]);
+  assert.deepEqual(evidence.sources, ["JAVA_HOME", "java-framework", "macos-java-home", "system"]);
+  assert.equal(evidence.pathCount, 1);
+  assert.equal(evidence.configuredCount, 1);
+  assert.equal(evidence.knownRootCount, 1);
+  assert.equal(evidence.osNativeCount, 1);
+  assert.match(evidence.rule, /not permission/);
 });

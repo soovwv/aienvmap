@@ -54,7 +54,8 @@ export function reconciliationSnapshot(value = {}) {
 function runtimeSection(section = {}) {
   return {
     installations: normalizeInstallations(section.installations),
-    distinctVersions: sorted(section.distinctVersions || [])
+    distinctVersions: sorted(section.distinctVersions || []),
+    discoveryEvidence: normalize(section.discoveryEvidence || {})
   };
 }
 
