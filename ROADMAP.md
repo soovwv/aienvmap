@@ -4,6 +4,13 @@
 
 Primary positioning: AI workspace coordination first, lightweight SBOM context second. Full SBOM generators and vulnerability scanners remain complementary optional inputs.
 
+## Competitive Boundary
+
+- mise, Flox, and Devbox declare, install, lock, or reproduce environments; aienvmap observes the runtime state that already exists on a host and gives AI agents review-first coordination evidence.
+- Microsoft APM packages and reproduces agent instructions, prompts, skills, plugins, and MCP declarations; aienvmap supplies runtime/package-manager truth that those agents can read before acting.
+- Syft, Trivy, Grype, and Dependency-Track generate or analyze full security evidence; aienvmap keeps a light coordination SBOM and should import or point to dedicated evidence rather than duplicate their databases.
+- `reconcile --check` detects drift from a reviewed host snapshot. It does not replace runtime lockfiles, create an isolated shell, or repair the machine.
+
 ## Reconciliation Track
 
 The default remains advisory and lightweight: observe existing state, explain conflicts, and write only aienvmap artifacts unless a human explicitly approves a targeted change.
