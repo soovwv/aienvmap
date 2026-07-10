@@ -18,6 +18,9 @@ test("packaged aienvmap skill points AI agents to current startup contracts", as
   assert.match(skill, /full compliance SBOM scanner/);
   assert.match(skill, /AI coordination layer/);
   assert.match(skill, /Syft, Trivy, Grype, Dependency-Track/);
+  assert.match(skill, /reconcile --json/);
+  assert.match(skill, /--full-packages/);
+  assert.match(skill, /installerEvidence/);
   assert.match(skill, /aiAdoptionDecision/);
   assert.match(skill, /compact use\/recommend\/start\/skip block/);
   assert.match(skill, /recommendation\.decisionRoutine/);

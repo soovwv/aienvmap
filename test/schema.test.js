@@ -14,8 +14,11 @@ test("schemaContract describes stable AI output contracts", () => {
   assert.equal(schema.outputs.reconcile.mode, "read-only environment; writes only the report when --write is explicit");
   assert.ok(schema.outputs.reconcile.rootFields.includes("aiDecision"));
   assert.ok(schema.outputs.reconcile.aiDecisionFields.includes("runtimeLinkSummary"));
+  assert.ok(schema.outputs.reconcile.aiDecisionFields.includes("pythonInstallerEvidence"));
   assert.ok(schema.outputs.reconcile.runtimeLinkFields.includes("ownershipProven"));
-  assert.match(schema.outputs.reconcile.rule, /do not prove installation ownership/);
+  assert.ok(schema.outputs.reconcile.installerEvidenceFields.includes("installerCounts"));
+  assert.ok(schema.outputs.reconcile.installerEvidenceFields.includes("metadataSample"));
+  assert.match(schema.outputs.reconcile.rule, /do not prove interpreter ownership/);
   assert.deepEqual(schema.outputs.reconcile.detailedToolchains, ["node/npm", "python/pip"]);
   assert.equal(schema.outputs.reconcileCheck.command, "aienvmap reconcile --check --json");
   assert.ok(schema.outputs.reconcileCheck.rootFields.includes("drift"));
