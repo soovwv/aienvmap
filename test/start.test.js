@@ -14,6 +14,9 @@ test("start syncs a missing workspace then returns the AI startup contract", asy
   assert.equal(result.mode, "synced");
   assert.equal(result.localMode, "read-mostly");
   assert.equal(result.startHere, ".aienvmap/discovery.json");
+  assert.equal(result.readOrder.includes(".aienvmap/reconcile.json"), true);
+  assert.ok(["clear", "review"].includes(result.reconciliation.decision));
+  assert.equal(result.reconciliation.artifact, ".aienvmap/reconcile.json");
   assert.equal(result.decision, "clear");
   assert.equal(result.aiDiscovery.safeStart, "npx aienvmap status");
   assert.equal(result.aiDiscovery.decision, "fallback-required");
@@ -34,6 +37,9 @@ test("start syncs a missing workspace then returns the AI startup contract", asy
   assert.match(result.statusText, /session:/);
   await assert.doesNotReject(fs.access(path.join(dir, ".aienvmap", "status.json")));
   await assert.doesNotReject(fs.access(path.join(dir, ".aienvmap", "dashboard.html")));
+  await assert.doesNotReject(fs.access(path.join(dir, ".aienvmap", "reconcile.json")));
+  const reconcile = JSON.parse(await fs.readFile(path.join(dir, ".aienvmap", "reconcile.json"), "utf8"));
+  assert.equal(reconcile.scanMode, "quick");
 });
 
 test("start reads fresh artifacts without resyncing", async () => {
@@ -62,6 +68,8 @@ test("start JSON output is machine-readable", async () => {
   assert.equal(json.status, "ok");
   assert.equal(json.mode, "synced");
   assert.equal(json.readOrder[0], ".aienvmap/discovery.json");
+  assert.equal(json.readOrder.includes(".aienvmap/reconcile.json"), true);
+  assert.equal(json.reconciliation.artifact, ".aienvmap/reconcile.json");
   assert.equal(json.nextSetupCommand, "npx aienvmap onboard");
   assert.equal(json.discoveryDecision, "fallback-required");
   assert.match(json.startupChecklist.join(" "), /start --json/);
@@ -95,4 +103,5 @@ test("start text output includes a copy-paste prompt", async () => {
   assert.match(text, /aiEntry: \.aienvmap\/discovery\.json \/ follow aiEntry\.readFirst/);
   assert.match(text, /AI fallback:/);
   assert.match(text, /copy-paste prompt: Use aienvmap as the workspace env map/);
+  assert.match(text, /reconcile: (clear|review) \/ \.aienvmap\/reconcile\.json/);
 });

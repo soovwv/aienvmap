@@ -56,6 +56,10 @@ export function summaryMdPath(dir) {
   return path.join(stateDir(dir), "summary.md");
 }
 
+export function reconcileJsonPath(dir) {
+  return path.join(stateDir(dir), "reconcile.json");
+}
+
 export function stateReadmePath(dir) {
   return path.join(stateDir(dir), "README.md");
 }

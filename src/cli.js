@@ -21,6 +21,7 @@ import { onboardWorkspace } from "./commands/onboard.js";
 import { demoWorkspace } from "./commands/demo.js";
 import { discoverWorkspace } from "./commands/discover.js";
 import { startWorkspace } from "./commands/start.js";
+import { reconcileWorkspace } from "./commands/reconcile.js";
 import { readFileSync } from "node:fs";
 
 const commands = new Map([
@@ -46,7 +47,8 @@ const commands = new Map([
   ["onboard", onboardWorkspace],
   ["demo", demoWorkspace],
   ["discover", discoverWorkspace],
-  ["start", startWorkspace]
+  ["start", startWorkspace],
+  ["reconcile", reconcileWorkspace]
 ]);
 
 const version = JSON.parse(readFileSync(new URL("../package.json", import.meta.url), "utf8")).version;
@@ -129,7 +131,8 @@ Usage:
   aienvmap schema [--json]
   aienvmap start [--dir .] [--json]
   aienvmap discover [--dir .] [--json]
-  aienvmap onboard [codex claude gemini] [--agents codex,claude,gemini,cursor,copilot] [--no-sync]
+  aienvmap reconcile [--dir .] [--json] [--write] [--quick|--full-packages] [--show-paths]
+  aienvmap onboard [codex claude gemini] [--agents codex,claude,gemini,cursor,copilot] [--dry-run|--uninstall] [--no-sync]
   aienvmap demo [conflict] [--json]
 
 Common:
@@ -145,6 +148,7 @@ Common:
   aienvmap summary   print/write a compact Markdown summary for AI and CI
   aienvmap schema    print the stable AI-readable output contract
   aienvmap discover  read-only detection plus aiDiscovery.decision and copy-paste prompt
+  aienvmap reconcile read-only package-manager traffic report for existing, non-clean environments
   aienvmap snippet   print an AGENTS.md pointer snippet
   aienvmap demo      run the temporary multi-agent conflict demo
   aienvmap dash      regenerate/open the lightweight dashboard
@@ -152,12 +156,12 @@ Common:
 Advanced:
   aienvmap init [--dir .]
   aienvmap scan [--dir .] [--deep] [--security]
-  aienvmap intent [--dir .] --actor agent:codex --action "install pnpm"
-  aienvmap resolve [--dir .] --actor human:you (--id <intent-id>|--target dependency|--all) [--status resolved|cancelled] [--json]
+  aienvmap intent [--dir .] --actor agent:codex --action "install pnpm" [--if-revision ir1:...]
+  aienvmap resolve [--dir .] --actor human:you (--id <intent-id>|--target dependency|--all) [--status resolved|cancelled] [--if-revision ir1:...] [--json]
   aienvmap record [--dir .] --actor agent:codex --summary "updated .nvmrc" [--target node] [--before 20] [--after 24]
   aienvmap checkpoint [--dir .] --actor agent:codex --summary "updated dependency" [--target dependency]
   aienvmap snippet [agents|codex|claude|gemini|cursor|copilot] [--write AGENTS.md]
-  aienvmap onboard [codex claude gemini] [--agents codex,claude,gemini,cursor,copilot] [--no-sync]
+  aienvmap onboard [codex claude gemini] [--agents codex,claude,gemini,cursor,copilot] [--dry-run|--uninstall] [--no-sync]
   aienvmap compile [--dir .]
   aienvmap diff [--dir .]
   aienvmap doctor [--dir .] [--json] [--ci] [--strict security|policy|coordination|all]
@@ -165,6 +169,7 @@ Advanced:
   aienvmap summary [--dir .] [--write]
   aienvmap start [--dir .] [--json]
   aienvmap discover [--dir .] [--json]
+  aienvmap reconcile [--dir .] [--json] [--write] [--quick|--full-packages] [--show-paths]
   aienvmap demo [conflict] [--json]
   aienvmap dash [--dir .] [--open]
 `);

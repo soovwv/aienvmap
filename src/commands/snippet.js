@@ -1,6 +1,6 @@
 import path from "node:path";
 import { markerBegin, markerEnd, renderAgentPointer } from "../render.js";
-import { replaceMarkerBlock } from "../fsutil.js";
+import { previewMarkerBlock, removeMarkerBlock, replaceMarkerBlock } from "../fsutil.js";
 import { workspaceDir } from "../paths.js";
 
 const defaultTargets = {
@@ -20,12 +20,27 @@ export async function snippetWorkspace(args) {
   }
   const block = renderAgentPointer(target);
 
-  if (args.write) {
+  if (args.write || args.dry_run || args.uninstall) {
     const dir = workspaceDir(args);
-    const rel = args.write === true ? defaultTargets[target] || "AGENTS.md" : String(args.write);
-    await replaceMarkerBlock(path.join(dir, rel), markerBegin, markerEnd, block);
-    if (!args.quiet) console.log(`snippet written: ${rel}`);
-    return { file: rel, target };
+    const rel = typeof args.write === "string" ? args.write : defaultTargets[target] || "AGENTS.md";
+    const file = path.resolve(dir, rel);
+    const relative = path.relative(dir, file);
+    if (relative.startsWith("..") || path.isAbsolute(relative)) {
+      throw new Error("instruction pointer target must stay inside the workspace");
+    }
+    if (args.dry_run) {
+      const preview = await previewMarkerBlock(file, markerBegin, markerEnd, block);
+      if (!args.quiet) console.log(`snippet preview: ${relative} ${preview.action} ${preview.beforeBytes}->${preview.afterBytes} bytes`);
+      return { file: relative, target, mode: "dry-run", ...preview };
+    }
+    if (args.uninstall) {
+      const removed = await removeMarkerBlock(file, markerBegin, markerEnd);
+      if (!args.quiet) console.log(`snippet uninstall: ${relative} ${removed.action}`);
+      return { file: relative, target, mode: "uninstall", ...removed };
+    }
+    await replaceMarkerBlock(file, markerBegin, markerEnd, block);
+    if (!args.quiet) console.log(`snippet written: ${relative}`);
+    return { file: relative, target };
   }
 
   console.log(block);

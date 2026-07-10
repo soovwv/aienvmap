@@ -1,4 +1,4 @@
-import { appendJsonLine } from "../fsutil.js";
+import { appendJsonLinesChecked } from "../fsutil.js";
 import { intentsPath, workspaceDir } from "../paths.js";
 import { newIntentID } from "../timeline.js";
 import { plannedTrust } from "../trust.js";
@@ -19,8 +19,11 @@ export async function intentWorkspace(args) {
     trust: plannedTrust(now)
   };
   entry.id = newIntentID();
-  await appendJsonLine(intentsPath(dir), entry);
-  console.log(`intent recorded: ${entry.id}`);
+  const revision = await appendJsonLinesChecked(intentsPath(dir), [entry], args.if_revision);
+  const output = { ...entry, coordinationRevision: revision.revision, previousRevision: revision.beforeRevision };
+  if (args.json) console.log(JSON.stringify(output, null, 2));
+  else if (!args.quiet) console.log(`intent recorded: ${entry.id} (revision ${revision.revision})`);
+  return output;
 }
 
 function required(value, name) {

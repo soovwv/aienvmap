@@ -1,0 +1,70 @@
+import { inspectPackageManagers } from "../package-managers.js";
+import { reconcileJsonPath, workspaceDir } from "../paths.js";
+import { writeJson } from "../fsutil.js";
+
+export async function reconcileWorkspace(args = {}) {
+  if (args.quick && args.full_packages) throw new Error("use either --quick or --full-packages, not both");
+  const dir = workspaceDir(args);
+  const result = await inspectPackageManagers(dir, { showPaths: args.show_paths, fullPackages: args.full_packages, quick: args.quick });
+  if (args.write) {
+    result.written = reconcileJsonPath(dir);
+    await writeJson(result.written, result);
+  }
+  if (args.json) {
+    console.log(JSON.stringify(result, null, 2));
+    return result;
+  }
+  if (args.quiet) return result;
+  console.log(`reconcile: ${result.decision.toUpperCase()} (read-only)`);
+  console.log(`scope: ${result.scope}`);
+  const expected = result.project.packageManager;
+  console.log(`project: ${expected ? `${expected.name}@${expected.version}` : "packageManager not declared"}; lockfiles: ${result.project.lockManagers.join(", ") || "none"}`);
+  if (!result.node.installations.length) console.log("node: not detected");
+  for (const item of result.node.installations) console.log(`node: ${item.version} ${item.active ? "[active]" : "[inactive]"} ${item.source}/${item.scope} ${item.path}`);
+  if (!result.npm.installations.length) console.log("npm: not detected");
+  for (const item of result.npm.installations) {
+    console.log(`npm: ${item.version} ${item.active ? "[active]" : "[inactive]"} ${item.source}/${item.scope} ${item.path}`);
+    if (item.globalRoot) console.log(`  global root: ${item.globalRoot}`);
+    if (item.globalPackages.length) console.log(`  global packages: ${item.globalPackages.map((pkg) => `${pkg.name}@${pkg.version}`).join(", ")}`);
+  }
+  if (!result.python.installations.length) console.log("python: not detected");
+  for (const item of result.python.installations) {
+    console.log(`python: ${item.version} ${item.active ? "[active]" : "[inactive]"} ${item.source}/${item.scope} ${item.path}`);
+    const packageSummary = item.packageCollection === "skipped-quick" ? "not collected (quick)" : `${item.packageCount}; digest: ${item.packageDigest.slice(0, 12)}`;
+    console.log(`  environment: ${item.virtualEnvironment ? "virtual" : "base"}; packages: ${packageSummary}; pip: ${item.pipAvailable ? "available" : "unavailable-or-empty"}`);
+    if (item.packageLocations.length) console.log(`  package locations: ${item.packageLocations.join(", ")}`);
+  }
+  for (const item of result.python.pipCommands) console.log(`pip: ${item.version} -> Python ${item.pythonVersion} ${item.active ? "[active]" : "[inactive]"} ${item.path}`);
+  for (const runtime of Object.values(result.otherRuntimes)) {
+    for (const item of runtime.installations) console.log(`${item.runtime}: ${item.versions.length ? item.versions.join(",") : item.version} ${item.active ? "[active]" : "[inactive]"} ${item.source}/${item.scope} ${item.path}`);
+  }
+  if (!result.findings.length) console.log("findings: no package-manager conflicts detected");
+  for (const finding of result.findings) {
+    console.log(`[${finding.severity}] ${finding.code}: ${finding.message}`);
+    console.log(`  next: ${finding.action}`);
+  }
+  if (result.aiDecision.actionCandidates.length) {
+    console.log("AI action candidates (review only):");
+    for (const item of result.aiDecision.actionCandidates) console.log(`- ${item.kind} ${item.recommendation}: ${item.target} (${item.confidence})`);
+  }
+  console.log("changes: none; review findings before changing runtimes, PATH, prefixes, or lockfiles");
+  if (result.written) console.log(`written: ${result.written}`);
+  return result;
+}
+
+export function summarizeReconciliation(value = {}) {
+  return {
+    decision: value.decision || "unknown",
+    generatedAt: value.generatedAt || "",
+    artifact: ".aienvmap/reconcile.json",
+    detailedToolchains: {
+      node: value.node?.installations?.length || 0,
+      npm: value.npm?.installations?.length || 0,
+      python: value.python?.installations?.length || 0,
+      pip: value.python?.pipCommands?.length || 0
+    },
+    informationOnlyRuntimes: Object.fromEntries(Object.entries(value.otherRuntimes || {}).map(([name, item]) => [name, item.installations?.length || 0])),
+    nextCommand: value.decision === "review" ? "aienvmap reconcile --json --full-packages" : "aienvmap status --json",
+    rule: "Read the report before runtime or package-manager changes; removal still requires explicit human approval."
+  };
+}

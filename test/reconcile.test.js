@@ -1,0 +1,196 @@
+import test from "node:test";
+import assert from "node:assert/strict";
+import fs from "node:fs/promises";
+import os from "node:os";
+import path from "node:path";
+import { analyzeNodeInstallations, analyzeNpmInstallations, analyzePythonCommandRouting, analyzePythonInstallations, buildAiDecision, compareNpmGlobalPackages, comparePythonPackages, findPythonCandidates, parsePackageManager, parsePipList, parsePipVersion, summarizePythonPackages } from "../src/package-managers.js";
+
+test("parsePackageManager separates package manager and pinned version", () => {
+  assert.deepEqual(parsePackageManager("npm@10.8.2"), { name: "npm", version: "10.8.2" });
+  assert.deepEqual(parsePackageManager("@pnpm/exe@10.0.0"), { name: "@pnpm/exe", version: "10.0.0" });
+  assert.equal(parsePackageManager(""), null);
+});
+
+test("analyzeNpmInstallations reports multiple versions and global roots", () => {
+  const findings = analyzeNpmInstallations([
+    { version: "11.0.0", active: true, globalRoot: "$HOME/npm-a" },
+    { version: "10.8.2", active: false, globalRoot: "$HOME/npm-b" }
+  ], { packageManager: { name: "npm", version: "10.8.2" }, lockManagers: ["npm"] });
+  assert.deepEqual(findings.map((item) => item.code), [
+    "multiple-npm-installations",
+    "multiple-npm-global-roots",
+    "active-npm-project-mismatch"
+  ]);
+  assert.ok(findings.every((item) => item.action));
+});
+
+test("analyzeNpmInstallations keeps same-version duplicates informational", () => {
+  const findings = analyzeNpmInstallations([
+    { version: "10.8.2", active: true, globalRoot: "/one" },
+    { version: "10.8.2", active: false, globalRoot: "/one" }
+  ], { packageManager: null, lockManagers: [] });
+  assert.equal(findings[0].code, "multiple-npm-installations");
+  assert.equal(findings[0].severity, "info");
+});
+
+test("analyzeNpmInstallations warns when npm lockfile has no visible npm", () => {
+  const findings = analyzeNpmInstallations([], { packageManager: null, lockManagers: ["npm"] });
+  assert.equal(findings[0].code, "npm-not-detected");
+  assert.equal(findings[0].severity, "review");
+});
+
+test("analyzeNodeInstallations compares active Node with .nvmrc", () => {
+  const findings = analyzeNodeInstallations([
+    { version: "24.1.0", active: true },
+    { version: "20.19.0", active: false }
+  ], { node: { versionFile: "20" } });
+  assert.deepEqual(findings.map((item) => item.code), ["multiple-node-installations", "active-node-project-mismatch"]);
+});
+
+test("parsePipList normalizes Python package inventories", () => {
+  assert.deepEqual(parsePipList('[{"name":"pip","version":"25.1"},{"name":"ruff","version":"0.9.1"}]'), [
+    { name: "pip", version: "25.1" },
+    { name: "ruff", version: "0.9.1" }
+  ]);
+  assert.deepEqual(parsePipList("not-json"), []);
+});
+
+test("parsePipVersion links a pip entry point to its Python version", () => {
+  assert.deepEqual(parsePipVersion("pip 25.1 from /opt/python/lib/site-packages/pip (python 3.12)"), {
+    version: "25.1",
+    packageLocation: "/opt/python/lib/site-packages/pip",
+    pythonVersion: "3.12"
+  });
+});
+
+test("Python command routing warns when bare pip targets another interpreter", () => {
+  const findings = analyzePythonCommandRouting(
+    [{ version: "3.11.9", active: true, path: "/python311" }],
+    [{ version: "25.1", pythonVersion: "3.12", active: true, path: "/pip" }]
+  );
+  assert.equal(findings[0].code, "python-pip-routing-mismatch");
+  assert.match(findings[0].action, /-m pip/);
+});
+
+test("Python package summaries are compact unless full evidence is requested", () => {
+  const item = { packages: [{ name: "ruff", version: "0.9.1" }, { name: "pip", version: "25.1" }] };
+  const compact = summarizePythonPackages(item, false);
+  const full = summarizePythonPackages(item, true);
+  assert.equal(compact.packageCount, 2);
+  assert.equal(compact.packages, undefined);
+  assert.equal(compact.packageDigest.length, 64);
+  assert.equal(full.packages.length, 2);
+});
+
+test("Python package comparisons expose overlap without dumping full inventories", () => {
+  const comparisons = comparePythonPackages([
+    { path: "/py311", packages: [{ name: "pip", version: "25" }, { name: "ruff", version: "1" }] },
+    { path: "/py312", packages: [{ name: "pip", version: "26" }, { name: "pytest", version: "9" }] }
+  ]);
+  assert.equal(comparisons[0].sharedCount, 1);
+  assert.equal(comparisons[0].versionConflictCount, 1);
+  assert.equal(comparisons[0].onlyLeftCount, 1);
+  assert.equal(comparisons[0].onlyRightCount, 1);
+  assert.deepEqual(comparisons[0].onlyLeftSample, ["ruff"]);
+});
+
+test("npm global package comparisons show tools unique to each prefix", () => {
+  const comparisons = compareNpmGlobalPackages([
+    { globalRoot: "/npm-a", globalPackages: [{ name: "typescript", version: "5" }] },
+    { globalRoot: "/npm-b", globalPackages: [{ name: "pnpm", version: "10" }] }
+  ]);
+  assert.deepEqual(comparisons[0].onlyLeftSample, ["typescript"]);
+  assert.deepEqual(comparisons[0].onlyRightSample, ["pnpm"]);
+});
+
+test("Python discovery includes a project venv even when it is outside PATH", async () => {
+  const dir = await fs.mkdtemp(path.join(os.tmpdir(), "aienvmap-python-venv-"));
+  const rel = process.platform === "win32" ? path.join(".venv", "Scripts", "python.exe") : path.join(".venv", "bin", "python");
+  await fs.mkdir(path.dirname(path.join(dir, rel)), { recursive: true });
+  await fs.writeFile(path.join(dir, rel), "", "utf8");
+  const found = await findPythonCandidates({ projectDir: dir, pathValue: "", env: {}, home: dir });
+  assert.equal(found.some((item) => item.source === "project-venv" && item.scope === "project"), true);
+});
+
+test("analyzePythonInstallations compares active Python with project version", () => {
+  const findings = analyzePythonInstallations([
+    { version: "3.13.1", active: true },
+    { version: "3.11.9", active: false }
+  ], { python: { versionFile: "3.11", signals: [".python-version"] } });
+  assert.deepEqual(findings.map((item) => item.code), ["multiple-python-installations", "active-python-project-mismatch"]);
+});
+
+test("AI decisions keep inactive virtual environments and require approval", () => {
+  const result = buildAiDecision({
+    npm: [],
+    python: [
+      { path: "/active/python", version: "3.12.1", active: true, virtualEnvironment: false, packages: [] },
+      { path: "/project/.venv/python", version: "3.12.1", active: false, virtualEnvironment: true, source: "path", packages: [{ name: "django", version: "5" }] }
+    ],
+    project: { python: { versionFile: "3.12" } },
+    findings: []
+  });
+  assert.equal(result.actionCandidates[0].recommendation, "keep-until-project-owner-review");
+  assert.equal(result.actionCandidates[0].requiresHumanApprovalBeforeRemoval, true);
+  assert.equal(result.actionCandidates[0].destructive, false);
+  assert.match(result.rules.join(" "), /Do not delete/);
+});
+
+test("reconcile CLI is read-only and returns machine-readable package-manager state", async () => {
+  const dir = await fs.mkdtemp(path.join(os.tmpdir(), "aienvmap-reconcile-"));
+  await fs.writeFile(path.join(dir, "package.json"), JSON.stringify({ packageManager: "npm@10.8.2" }), "utf8");
+  const { execFile } = await import("node:child_process");
+  const { promisify } = await import("node:util");
+  const result = await promisify(execFile)(process.execPath, [path.resolve("bin/aienvmap.js"), "reconcile", "--json", "--dir", dir], { cwd: path.resolve(".") });
+  const json = JSON.parse(result.stdout);
+  assert.equal(json.mode, "read-only");
+  assert.equal(json.schemaName, "aienvmap.reconcile");
+  assert.equal(json.schemaVersion, 1);
+  assert.equal(json.project.packageManager.name, "npm");
+  assert.equal(json.project.packageManager.version, "10.8.2");
+  assert.ok(Array.isArray(json.python.installations));
+  assert.ok(Array.isArray(json.node.installations));
+  assert.ok(json.otherRuntimes.java);
+  assert.ok(json.otherRuntimes.dotnet);
+  assert.equal(json.aiDecision.consumer, "AI agent");
+  assert.equal(json.python.packageDetail.startsWith("summary"), true);
+  assert.ok(json.python.installations.every((item) => item.packages === undefined));
+  assert.ok(json.python.installations.every((item) => typeof item.packageDigest === "string"));
+  assert.ok(["clear", "review"].includes(json.decision));
+  assert.equal((await fs.readdir(dir)).sort().join(","), "package.json");
+});
+
+test("reconcile --full-packages exposes package-level evidence on demand", async () => {
+  const dir = await fs.mkdtemp(path.join(os.tmpdir(), "aienvmap-reconcile-full-"));
+  const { execFile } = await import("node:child_process");
+  const { promisify } = await import("node:util");
+  const result = await promisify(execFile)(process.execPath, [path.resolve("bin/aienvmap.js"), "reconcile", "--json", "--full-packages", "--dir", dir], { cwd: path.resolve(".") });
+  const json = JSON.parse(result.stdout);
+  assert.equal(json.python.packageDetail, "full");
+  assert.ok(json.python.installations.every((item) => Array.isArray(item.packages)));
+});
+
+test("reconcile --quick keeps startup evidence compact", async () => {
+  const dir = await fs.mkdtemp(path.join(os.tmpdir(), "aienvmap-reconcile-quick-"));
+  const { execFile } = await import("node:child_process");
+  const { promisify } = await import("node:util");
+  const result = await promisify(execFile)(process.execPath, [path.resolve("bin/aienvmap.js"), "reconcile", "--json", "--quick", "--dir", dir], { cwd: path.resolve(".") });
+  const json = JSON.parse(result.stdout);
+  assert.equal(json.scanMode, "quick");
+  assert.match(json.python.packageDetail, /not collected/);
+  assert.ok(json.python.installations.every((item) => item.packageCount === null));
+  assert.ok(json.python.installations.every((item) => item.packageCollection === "skipped-quick"));
+});
+
+test("reconcile --write saves only an aienvmap report", async () => {
+  const dir = await fs.mkdtemp(path.join(os.tmpdir(), "aienvmap-reconcile-write-"));
+  const { execFile } = await import("node:child_process");
+  const { promisify } = await import("node:util");
+  const result = await promisify(execFile)(process.execPath, [path.resolve("bin/aienvmap.js"), "reconcile", "--json", "--write", "--dir", dir], { cwd: path.resolve(".") });
+  const json = JSON.parse(result.stdout);
+  const saved = JSON.parse(await fs.readFile(path.join(dir, ".aienvmap", "reconcile.json"), "utf8"));
+  assert.equal(saved.schemaName, "aienvmap.reconcile");
+  assert.equal(saved.mode, "read-only");
+  assert.equal(saved.written, json.written);
+  assert.deepEqual((await fs.readdir(path.join(dir, ".aienvmap"))).sort(), ["reconcile.json"]);
+});

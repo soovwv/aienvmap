@@ -174,23 +174,27 @@ Session start contract:
 
 1. If this file is loaded, treat the aienvmap block as the live env pointer.
 2. Read \`.aienvmap/status.json\` before environment-affecting work when it exists.
-3. If \`.aienvmap/status.json\` is missing or stale, run \`aienvmap status --json\`, then \`aienvmap sync\` only when refresh is required.
-4. Continue project-local code work unless status/context requires environment review.
+3. Read \`.aienvmap/reconcile.json\` when it exists; it is the AI-readable Node/npm and Python/pip installation traffic report.
+4. If \`.aienvmap/status.json\` is missing or stale, run \`aienvmap status --json\`, then \`aienvmap sync\` only when refresh is required.
+5. Continue project-local code work unless status/context requires environment review.
 
 Fast read order:
 
 1. Read \`.aienvmap/status.json\`.
-2. Read \`.aienvmap/summary.md\` for the short handoff.
-3. Run \`aienvmap context --json\` for details.
-4. Run \`aienvmap status --write\` only when status artifacts are missing.
-5. Read \`AIENV.md\` when Markdown context is easier.
+2. Read \`.aienvmap/reconcile.json\` when present.
+3. Read \`.aienvmap/summary.md\` for the short handoff.
+4. Run \`aienvmap context --json\` for details.
+5. Run \`aienvmap status --write\` only when status artifacts are missing.
+6. Read \`AIENV.md\` when Markdown context is easier.
 
 Before changing runtimes, package managers, Docker settings, global packages, dependencies, lockfiles, or environment policy:
 
 1. If status or context says \`review-required\`, ask the user before changing the environment.
-2. Record planned environment changes with the recommended target, for example \`aienvmap intent --actor ${actor} --action planned-change --target dependency\`.
-3. Prefer project-local version files and local environments.
-4. After accepted environment changes, run \`aienvmap checkpoint --actor ${actor} --summary what-changed --target environment\`.
+2. If reconciliation evidence is missing, run \`aienvmap reconcile --write\`; use \`--full-packages\` only when package-level comparison is required.
+3. Record planned environment changes with the recommended target, for example \`aienvmap intent --actor ${actor} --action planned-change --target dependency\`.
+4. Prefer project-local version files and local environments.
+5. Never remove a runtime, package manager, or environment without explicit human approval and a rollback plan.
+6. After accepted environment changes, run \`aienvmap checkpoint --actor ${actor} --summary what-changed --target environment\`.
 
 \`aienvmap\` does not replace this instruction file. It provides the live env map, lightweight runtime SBOM, intent log, timeline, and dashboard.`;
 }

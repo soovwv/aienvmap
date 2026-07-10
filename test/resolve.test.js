@@ -51,13 +51,33 @@ test("resolveWorkspace prints JSON output for AI consumers", async () => {
   assert.equal(json.count, 1);
   assert.equal(json.actor, "human:owner");
   assert.equal(json.refs.length, 1);
+  assert.match(json.coordinationRevision, /^ir1:[a-f0-9]{16}$/);
+});
+
+test("intent and resolve support compare-and-swap for multiple AIs", async () => {
+  const dir = await fs.mkdtemp(path.join(os.tmpdir(), "aienvmap-resolve-cas-"));
+  const first = await recordIntentQuietly({ dir, actor: "agent:codex", action: "update dependency", target: "dependency" });
+  const staleRevision = first.previousRevision;
+  await assert.rejects(
+    recordIntentQuietly({ dir, actor: "agent:gemini", action: "update node", target: "node", if_revision: staleRevision }),
+    (error) => error.code === "AIENVMAP_REVISION_CONFLICT"
+  );
+  const result = await resolveWorkspace({
+    dir,
+    actor: "human:owner",
+    target: "dependency",
+    if_revision: first.coordinationRevision,
+    quiet: true
+  });
+  assert.equal(result.previousRevision, first.coordinationRevision);
+  assert.notEqual(result.coordinationRevision, first.coordinationRevision);
 });
 
 async function recordIntentQuietly(args) {
   const originalLog = console.log;
   console.log = () => {};
   try {
-    await intentWorkspace(args);
+    return await intentWorkspace({ ...args, quiet: true });
   } finally {
     console.log = originalLog;
   }
