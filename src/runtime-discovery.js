@@ -65,15 +65,7 @@ export async function inspectJavaBuildTools(installations = [], options = {}) {
 async function javaBuildToolResult(command, args, options, win) {
   if (!win || !/\.(?:cmd|bat)$/i.test(command)) return commandResult(command, args, options);
   const comspec = process.env.ComSpec || "cmd.exe";
-  return commandResult(comspec, ["/d", "/s", "/c", windowsBatchCommand(command, args)], options);
-}
-
-export function windowsBatchCommand(command, args = []) {
-  const quote = (value) => {
-    const text = String(value);
-    return /^[A-Za-z0-9._@:/=\\-]+$/.test(text) ? text : `"${text.replaceAll('"', '""')}"`;
-  };
-  return `"${quote(command)} ${args.map(quote).join(" ")}"`;
+  return commandResult(comspec, ["/d", "/c", command, ...args], options);
 }
 
 export function parseMavenVersion(raw) {

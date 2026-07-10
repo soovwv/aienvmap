@@ -1,6 +1,9 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { analyzeCommonRuntimes, analyzeJavaBuildTools, linkJavaBuildTool, parseDotnetRuntimes, parseGradleVersion, parseJavaProperties, parseLinuxJavaAlternatives, parseMacJavaHomes, parseMavenVersion, parseRustToolchains, parseVersionLines, parseWindowsJavaRegistry, summarizeDiscoveryEvidence, summarizeJavaMetadata, windowsBatchCommand } from "../src/runtime-discovery.js";
+import fs from "node:fs/promises";
+import os from "node:os";
+import path from "node:path";
+import { analyzeCommonRuntimes, analyzeJavaBuildTools, inspectJavaBuildTools, linkJavaBuildTool, parseDotnetRuntimes, parseGradleVersion, parseJavaProperties, parseLinuxJavaAlternatives, parseMacJavaHomes, parseMavenVersion, parseRustToolchains, parseVersionLines, parseWindowsJavaRegistry, summarizeDiscoveryEvidence, summarizeJavaMetadata } from "../src/runtime-discovery.js";
 
 test("parseVersionLines extracts installed SDK versions", () => {
   assert.deepEqual(parseVersionLines("8.0.410 [C:\\dotnet\\sdk]\n9.0.100-preview.1 [C:\\dotnet\\sdk]\n"), ["8.0.410", "9.0.100-preview.1"]);
@@ -159,8 +162,24 @@ test("Gradle launcher evidence is not mistaken for a daemon Java home", () => {
   assert.equal(parsed.daemonJavaHome, "");
 });
 
-test("Windows Java build-tool wrappers use a bounded quoted batch command", () => {
-  assert.equal(windowsBatchCommand("C:\\Project Files\\gradlew.bat", ["--version"]), '""C:\\Project Files\\gradlew.bat" --version"');
+test("Windows project Maven wrapper reports its JVM binding", { skip: process.platform !== "win32" }, async () => {
+  const dir = await fs.mkdtemp(path.join(os.tmpdir(), "aienvmap wrapper "));
+  try {
+    await fs.writeFile(path.join(dir, "mvnw.cmd"), [
+      "@echo off",
+      "echo Apache Maven 3.9.9",
+      "echo Java version: 21.0.5, vendor: Test Vendor, runtime: C:\\fake\\jdk-21"
+    ].join("\r\n"));
+    const result = await inspectJavaBuildTools([
+      { path: "C:\\fake\\jdk-21\\bin\\java.exe", javaHome: "C:\\fake\\jdk-21", runtimeVersion: "21.0.5" }
+    ], { projectDir: dir, platform: "win32", showPaths: true });
+    const binding = result.bindings.find((item) => item.tool === "maven");
+    assert.equal(binding.commandSource, "project-wrapper");
+    assert.equal(binding.relationship, "exact-home");
+    assert.equal(binding.confidence, "strong");
+  } finally {
+    await fs.rm(dir, { recursive: true, force: true });
+  }
 });
 
 test("Java build-tool binding prefers exact home and stays conservative otherwise", () => {
