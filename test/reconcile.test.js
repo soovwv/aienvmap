@@ -238,8 +238,8 @@ test("AI decisions keep inactive virtual environments and require approval", () 
 test("AI decision summarizes strong, inferred, and unresolved runtime links", () => {
   const result = buildAiDecision({
     python: [
-      { installerEvidence: { collection: "collected", installerCounts: { pip: 4, uv: 2 }, requestedCount: 2, editableCount: 1 } },
-      { installerEvidence: { collection: "unsupported-or-failed" } }
+      { installerEvidence: { collection: "collected", installerCounts: { pip: 4, uv: 2 }, requestedCount: 2, editableCount: 1 }, managerEvidence: { manager: "uv", confidence: "strong", ownershipProven: true } },
+      { installerEvidence: { collection: "unsupported-or-failed" }, managerEvidence: { manager: "uv", confidence: "medium", ownershipProven: false } }
     ],
     runtimeLinks: {
       npm: [{ confidence: "strong" }, { confidence: "medium" }],
@@ -256,6 +256,11 @@ test("AI decision summarizes strong, inferred, and unresolved runtime links", ()
   assert.equal(result.pythonInstallerEvidence.requestedPackages, 2);
   assert.equal(result.pythonInstallerEvidence.editablePackages, 1);
   assert.match(result.pythonInstallerEvidence.rule, /does not prove/);
+  assert.equal(result.pythonManagerEvidence.proven, 1);
+  assert.equal(result.pythonManagerEvidence.inferred, 1);
+  assert.deepEqual(result.pythonManagerEvidence.managers, ["uv"]);
+  assert.equal(result.pythonManagerEvidence.removalAuthorized, false);
+  assert.match(result.pythonManagerEvidence.rule, /never turns it into removal authorization/);
 });
 
 test("reconcile CLI is read-only and returns machine-readable package-manager state", async () => {

@@ -494,6 +494,7 @@ export function buildAiDecision({ node = [], npm = [], python = [], project = {}
       rule: "Runtime links are routing evidence, not proof of installation ownership or permission to remove software."
     },
     pythonInstallerEvidence: summarizeInstallerEvidence(python),
+    pythonManagerEvidence: summarizePythonManagerEvidence(python),
     safeCommands: {
       pythonPackageCheck: "<selected-python> -m pip list --format=json",
       pythonInstallRule: "Use <selected-python> -m pip instead of bare pip so the target interpreter is explicit.",
@@ -522,6 +523,19 @@ function summarizeInstallerEvidence(installations = []) {
     requestedPackages: evidence.reduce((sum, item) => sum + Number(item.requestedCount || 0), 0),
     editablePackages: evidence.reduce((sum, item) => sum + Number(item.editableCount || 0), 0),
     rule: "Installer evidence describes Python distributions only; it does not prove who owns or may remove the interpreter."
+  };
+}
+
+function summarizePythonManagerEvidence(installations = []) {
+  const evidence = installations.map((item) => item.managerEvidence || {});
+  return {
+    total: evidence.length,
+    proven: evidence.filter((item) => item.ownershipProven === true).length,
+    inferred: evidence.filter((item) => item.confidence === "medium").length,
+    unconfirmed: evidence.filter((item) => item.confidence === "none" || !item.confidence).length,
+    managers: [...new Set(evidence.map((item) => item.manager).filter((item) => item && item !== "unknown"))].sort(),
+    removalAuthorized: false,
+    rule: "Manager-native ownership evidence may identify an interpreter owner, but aienvmap never turns it into removal authorization."
   };
 }
 
