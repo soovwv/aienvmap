@@ -113,7 +113,9 @@ export function summarizeReconciliation(value = {}) {
         tool: item.tool,
         toolVersion: item.toolVersion,
         commandSource: item.commandSource,
+        runtimeRole: item.runtimeRole,
         javaVersion: item.javaVersion,
+        launcherJavaVersion: item.launcherJavaVersion || "",
         relationship: item.relationship,
         confidence: item.confidence
       }))

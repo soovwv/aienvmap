@@ -142,10 +142,21 @@ test("Gradle version parser supports launcher and daemon JVM evidence", () => {
     "Daemon JVM: C:\\Program Files\\Microsoft\\jdk-21 (no JDK specified, using current Java home)"
   ].join("\n")), {
     toolVersion: "8.10.2",
-    javaVersion: "21.0.5",
-    vendor: "Microsoft 21.0.5+11-LTS",
-    javaHome: "C:\\Program Files\\Microsoft\\jdk-21"
+    javaVersion: "",
+    vendor: "",
+    javaHome: "C:\\Program Files\\Microsoft\\jdk-21",
+    launcherJavaVersion: "21.0.5",
+    launcherVendor: "Microsoft 21.0.5+11-LTS",
+    daemonJavaHome: "C:\\Program Files\\Microsoft\\jdk-21"
   });
+});
+
+test("Gradle launcher evidence is not mistaken for a daemon Java home", () => {
+  const parsed = parseGradleVersion("Gradle 8.5\nJVM: 17.0.10 (Eclipse Adoptium 17.0.10+7)\n");
+  assert.equal(parsed.launcherJavaVersion, "17.0.10");
+  assert.equal(parsed.javaVersion, "");
+  assert.equal(parsed.javaHome, "");
+  assert.equal(parsed.daemonJavaHome, "");
 });
 
 test("Java build-tool binding prefers exact home and stays conservative otherwise", () => {

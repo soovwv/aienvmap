@@ -551,7 +551,7 @@ export function schemaContract() {
         javaNativeSources: ["windows-registry", "macos-java-home", "linux-alternatives"],
         javaIdentityFields: ["vendor", "vendorVersion", "architecture", "runtimeName", "runtimeVersion", "vmName", "vmVendor", "runtimeKind", "hasCompiler", "javaHome", "computedJavaHome", "javaHomeSource", "propertyEvidence"],
         javaRuntimeMetadataFields: ["vendors", "architectures", "runtimeKinds", "propertyEvidenceCount", "compilerCount", "rule"],
-        javaBuildToolFields: ["tool", "toolVersion", "commandSource", "javaVersion", "vendor", "javaHome", "evidence", "runtimePath", "relationship", "confidence"],
+        javaBuildToolFields: ["tool", "toolVersion", "commandSource", "runtimeRole", "javaVersion", "vendor", "javaHome", "launcherJavaVersion", "launcherVendor", "daemonJavaHome", "evidence", "runtimePath", "relationship", "confidence"],
         javaBuildToolRelationships: ["exact-home", "unique-major-version", "unresolved"],
         rule: "AI agents may propose consolidation from this evidence; Java identity, manager ownership, and OS-native provenance never authorize removal or PATH changes without explicit human approval and a rollback plan."
       },

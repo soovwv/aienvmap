@@ -47,6 +47,12 @@ export async function inspectJavaBuildTools(installations = [], options = {}) {
       javaVersion: parsed.javaVersion,
       vendor: parsed.vendor,
       javaHome: displayPath(parsed.javaHome, options),
+      runtimeRole: definition.tool === "gradle" ? "daemon-jvm" : "maven-runtime",
+      ...(definition.tool === "gradle" ? {
+        launcherJavaVersion: parsed.launcherJavaVersion,
+        launcherVendor: parsed.launcherVendor,
+        daemonJavaHome: displayPath(parsed.daemonJavaHome, options)
+      } : {}),
       evidence: parsed.javaVersion || parsed.javaHome ? "reported-by-tool" : "tool-only"
     }, installations);
   }));
@@ -73,9 +79,12 @@ export function parseGradleVersion(raw) {
   const daemon = text.match(/^Daemon JVM:\s*(.+?)(?:\s+\([^)]*\))?\s*$/im);
   return {
     toolVersion: text.match(/^Gradle\s+([^\s\r\n]+)/im)?.[1] || "",
-    javaVersion: jvm?.[1]?.trim() || "",
-    vendor: jvm?.[2]?.trim() || "",
-    javaHome: daemon?.[1]?.trim() || ""
+    javaVersion: "",
+    vendor: "",
+    javaHome: daemon?.[1]?.trim() || "",
+    launcherJavaVersion: jvm?.[1]?.trim() || "",
+    launcherVendor: jvm?.[2]?.trim() || "",
+    daemonJavaHome: daemon?.[1]?.trim() || ""
   };
 }
 
