@@ -5,7 +5,7 @@ import { createHash } from "node:crypto";
 import { commandOutput, commandVersion, firstVersion } from "./shell.js";
 import { exists } from "./fsutil.js";
 import { parseNpmGlobal } from "./inventory.js";
-import { analyzeCommonRuntimes, inspectCommonRuntimes } from "./runtime-discovery.js";
+import { analyzeCommonRuntimes, analyzeJavaBuildTools, inspectCommonRuntimes } from "./runtime-discovery.js";
 
 const npmNames = process.platform === "win32" ? ["npm.cmd", "npm.exe"] : ["npm"];
 const nodeNames = process.platform === "win32" ? ["node.exe"] : ["node"];
@@ -18,7 +18,7 @@ export async function inspectPackageManagers(dir, options = {}) {
     findNodeCandidates(options),
     findPythonCandidates({ ...options, projectDir: dir }),
     findPipCandidates({ ...options, projectDir: dir }),
-    inspectCommonRuntimes(options),
+    inspectCommonRuntimes({ ...options, projectDir: dir }),
     readProjectExpectation(dir),
     inspectUvPythonManager(options)
   ]);
@@ -59,7 +59,8 @@ export async function inspectPackageManagers(dir, options = {}) {
     ...analyzePythonInstallations(pythonInstallations, project),
     ...analyzePythonCommandRouting(pythonInstallations, pipCommands),
     ...analyzeRuntimeLinks(npmRuntimeLinks, pipRuntimeLinks, nodeInstallations, pythonInstallations),
-    ...analyzeCommonRuntimes(commonRuntimes)
+    ...analyzeCommonRuntimes(commonRuntimes),
+    ...analyzeJavaBuildTools(commonRuntimes.java)
   ];
   const aiDecision = buildAiDecision({ node: nodeInstallations, npm: installations, python: pythonInstallations, project, findings, runtimeLinks: { npm: npmRuntimeLinks, pip: pipRuntimeLinks } });
   const publicPythonInstallations = pythonInstallations.map((item) => summarizePythonPackages(item, options.fullPackages));

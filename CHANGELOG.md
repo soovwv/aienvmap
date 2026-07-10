@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Added read-only Maven/Gradle JVM binding evidence with project-wrapper precedence, distinct Gradle Launcher/Daemon roles, conservative links to detected Java installations, AI review findings, compact startup summaries, and drift detection.
 - Added selected Java system-property identity evidence (vendor, architecture, runtime/VM, reported home) and sibling `javac` JDK classification, including AI summaries and drift detection without retaining unrelated properties.
 - Added cross-platform OS-native Java discovery through Windows Registry, macOS `java_home`, and Linux alternatives, with AI-readable provenance summaries and drift detection while keeping Java information-only.
 - Added full-scan uv-managed Python ownership evidence using offline JSON output, with inference-only defaults, AI/drift summaries, and an invariant that ownership proof never authorizes removal.

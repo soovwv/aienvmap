@@ -1,6 +1,9 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { analyzeCommonRuntimes, parseDotnetRuntimes, parseJavaProperties, parseLinuxJavaAlternatives, parseMacJavaHomes, parseRustToolchains, parseVersionLines, parseWindowsJavaRegistry, summarizeDiscoveryEvidence, summarizeJavaMetadata } from "../src/runtime-discovery.js";
+import fs from "node:fs/promises";
+import os from "node:os";
+import path from "node:path";
+import { analyzeCommonRuntimes, analyzeJavaBuildTools, inspectJavaBuildTools, linkJavaBuildTool, parseDotnetRuntimes, parseGradleVersion, parseJavaProperties, parseLinuxJavaAlternatives, parseMacJavaHomes, parseMavenVersion, parseRustToolchains, parseVersionLines, parseWindowsJavaRegistry, summarizeDiscoveryEvidence, summarizeJavaMetadata } from "../src/runtime-discovery.js";
 
 test("parseVersionLines extracts installed SDK versions", () => {
   assert.deepEqual(parseVersionLines("8.0.410 [C:\\dotnet\\sdk]\n9.0.100-preview.1 [C:\\dotnet\\sdk]\n"), ["8.0.410", "9.0.100-preview.1"]);
@@ -120,4 +123,91 @@ test("Java metadata summary exposes vendor, architecture, and JDK coverage", () 
   assert.equal(summary.propertyEvidenceCount, 2);
   assert.equal(summary.compilerCount, 1);
   assert.match(summary.rule, /does not authorize/);
+});
+
+test("Maven version parser retains only build-tool JVM identity", () => {
+  assert.deepEqual(parseMavenVersion([
+    "Apache Maven 3.9.9 (example)",
+    "Java version: 21.0.5, vendor: Microsoft, runtime: C:\\Program Files\\Microsoft\\jdk-21",
+    "Default locale: en_US, platform encoding: UTF-8"
+  ].join("\n")), {
+    toolVersion: "3.9.9",
+    javaVersion: "21.0.5",
+    vendor: "Microsoft",
+    javaHome: "C:\\Program Files\\Microsoft\\jdk-21"
+  });
+});
+
+test("Gradle version parser supports launcher and daemon JVM evidence", () => {
+  assert.deepEqual(parseGradleVersion([
+    "Gradle 8.10.2",
+    "Launcher JVM: 21.0.5 (Microsoft 21.0.5+11-LTS)",
+    "Daemon JVM: C:\\Program Files\\Microsoft\\jdk-21 (no JDK specified, using current Java home)"
+  ].join("\n")), {
+    toolVersion: "8.10.2",
+    javaVersion: "",
+    vendor: "",
+    javaHome: "C:\\Program Files\\Microsoft\\jdk-21",
+    launcherJavaVersion: "21.0.5",
+    launcherVendor: "Microsoft 21.0.5+11-LTS",
+    daemonJavaHome: "C:\\Program Files\\Microsoft\\jdk-21"
+  });
+});
+
+test("Gradle launcher evidence is not mistaken for a daemon Java home", () => {
+  const parsed = parseGradleVersion("Gradle 8.5\nJVM: 17.0.10 (Eclipse Adoptium 17.0.10+7)\n");
+  assert.equal(parsed.launcherJavaVersion, "17.0.10");
+  assert.equal(parsed.javaVersion, "");
+  assert.equal(parsed.javaHome, "");
+  assert.equal(parsed.daemonJavaHome, "");
+});
+
+test("Windows project Maven wrapper reports its JVM binding", { skip: process.platform !== "win32" }, async () => {
+  const dir = await fs.mkdtemp(path.join(os.tmpdir(), "aienvmap wrapper "));
+  try {
+    await fs.writeFile(path.join(dir, "mvnw.cmd"), [
+      "@echo off",
+      "echo Apache Maven 3.9.9",
+      "echo Java version: 21.0.5, vendor: Test Vendor, runtime: C:\\fake\\jdk-21"
+    ].join("\r\n"));
+    const result = await inspectJavaBuildTools([
+      { path: "C:\\fake\\jdk-21\\bin\\java.exe", javaHome: "C:\\fake\\jdk-21", runtimeVersion: "21.0.5" }
+    ], { projectDir: dir, platform: "win32", showPaths: true });
+    const binding = result.bindings.find((item) => item.tool === "maven");
+    assert.equal(binding.commandSource, "project-wrapper");
+    assert.equal(binding.relationship, "exact-home");
+    assert.equal(binding.confidence, "strong");
+  } finally {
+    await fs.rm(dir, { recursive: true, force: true });
+  }
+});
+
+test("Java build-tool binding prefers exact home and stays conservative otherwise", () => {
+  const installations = [
+    { path: "/jdk-17/bin/java", javaHome: "/jdk-17", runtimeVersion: "17.0.12" },
+    { path: "/jdk-21/bin/java", javaHome: "/jdk-21", runtimeVersion: "21.0.5" }
+  ];
+  const exact = linkJavaBuildTool({ javaHome: "/jdk-21", javaVersion: "21.0.5" }, installations);
+  assert.equal(exact.relationship, "exact-home");
+  assert.equal(exact.confidence, "strong");
+  assert.equal(exact.runtimePath, "/jdk-21/bin/java");
+  const inferred = linkJavaBuildTool({ javaHome: "", javaVersion: "17.0.12" }, installations);
+  assert.equal(inferred.relationship, "unique-major-version");
+  assert.equal(inferred.confidence, "medium");
+});
+
+test("Java build-tool analysis reviews divergent and ambiguous JVM routing", () => {
+  const findings = analyzeJavaBuildTools({
+    installations: [
+      { path: "/jdk-21/bin/java", active: true },
+      { path: "/jdk-17/bin/java", active: false }
+    ],
+    buildTools: { bindings: [
+      { tool: "maven", runtimePath: "/jdk-17/bin/java", confidence: "strong" },
+      { tool: "gradle", runtimePath: "/jdk-21/bin/java", confidence: "medium" }
+    ] }
+  });
+  assert.deepEqual(findings.map((item) => item.code), ["java-maven-runtime-divergence", "java-gradle-runtime-ambiguous"]);
+  assert.ok(findings.every((item) => item.severity === "review"));
+  assert.match(findings[0].action, /do not change them automatically/);
 });
