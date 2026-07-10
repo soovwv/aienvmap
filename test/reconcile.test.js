@@ -237,6 +237,7 @@ test("AI decisions keep inactive virtual environments and require approval", () 
 
 test("AI decision summarizes strong, inferred, and unresolved runtime links", () => {
   const result = buildAiDecision({
+    java: { runtimeMetadata: { managers: ["jenv", "mise"], managedInstallCount: 1, routingManagedCount: 2 } },
     python: [
       { installerEvidence: { collection: "collected", installerCounts: { pip: 4, uv: 2 }, requestedCount: 2, editableCount: 1 }, managerEvidence: { manager: "uv", confidence: "strong", ownershipProven: true } },
       { installerEvidence: { collection: "unsupported-or-failed" }, managerEvidence: { manager: "uv", confidence: "medium", ownershipProven: false } }
@@ -261,6 +262,11 @@ test("AI decision summarizes strong, inferred, and unresolved runtime links", ()
   assert.deepEqual(result.pythonManagerEvidence.managers, ["uv"]);
   assert.equal(result.pythonManagerEvidence.removalAuthorized, false);
   assert.match(result.pythonManagerEvidence.rule, /never turns it into removal authorization/);
+  assert.deepEqual(result.javaManagerEvidence.managers, ["jenv", "mise"]);
+  assert.equal(result.javaManagerEvidence.managedInstalls, 1);
+  assert.equal(result.javaManagerEvidence.routingManaged, 2);
+  assert.equal(result.javaManagerEvidence.removalAuthorized, false);
+  assert.match(result.javaManagerEvidence.rule, /routing only/);
 });
 
 test("reconcile CLI is read-only and returns machine-readable package-manager state", async () => {

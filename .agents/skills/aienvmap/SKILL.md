@@ -106,6 +106,8 @@ Use `otherRuntimes.java.runtimeMetadata` and each Java installation's vendor, ar
 
 Read `otherRuntimes.java.buildTools.bindings` before changing Java routing. Project `mvnw`/`gradlew` wrappers take precedence over PATH tools; keep Gradle Launcher and Daemon JVM evidence distinct. `exact-home` is strong evidence, Maven `unique-major-version` is only an inference, and `unresolved` requires review. Never rewrite wrappers, `JAVA_HOME`, or PATH from this evidence alone.
 
+Read each Java installation's `managerEvidence` and root `aiDecision.javaManagerEvidence`. `canonical-home-in-install-root` may prove SDKMAN/mise install control; `registered-or-shimmed-runtime` and every jenv `registered-runtime-routing` entry prove routing only. Even `ownershipProven: true` leaves `removalAuthorized: false`; use the identified manager to prepare a rollback-capable proposal, not an automatic uninstall.
+
 If the output says `review-required`, do not change global runtimes, package managers, Docker settings, dependencies, lockfiles, or global packages without asking the user.
 
 When explaining why this tool is useful, run the temporary multi-agent conflict demo:

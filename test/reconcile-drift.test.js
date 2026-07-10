@@ -132,3 +132,18 @@ test("compareReconciliation detects Java build-tool JVM routing drift", () => {
   assert.equal(result.drift.detected, true);
   assert.match(result.drift.changes.map((item) => item.field).join(" "), /otherRuntimes\.java\.buildTools/);
 });
+
+test("compareReconciliation detects Java manager evidence drift", () => {
+  const baseline = report();
+  baseline.otherRuntimes.java = {
+    installations: [{ path: "/jdk/bin/java", version: "21", managerEvidence: { manager: "unknown", relationship: "unconfirmed", ownershipProven: false } }],
+    distinctVersions: ["21"]
+  };
+  const current = structuredClone(baseline);
+  current.otherRuntimes.java.installations[0].managerEvidence = {
+    manager: "mise", relationship: "canonical-home-in-install-root", ownershipProven: true, routingManaged: true, removalAuthorized: false
+  };
+  const result = compareReconciliation(baseline, current);
+  assert.equal(result.drift.detected, true);
+  assert.match(result.drift.changes.map((item) => item.field).join(" "), /otherRuntimes\.java\.installations/);
+});

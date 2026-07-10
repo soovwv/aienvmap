@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
-import { analyzeCommonRuntimes, analyzeJavaBuildTools, inspectJavaBuildTools, linkJavaBuildTool, parseDotnetRuntimes, parseGradleVersion, parseJavaProperties, parseLinuxJavaAlternatives, parseMacJavaHomes, parseMavenVersion, parseRustToolchains, parseVersionLines, parseWindowsJavaRegistry, summarizeDiscoveryEvidence, summarizeJavaMetadata } from "../src/runtime-discovery.js";
+import { analyzeCommonRuntimes, analyzeJavaBuildTools, inspectJavaBuildTools, javaManagerEvidence, linkJavaBuildTool, parseDotnetRuntimes, parseGradleVersion, parseJavaProperties, parseLinuxJavaAlternatives, parseMacJavaHomes, parseMavenVersion, parseRustToolchains, parseVersionLines, parseWindowsJavaRegistry, summarizeDiscoveryEvidence, summarizeJavaMetadata } from "../src/runtime-discovery.js";
 
 test("parseVersionLines extracts installed SDK versions", () => {
   assert.deepEqual(parseVersionLines("8.0.410 [C:\\dotnet\\sdk]\n9.0.100-preview.1 [C:\\dotnet\\sdk]\n"), ["8.0.410", "9.0.100-preview.1"]);
@@ -122,7 +122,42 @@ test("Java metadata summary exposes vendor, architecture, and JDK coverage", () 
   assert.deepEqual(summary.runtimeKinds, ["jdk", "jre-or-runtime-image"]);
   assert.equal(summary.propertyEvidenceCount, 2);
   assert.equal(summary.compilerCount, 1);
+  assert.deepEqual(summary.managers, []);
+  assert.equal(summary.managedInstallCount, 0);
   assert.match(summary.rule, /does not authorize/);
+});
+
+test("Java manager evidence separates managed installs from routing registration", () => {
+  const home = "/home/test";
+  const mise = javaManagerEvidence({ source: "mise" }, { javaHome: "/home/test/.local/share/mise/installs/java/temurin-21" }, { home, platform: "linux", showPaths: true, env: {} });
+  assert.equal(mise.relationship, "canonical-home-in-install-root");
+  assert.equal(mise.ownershipProven, true);
+  assert.equal(mise.routingManaged, true);
+  assert.equal(mise.removalAuthorized, false);
+
+  const miseViaJavaHome = javaManagerEvidence({ source: "JAVA_HOME" }, { javaHome: "/home/test/.local/share/mise/installs/java/temurin-17" }, { home, platform: "linux", showPaths: true, env: {} });
+  assert.equal(miseViaJavaHome.manager, "mise");
+  assert.equal(miseViaJavaHome.ownershipProven, true);
+
+  const sdkmanLink = javaManagerEvidence({ source: "sdkman" }, { javaHome: "/opt/external-jdk" }, { home, platform: "linux", showPaths: true, env: {} });
+  assert.equal(sdkmanLink.relationship, "registered-or-shimmed-runtime");
+  assert.equal(sdkmanLink.ownershipProven, false);
+  assert.equal(sdkmanLink.confidence, "medium");
+
+  const jenv = javaManagerEvidence({ source: "jenv" }, { javaHome: "/opt/jdk" }, { home, platform: "linux", showPaths: true, env: {} });
+  assert.equal(jenv.relationship, "registered-runtime-routing");
+  assert.equal(jenv.ownershipProven, false);
+  assert.equal(jenv.routingManaged, true);
+  assert.equal(jenv.proofScope, "jenv-routing-only");
+
+  const summary = summarizeJavaMetadata([
+    { managerEvidence: mise },
+    { managerEvidence: sdkmanLink },
+    { managerEvidence: jenv }
+  ]);
+  assert.deepEqual(summary.managers, ["jenv", "mise", "sdkman"]);
+  assert.equal(summary.managedInstallCount, 1);
+  assert.equal(summary.routingManagedCount, 3);
 });
 
 test("Maven version parser retains only build-tool JVM identity", () => {

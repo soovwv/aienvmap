@@ -86,7 +86,7 @@ function normalizeRuntimeLinks(items = []) {
 }
 
 function normalizeInstallations(items = [], extra = []) {
-  const fields = ["runtime", "manager", "path", "version", "versions", "active", "source", "scope", "discovery", ...extra];
+  const fields = ["runtime", "manager", "path", "version", "versions", "active", "source", "scope", "discovery", "managerEvidence", ...extra];
   return items.map((item) => Object.fromEntries(fields.filter((key) => item?.[key] !== undefined).map((key) => [key, normalize(item[key])]))).sort((a, b) => `${a.path || ""}:${a.version || ""}`.localeCompare(`${b.path || ""}:${b.version || ""}`));
 }
 

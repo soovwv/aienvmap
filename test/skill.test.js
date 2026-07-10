@@ -31,6 +31,9 @@ test("packaged aienvmap skill points AI agents to current startup contracts", as
   assert.match(skill, /sibling-`javac` evidence/);
   assert.match(skill, /otherRuntimes\.java\.buildTools\.bindings/);
   assert.match(skill, /Project `mvnw`\/`gradlew` wrappers take precedence/);
+  assert.match(skill, /aiDecision\.javaManagerEvidence/);
+  assert.match(skill, /canonical-home-in-install-root/);
+  assert.match(skill, /every jenv `registered-runtime-routing` entry prove routing only/);
   assert.match(skill, /aiAdoptionDecision/);
   assert.match(skill, /compact use\/recommend\/start\/skip block/);
   assert.match(skill, /recommendation\.decisionRoutine/);
