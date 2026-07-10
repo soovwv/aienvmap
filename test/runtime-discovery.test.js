@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { analyzeCommonRuntimes, analyzeJavaBuildTools, linkJavaBuildTool, parseDotnetRuntimes, parseGradleVersion, parseJavaProperties, parseLinuxJavaAlternatives, parseMacJavaHomes, parseMavenVersion, parseRustToolchains, parseVersionLines, parseWindowsJavaRegistry, summarizeDiscoveryEvidence, summarizeJavaMetadata } from "../src/runtime-discovery.js";
+import { analyzeCommonRuntimes, analyzeJavaBuildTools, linkJavaBuildTool, parseDotnetRuntimes, parseGradleVersion, parseJavaProperties, parseLinuxJavaAlternatives, parseMacJavaHomes, parseMavenVersion, parseRustToolchains, parseVersionLines, parseWindowsJavaRegistry, summarizeDiscoveryEvidence, summarizeJavaMetadata, windowsBatchCommand } from "../src/runtime-discovery.js";
 
 test("parseVersionLines extracts installed SDK versions", () => {
   assert.deepEqual(parseVersionLines("8.0.410 [C:\\dotnet\\sdk]\n9.0.100-preview.1 [C:\\dotnet\\sdk]\n"), ["8.0.410", "9.0.100-preview.1"]);
@@ -157,6 +157,10 @@ test("Gradle launcher evidence is not mistaken for a daemon Java home", () => {
   assert.equal(parsed.javaVersion, "");
   assert.equal(parsed.javaHome, "");
   assert.equal(parsed.daemonJavaHome, "");
+});
+
+test("Windows Java build-tool wrappers use a bounded quoted batch command", () => {
+  assert.equal(windowsBatchCommand("C:\\Project Files\\gradlew.bat", ["--version"]), '""C:\\Project Files\\gradlew.bat" --version"');
 });
 
 test("Java build-tool binding prefers exact home and stays conservative otherwise", () => {

@@ -35,9 +35,9 @@ export async function inspectJavaBuildTools(installations = [], options = {}) {
   const bindings = await Promise.all(definitions.map(async (definition) => {
     const wrapper = path.join(projectDir, definition.wrapper);
     const usesWrapper = await exists(wrapper);
-    const result = await commandResult(usesWrapper ? wrapper : definition.command, definition.args, {
+    const result = await javaBuildToolResult(usesWrapper ? wrapper : definition.command, definition.args, {
       cwd: projectDir, timeout: 6000, maxBuffer: 1024 * 1024
-    });
+    }, win);
     const parsed = definition.parser(`${result.stdout}\n${result.stderr}`);
     if (!parsed.toolVersion) return null;
     return linkJavaBuildTool({
@@ -60,6 +60,20 @@ export async function inspectJavaBuildTools(installations = [], options = {}) {
     bindings: bindings.filter(Boolean),
     rule: "Build-tool JVM bindings are read-only evidence; they do not authorize wrapper, JAVA_HOME, PATH, or runtime changes."
   };
+}
+
+async function javaBuildToolResult(command, args, options, win) {
+  if (!win || !/\.(?:cmd|bat)$/i.test(command)) return commandResult(command, args, options);
+  const comspec = process.env.ComSpec || "cmd.exe";
+  return commandResult(comspec, ["/d", "/s", "/c", windowsBatchCommand(command, args)], options);
+}
+
+export function windowsBatchCommand(command, args = []) {
+  const quote = (value) => {
+    const text = String(value);
+    return /^[A-Za-z0-9._@:/=\\-]+$/.test(text) ? text : `"${text.replaceAll('"', '""')}"`;
+  };
+  return `"${quote(command)} ${args.map(quote).join(" ")}"`;
 }
 
 export function parseMavenVersion(raw) {
