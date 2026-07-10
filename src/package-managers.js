@@ -59,7 +59,7 @@ export async function inspectPackageManagers(dir, options = {}) {
     ...analyzeRuntimeLinks(npmRuntimeLinks, pipRuntimeLinks, nodeInstallations, pythonInstallations),
     ...analyzeCommonRuntimes(commonRuntimes)
   ];
-  const aiDecision = buildAiDecision({ node: nodeInstallations, npm: installations, python: pythonInstallations, project, findings });
+  const aiDecision = buildAiDecision({ node: nodeInstallations, npm: installations, python: pythonInstallations, project, findings, runtimeLinks: { npm: npmRuntimeLinks, pip: pipRuntimeLinks } });
   const publicPythonInstallations = pythonInstallations.map((item) => summarizePythonPackages(item, options.fullPackages));
   return {
     schemaName: "aienvmap.reconcile",
@@ -355,7 +355,7 @@ export function analyzePythonInstallations(installations, project = {}) {
   return findings;
 }
 
-export function buildAiDecision({ node = [], npm = [], python = [], project = {}, findings = [] }) {
+export function buildAiDecision({ node = [], npm = [], python = [], project = {}, findings = [], runtimeLinks = {} }) {
   const actionCandidates = [];
   for (const item of node.filter((entry) => !entry.active)) actionCandidates.push({
     target: item.path,
@@ -390,13 +390,18 @@ export function buildAiDecision({ node = [], npm = [], python = [], project = {}
   return {
     consumer: "AI agent",
     decision: findings.some((item) => item.severity === "review") ? "review" : "clear",
-    readFirst: ["project", "node.active", "npm.active", "python.active", "findings", "aiDecision.actionCandidates"],
+    readFirst: ["project", "node.active", "npm.active", "npm.runtimeLinks", "python.active", "python.runtimeLinks", "findings", "aiDecision.actionCandidates"],
     canonicalCandidates: {
       node: chooseCanonical(node, project.node?.versionFile || ""),
       npm: chooseCanonical(npm, project.packageManager?.name === "npm" ? project.packageManager.version : ""),
       python: chooseCanonical(python, project.python?.versionFile || "")
     },
     actionCandidates,
+    runtimeLinkSummary: {
+      npm: summarizeRuntimeLinkConfidence(runtimeLinks.npm),
+      pip: summarizeRuntimeLinkConfidence(runtimeLinks.pip),
+      rule: "Runtime links are routing evidence, not proof of installation ownership or permission to remove software."
+    },
     safeCommands: {
       pythonPackageCheck: "<selected-python> -m pip list --format=json",
       pythonInstallRule: "Use <selected-python> -m pip instead of bare pip so the target interpreter is explicit.",
@@ -405,10 +410,20 @@ export function buildAiDecision({ node = [], npm = [], python = [], project = {}
     },
     rules: [
       "Treat active as PATH precedence, not proof that it is canonical.",
+      "Treat runtimeLinks as routing evidence only; ownershipProven remains false until an external manager confirms ownership.",
       "Do not delete, uninstall, rewrite PATH, change prefixes, or remove environments automatically.",
       "A removal candidate requires project ownership checks, package comparison, a rollback plan, and explicit human approval.",
       "If package digests differ and package-level evidence is needed, rerun `aienvmap reconcile --json --full-packages` before deciding."
     ]
+  };
+}
+
+function summarizeRuntimeLinkConfidence(links = []) {
+  return {
+    total: links.length,
+    strong: links.filter((item) => item.confidence === "strong").length,
+    inferred: links.filter((item) => item.confidence === "medium").length,
+    unresolved: links.filter((item) => item.confidence === "none").length
   };
 }
 

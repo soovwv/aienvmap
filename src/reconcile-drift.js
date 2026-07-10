@@ -62,7 +62,8 @@ function npmSection(section = {}) {
   return {
     ...runtimeSection(section),
     distinctGlobalRoots: sorted(section.distinctGlobalRoots || []),
-    installations: normalizeInstallations(section.installations, ["prefix", "globalRoot", "globalPackages", "packageCollection"])
+    installations: normalizeInstallations(section.installations, ["prefix", "globalRoot", "globalPackages", "packageCollection"]),
+    runtimeLinks: normalizeRuntimeLinks(section.runtimeLinks)
   };
 }
 
@@ -71,8 +72,13 @@ function pythonSection(section = {}) {
     ...runtimeSection(section),
     packageLocations: sorted(section.packageLocations || []),
     installations: normalizeInstallations(section.installations, ["virtualEnvironment", "prefix", "basePrefix", "packageLocations", "packageCount", "packageDigest", "packageCollection", "pipAvailable"]),
-    pipCommands: normalizeInstallations(section.pipCommands, ["pythonVersion", "packageLocation"])
+    pipCommands: normalizeInstallations(section.pipCommands, ["pythonVersion", "packageLocation"]),
+    runtimeLinks: normalizeRuntimeLinks(section.runtimeLinks)
   };
+}
+
+function normalizeRuntimeLinks(items = []) {
+  return items.map((item) => normalize(item)).sort((a, b) => `${a.managerPath || ""}:${a.runtimePath || ""}`.localeCompare(`${b.managerPath || ""}:${b.runtimePath || ""}`));
 }
 
 function normalizeInstallations(items = [], extra = []) {

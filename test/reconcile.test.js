@@ -177,6 +177,20 @@ test("AI decisions keep inactive virtual environments and require approval", () 
   assert.equal(result.actionCandidates[0].requiresHumanApprovalBeforeRemoval, true);
   assert.equal(result.actionCandidates[0].destructive, false);
   assert.match(result.rules.join(" "), /Do not delete/);
+  assert.match(result.rules.join(" "), /routing evidence only/);
+});
+
+test("AI decision summarizes strong, inferred, and unresolved runtime links", () => {
+  const result = buildAiDecision({
+    runtimeLinks: {
+      npm: [{ confidence: "strong" }, { confidence: "medium" }],
+      pip: [{ confidence: "none" }]
+    }
+  });
+  assert.deepEqual(result.runtimeLinkSummary.npm, { total: 2, strong: 1, inferred: 1, unresolved: 0 });
+  assert.deepEqual(result.runtimeLinkSummary.pip, { total: 1, strong: 0, inferred: 0, unresolved: 1 });
+  assert.match(result.runtimeLinkSummary.rule, /not proof/);
+  assert.ok(result.readFirst.includes("npm.runtimeLinks"));
 });
 
 test("reconcile CLI is read-only and returns machine-readable package-manager state", async () => {
@@ -193,9 +207,12 @@ test("reconcile CLI is read-only and returns machine-readable package-manager st
   assert.equal(json.project.packageManager.version, "10.8.2");
   assert.ok(Array.isArray(json.python.installations));
   assert.ok(Array.isArray(json.node.installations));
+  assert.ok(Array.isArray(json.npm.runtimeLinks));
+  assert.ok(Array.isArray(json.python.runtimeLinks));
   assert.ok(json.otherRuntimes.java);
   assert.ok(json.otherRuntimes.dotnet);
   assert.equal(json.aiDecision.consumer, "AI agent");
+  assert.ok(json.aiDecision.runtimeLinkSummary);
   assert.equal(json.python.packageDetail.startsWith("summary"), true);
   assert.ok(json.python.installations.every((item) => item.packages === undefined));
   assert.ok(json.python.installations.every((item) => typeof item.packageDigest === "string"));
