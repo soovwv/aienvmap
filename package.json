@@ -1,0 +1,67 @@
+{
+  "name": "aienvmap",
+  "version": "0.1.0",
+  "description": "AI workspace coordination tool with an env map and light SBOM for multiple AI agents sharing one development environment.",
+  "type": "module",
+  "bin": {
+    "aienvmap": "bin/aienvmap.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/soovwv/aienvmap.git"
+  },
+  "bugs": {
+    "url": "https://github.com/soovwv/aienvmap/issues"
+  },
+  "homepage": "https://github.com/soovwv/aienvmap#readme",
+  "files": [
+    "bin",
+    "src",
+    "README.md",
+    "LICENSE",
+    "CHANGELOG.md",
+    "BUGFIXES.md",
+    "CONTRIBUTING.md",
+    "SECURITY.md",
+    "TROUBLESHOOTING.md",
+    "ROADMAP.md",
+    "action.yml",
+    "examples",
+    ".agents"
+  ],
+  "scripts": {
+    "test": "node --test",
+    "pack:dry": "npm pack --dry-run",
+    "smoke": "node bin/aienvmap.js --version && node bin/aienvmap.js --help",
+    "demo:conflict": "node examples/multi-agent-conflict-demo.mjs",
+    "release:check": "npm test && npm run smoke && npm run demo:conflict && npm run pack:dry"
+  },
+  "keywords": [
+    "ai",
+    "ai-workspace",
+    "ai-agents",
+    "ai-coding",
+    "coordination",
+    "workspace-coordination",
+    "multi-agent",
+    "shared-environment",
+    "environment",
+    "env-map",
+    "environment-map",
+    "version-drift",
+    "sbom",
+    "light-sbom",
+    "dependency-coordination",
+    "runtime",
+    "agent",
+    "agentic",
+    "devops",
+    "codex",
+    "claude",
+    "gemini"
+  ],
+  "license": "Apache-2.0",
+  "engines": {
+    "node": ">=18"
+  }
+}

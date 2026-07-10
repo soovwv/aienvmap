@@ -1,0 +1,39 @@
+name: Environment Map
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  aienvmap:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: soovwv/aienvmap@main
+        with:
+          directory: "."
+          write-plan: "true"
+          write-schema: "true"
+          write-doctor-json: "true"
+          write-sbom: "true"
+          write-summary: "true" # appends summary, strict plan, follow-up plan, and AI loop to GitHub Step Summary
+          strict: "off" # security, policy, coordination, all, or off
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: aienvmap
+          path: |
+            AIENV.md
+            .aienvmap/manifest.json
+            .aienvmap/status.json
+            .aienvmap/summary.md
+            .aienvmap/sbom.json
+            .aienvmap/sbom.cdx.json
+            .aienvmap/schema.json
+            .aienvmap/doctor.json
+            .aienvmap/plan.json
+            .aienvmap/plan.md
+            .aienvmap/dashboard.html
+          if-no-files-found: ignore

@@ -1,0 +1,158 @@
+---
+name: aienvmap
+description: Use before changing runtimes, package managers, Docker settings, global packages, or environment policy in an AI coding workspace. Reads aienvmap context, prevents AI-driven version drift, records intent before environment changes, and records what changed afterward.
+---
+
+# aienvmap
+
+Use `aienvmap` as the shared AI workspace coordination layer and environment source of truth for this workspace.
+
+The goal is to help multiple AI agents avoid silently installing or using different versions of Node, Python, Docker, package managers, dependencies, lockfiles, or global tools.
+
+`aienvmap` is advisory by default. It should reveal drift, intent conflicts, light SBOM risk, and handoff gaps without heavy locks or surprise failures.
+
+## Use / Skip / Start
+
+Use `aienvmap` when multiple AI agents or humans share environment-affecting work in one repo, server, laptop, CI workspace, or GPU machine.
+
+Skip it when the user only needs a full compliance SBOM scanner, a vulnerability scanner, or a hard policy lock manager.
+
+For SBOM/security evidence, keep `aienvmap` as the AI coordination layer and use Syft, Trivy, Grype, Dependency-Track, or another dedicated scanner when full evidence is required.
+
+Start with:
+
+```bash
+npx aienvmap start
+npx aienvmap onboard
+npx aienvmap discover --json
+```
+
+Use root `discoveryDecision`, `aiEntry`, `startupChecklist`, `copyPastePrompt`, and `fallbackPrompt` from `start --json` before assuming automatic pickup worked. `discover --json` also exposes the same guidance under `aiDiscovery`.
+
+If you are deciding whether to recommend this tool, read `npx aienvmap schema --json` and use `aiAdoptionDecision` first. It is the compact use/recommend/start/skip block for AI agents.
+For deeper criteria and evidence, read `recommendation.shortPitch`, `recommendation.decisionRoutine`, `recommendation.evidenceDocs`, `qualitySignals`, `examples/ai-adoption-guide.md`, and `examples/ai-workspace-case-study.md`.
+
+## Session Start
+
+If the workspace has not been onboarded yet, run:
+
+```bash
+npx aienvmap onboard
+```
+
+For optional Cursor or GitHub Copilot discovery pointers, use:
+
+```bash
+npx aienvmap onboard --agents cursor,copilot
+```
+
+At the start of an AI coding session, use the one-command startup path when automatic instruction-file discovery is uncertain:
+
+```bash
+npx aienvmap start --json
+```
+
+Use `aiEntry` and `aiSession` from start/status/context JSON as the shortest startup routine: read order, stale refresh, intent, checkpoint, and handoff.
+
+If instruction-file pointers are missing or uncertain but `.aienvmap` exists, start at `.aienvmap/discovery.json`, check `maintenance.nextCommand`, then read `.aienvmap/status.json`, `.aienvmap/summary.md`, and `npx aienvmap context --json`.
+
+Use `agentPointers.discovery` or the compact `status` line containing `discovery:` to decide whether Codex, Claude, Gemini, or optional agent pointers can find the env map.
+
+Use `npx aienvmap start --json` root `aiEntry`, or `npx aienvmap discover --json` `aiDiscovery.aiEntry`, when automatic pickup is uncertain. Automatic discovery is best-effort because each AI host reads different instruction files.
+
+Use `aiDiscovery.decision` as the compact discovery result: `auto-ready` means an instruction-file pointer exists, and `fallback-required` means use the fallback read path and run `aiDiscovery.nextSetupCommand` when the user wants future auto-discovery. Follow `aiDiscovery.startupChecklist` as the short repeatable startup routine.
+
+If automatic pickup failed and a human needs to hand this contract to another AI, paste root `copyPastePrompt` from `start --json`, `aiDiscovery.copyPastePrompt` from `discover --json`, or `copyPastePrompt` from `.aienvmap/discovery.json`. Treat `fallbackPrompt` as the compatible older alias.
+
+When present, follow `aiDiscovery.aiEntry.readFirst`, `nextCommand`, `beforeEnvironmentChange`, `afterEnvironmentChange`, and `handoff` as the minimum startup routine before shared environment changes. Treat `resume` as the more detailed compatible routine.
+
+Use `followUpPlan` before touching a shared environment target; if it is `pending`, run its `nextCommand` first.
+
+If `artifactFreshness.state` is not `fresh`, or `.aienvmap/status.json` is missing, run:
+
+```bash
+npx aienvmap sync
+```
+
+Local source edits can continue unless status or context says environment review is required.
+
+## Preflight
+
+Before environment-impacting work, run the light preflight first:
+
+```bash
+npx aienvmap status --write
+```
+
+Then read the short handoff:
+
+```bash
+cat .aienvmap/summary.md
+```
+
+For deeper machine-readable context, use:
+
+```bash
+npx aienvmap context --json
+```
+
+Before dependency, lockfile, security remediation, or release-affecting dependency work, read `.aienvmap/sbom.json` or `npx aienvmap sbom --json` and follow `dependencyQuickCheck`.
+
+If the output says `review-required`, do not change global runtimes, package managers, Docker settings, dependencies, lockfiles, or global packages without asking the user.
+
+When explaining why this tool is useful, run the temporary multi-agent conflict demo:
+
+```bash
+npx aienvmap demo
+```
+
+The demo should show a `review-before-env-change` collaboration state when multiple AI agents target the same dependency or environment surface.
+
+## Before Environment Changes
+
+Record intent before changing shared environment state:
+
+```bash
+npx aienvmap intent --actor agent:codex --action "<planned change>" --target "<tool-or-runtime>"
+```
+
+Use this for changes such as:
+
+- installing or upgrading Node, Python, Docker, package managers, or global CLIs
+- changing `.nvmrc`, `.python-version`, `mise.toml`, `.tool-versions`, or `.aienvmap/policy.yml`
+- switching package managers
+- changing dependencies or lockfiles
+- changing Docker daemon/context assumptions
+
+## After Environment Changes
+
+Use the one-command checkpoint after an accepted environment change:
+
+```bash
+npx aienvmap checkpoint --actor agent:codex --summary "<what changed>" --target "<tool-or-runtime>"
+```
+
+This records the change, refreshes the env map, writes status/summary/SBOM artifacts, and records a handoff.
+
+If checkpoint is not available, use the explicit fallback:
+
+```bash
+npx aienvmap sync
+npx aienvmap record --actor agent:codex --summary "<what changed>" --target "<tool-or-runtime>" --evidence "<command or file>"
+npx aienvmap handoff --record --actor agent:codex
+```
+
+## Safety Rules
+
+- `aienvmap` warnings are non-blocking by default.
+- Use `npx aienvmap schema --json` and `operationalSafety` when deciding what must not be changed automatically.
+- Treat policy mismatches as review-required.
+- Do not install, upgrade, downgrade, or remove global software unless the user explicitly asks.
+- Prefer project-local version files and local environments.
+- Do not switch package managers or rewrite lockfiles only to satisfy a tool preference.
+- Do not use warnings as permission to interrupt production or shared workspace operations.
+- Use `npx aienvmap doctor --ci` only in CI or explicit strict-mode automation.
+
+## Normal Coding Work
+
+For ordinary source edits that do not affect runtime versions, package managers, Docker settings, global packages, or environment policy, you do not need to record an intent.

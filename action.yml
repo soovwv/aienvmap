@@ -1,0 +1,195 @@
+name: aienvmap
+description: AI-first environment map and policy check for coding workspaces
+author: soovwv
+
+inputs:
+  directory:
+    description: Workspace directory to scan
+    required: false
+    default: "."
+  strict:
+    description: Fail when doctor reports scoped warnings
+    required: false
+    default: "off"
+  write-plan:
+    description: Write read-only AI plan artifacts
+    required: false
+    default: "true"
+  write-status:
+    description: Write compact AI status artifact
+    required: false
+    default: "true"
+  write-schema:
+    description: Write stable AI output contract artifact
+    required: false
+    default: "true"
+  write-doctor-json:
+    description: Write doctor JSON with advisory/strict exit behavior
+    required: false
+    default: "true"
+  write-sbom:
+    description: Write standalone light SBOM and CycloneDX-lite artifacts
+    required: false
+    default: "true"
+  write-summary:
+    description: Write compact Markdown summary and append it to GitHub Step Summary
+    required: false
+    default: "true"
+
+runs:
+  using: composite
+  steps:
+    - name: Sync environment map
+      shell: bash
+      run: node "$GITHUB_ACTION_PATH/bin/aienvmap.js" sync --dir "${{ inputs.directory }}" --quiet
+
+    - name: Write AI plan
+      shell: bash
+      run: |
+        if [ "${{ inputs.write-plan }}" = "true" ]; then
+          node "$GITHUB_ACTION_PATH/bin/aienvmap.js" plan --dir "${{ inputs.directory }}" --write --json
+        fi
+
+    - name: Write AI status
+      shell: bash
+      run: |
+        if [ "${{ inputs.write-status }}" = "true" ]; then
+          node "$GITHUB_ACTION_PATH/bin/aienvmap.js" status --dir "${{ inputs.directory }}" --write --quiet
+        fi
+
+    - name: Write AI schema
+      shell: bash
+      run: |
+        if [ "${{ inputs.write-schema }}" = "true" ]; then
+          mkdir -p "${{ inputs.directory }}/.aienvmap"
+          node "$GITHUB_ACTION_PATH/bin/aienvmap.js" schema --json > "${{ inputs.directory }}/.aienvmap/schema.json"
+        fi
+
+    - name: Write doctor advisory JSON
+      shell: bash
+      run: |
+        if [ "${{ inputs.write-doctor-json }}" = "true" ]; then
+          mkdir -p "${{ inputs.directory }}/.aienvmap"
+          node "$GITHUB_ACTION_PATH/bin/aienvmap.js" doctor --dir "${{ inputs.directory }}" --json > "${{ inputs.directory }}/.aienvmap/doctor.json"
+        fi
+
+    - name: Write SBOM artifacts
+      shell: bash
+      run: |
+        if [ "${{ inputs.write-sbom }}" = "true" ]; then
+          node "$GITHUB_ACTION_PATH/bin/aienvmap.js" sbom --dir "${{ inputs.directory }}" --write --quiet
+          node "$GITHUB_ACTION_PATH/bin/aienvmap.js" sbom --dir "${{ inputs.directory }}" --format cyclonedx-lite --write --quiet
+        fi
+
+    - name: Write AI summary
+      shell: bash
+      run: |
+        if [ "${{ inputs.write-summary }}" = "true" ]; then
+          node "$GITHUB_ACTION_PATH/bin/aienvmap.js" summary --dir "${{ inputs.directory }}" --write --quiet
+          if [ -n "$GITHUB_STEP_SUMMARY" ]; then
+            cat "${{ inputs.directory }}/.aienvmap/summary.md" >> "$GITHUB_STEP_SUMMARY"
+          fi
+        fi
+
+    - name: Append strict plan summary
+      shell: bash
+      run: |
+        if [ "${{ inputs.write-summary }}" = "true" ] && [ -n "$GITHUB_STEP_SUMMARY" ]; then
+          mkdir -p "${{ inputs.directory }}/.aienvmap"
+          plan_source="${{ inputs.directory }}/.aienvmap/doctor.json"
+          if [ ! -f "$plan_source" ]; then
+            plan_source="$(mktemp)"
+            node "$GITHUB_ACTION_PATH/bin/aienvmap.js" doctor --dir "${{ inputs.directory }}" --json > "$plan_source"
+          fi
+          node - "$plan_source" "$GITHUB_STEP_SUMMARY" <<'NODE'
+        const fs = require("node:fs");
+
+        const [doctorPath, summaryPath] = process.argv.slice(2);
+        const doctor = JSON.parse(fs.readFileSync(doctorPath, "utf8"));
+        const plan = doctor.enforcement?.strictPlan || {};
+        const local = plan.localDefault || "aienvmap doctor --json";
+        const ci = plan.ciCommand || "aienvmap doctor --strict all --json";
+        const rule = plan.rule || "Strict failure is explicit only.";
+
+        fs.appendFileSync(summaryPath, [
+          "",
+          "## aienvmap strict plan",
+          "",
+          `- local: \`${local}\``,
+          `- ci: \`${ci}\``,
+          `- rule: ${rule}`,
+          ""
+        ].join("\n"));
+        NODE
+        fi
+
+    - name: Append follow-up plan summary
+      shell: bash
+      run: |
+        if [ "${{ inputs.write-summary }}" = "true" ] && [ -n "$GITHUB_STEP_SUMMARY" ]; then
+          mkdir -p "${{ inputs.directory }}/.aienvmap"
+          doctor_source="${{ inputs.directory }}/.aienvmap/doctor.json"
+          if [ ! -f "$doctor_source" ]; then
+            doctor_source="$(mktemp)"
+            node "$GITHUB_ACTION_PATH/bin/aienvmap.js" doctor --dir "${{ inputs.directory }}" --json > "$doctor_source"
+          fi
+          node - "$doctor_source" "$GITHUB_STEP_SUMMARY" <<'NODE'
+        const fs = require("node:fs");
+
+        const [doctorPath, summaryPath] = process.argv.slice(2);
+        const doctor = JSON.parse(fs.readFileSync(doctorPath, "utf8"));
+        const followUp = doctor.followUpPlan || {};
+        if (followUp.status !== "pending") process.exit(0);
+
+        fs.appendFileSync(summaryPath, [
+          "",
+          "## aienvmap follow-up plan",
+          "",
+          `- next: \`${followUp.nextCommand || "aienvmap status --json"}\``,
+          `- targets: ${(followUp.targets || []).join(", ") || "environment"}`,
+          `- rule: ${followUp.rule || "Resolve follow-ups before shared environment changes."}`,
+          ""
+        ].join("\n"));
+        NODE
+        fi
+
+    - name: Append AI loop summary
+      shell: bash
+      run: |
+        if [ "${{ inputs.write-summary }}" = "true" ] && [ -n "$GITHUB_STEP_SUMMARY" ]; then
+          mkdir -p "${{ inputs.directory }}/.aienvmap"
+          schema_source="${{ inputs.directory }}/.aienvmap/schema.json"
+          if [ ! -f "$schema_source" ]; then
+            schema_source="$(mktemp)"
+            node "$GITHUB_ACTION_PATH/bin/aienvmap.js" schema --json > "$schema_source"
+          fi
+          node - "$schema_source" "$GITHUB_STEP_SUMMARY" <<'NODE'
+        const fs = require("node:fs");
+
+        const [schemaPath, summaryPath] = process.argv.slice(2);
+        const schema = JSON.parse(fs.readFileSync(schemaPath, "utf8"));
+        const loop = schema.aiLoop || {};
+        const steps = (loop.steps || []).slice(0, 6).map((item) => item.command).join(" -> ");
+
+        fs.appendFileSync(summaryPath, [
+          "",
+          "## aienvmap AI loop",
+          "",
+          `- mode: ${loop.localMode || "warn-only"}`,
+          `- steps: \`${steps || "aienvmap sync -> aienvmap status -> aienvmap handoff"}\``,
+          `- rule: ${loop.strictRule || "Local checks are warn-only; strict gates are explicit."}`,
+          ""
+        ].join("\n"));
+        NODE
+        fi
+
+    - name: Doctor
+      shell: bash
+      run: |
+        if [ "${{ inputs.strict }}" = "true" ]; then
+          node "$GITHUB_ACTION_PATH/bin/aienvmap.js" doctor --dir "${{ inputs.directory }}" --ci
+        elif [ "${{ inputs.strict }}" != "false" ] && [ "${{ inputs.strict }}" != "off" ]; then
+          node "$GITHUB_ACTION_PATH/bin/aienvmap.js" doctor --dir "${{ inputs.directory }}" --strict "${{ inputs.strict }}"
+        else
+          node "$GITHUB_ACTION_PATH/bin/aienvmap.js" doctor --dir "${{ inputs.directory }}"
+        fi

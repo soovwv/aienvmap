@@ -1,0 +1,65 @@
+name: Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version already set in package.json, for example 0.2.0"
+        required: true
+        type: string
+      npm_tag:
+        description: "npm dist-tag"
+        required: true
+        default: "latest"
+        type: string
+      confirm_publish:
+        description: "Type publish to confirm npm publish"
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  publish:
+    name: Manual npm publish
+    runs-on: ubuntu-latest
+    if: ${{ github.event.inputs.confirm_publish == 'publish' }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          registry-url: "https://registry.npmjs.org"
+
+      - name: Verify package version
+        shell: bash
+        run: |
+          actual="$(node -p "require('./package.json').version")"
+          expected="${{ github.event.inputs.version }}"
+          npm_tag="${{ github.event.inputs.npm_tag }}"
+          if ! [[ "$expected" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?$ ]]; then
+            echo "Version input must be a semver-like value, got $expected"
+            exit 1
+          fi
+          if ! [[ "$npm_tag" =~ ^[0-9A-Za-z._-]+$ ]]; then
+            echo "npm_tag must contain only letters, numbers, dot, underscore, or dash"
+            exit 1
+          fi
+          if [ "$actual" != "$expected" ]; then
+            echo "package.json version is $actual, expected $expected"
+            exit 1
+          fi
+
+      - name: Release check
+        run: npm run release:check
+
+      - name: Publish to npm
+        run: npm publish --tag "${{ github.event.inputs.npm_tag }}" --provenance
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
