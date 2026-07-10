@@ -4,6 +4,13 @@
 
 Primary positioning: AI workspace coordination first, lightweight SBOM context second. Full SBOM generators and vulnerability scanners remain complementary optional inputs.
 
+## Competitive Boundary
+
+- mise, Flox, and Devbox declare, install, lock, or reproduce environments; aienvmap observes the runtime state that already exists on a host and gives AI agents review-first coordination evidence.
+- Microsoft APM packages and reproduces agent instructions, prompts, skills, plugins, and MCP declarations; aienvmap supplies runtime/package-manager truth that those agents can read before acting.
+- Syft, Trivy, Grype, and Dependency-Track generate or analyze full security evidence; aienvmap keeps a light coordination SBOM and should import or point to dedicated evidence rather than duplicate their databases.
+- `reconcile --check` detects drift from a reviewed host snapshot. It does not replace runtime lockfiles, create an isolated shell, or repair the machine.
+
 ## Reconciliation Track
 
 The default remains advisory and lightweight: observe existing state, explain conflicts, and write only aienvmap artifacts unless a human explicitly approves a targeted change.
@@ -15,7 +22,7 @@ The default remains advisory and lightweight: observe existing state, explain co
 - Information-only runtime coverage stays lightweight: Java includes `java`/`javac`/`JAVA_HOME` plus standard JDK roots, .NET includes SDK/runtime lists, Rust includes rustup toolchains, Go includes core env paths, and Ruby includes gem home; package enumeration remains out of scope for these runtimes.
 - Current shared-server safety: distinguish project, current-user, and visible-host facts, redact user paths by default, atomically replace generated artifacts, serialize concurrent JSONL writes with stale-lock recovery, and optionally reject stale intent/resolution writes with `coordinationRevision` plus `--if-revision`.
 - Next shared-server safety: add explicit actor/session ownership and lease expiry before claiming complete concurrent multi-user coordination.
-- Next lifecycle integration: surface a compact reconciliation decision in AI startup/status, then add optional PR drift checks; do not run environment cleanup or package installation automatically.
+- Current lifecycle integration: startup/status surface a compact reconciliation decision, and `reconcile --check` provides an opt-in exit-code drift gate for stable or self-hosted PR environments; no cleanup or installation runs automatically.
 - SBOM boundary: keep manifest-derived light SBOM as coordination context and import Syft/Trivy/Grype evidence rather than building a competing vulnerability database.
 
 Acceptance gates: cross-platform fixtures for every manager, no writes in default reconciliation, explicit evidence and limitations in JSON, bounded scan time, no version bump as part of feature development, and full test/smoke/pack verification before release review.

@@ -14,7 +14,11 @@ test("schemaContract describes stable AI output contracts", () => {
   assert.equal(schema.outputs.reconcile.mode, "read-only environment; writes only the report when --write is explicit");
   assert.ok(schema.outputs.reconcile.rootFields.includes("aiDecision"));
   assert.deepEqual(schema.outputs.reconcile.detailedToolchains, ["node/npm", "python/pip"]);
+  assert.equal(schema.outputs.reconcileCheck.command, "aienvmap reconcile --check --json");
+  assert.ok(schema.outputs.reconcileCheck.rootFields.includes("drift"));
+  assert.match(schema.outputs.reconcileCheck.rule, /self-hosted/);
   assert.ok(schema.releaseReadiness.contractReview.surfaces.includes("reconcile"));
+  assert.ok(schema.releaseReadiness.contractReview.surfaces.includes("reconcileCheck"));
   assert.ok(schema.outputs.status.rootFields.includes("coordinationRevision"));
   assert.match(schema.outputs.status.compareAndSwap, /--if-revision/);
   assert.match(schema.compatibilityPolicy, /backward-compatible/);

@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Added opt-in `reconcile --check` host-state drift detection with AI-readable differences and stable exit code `2`, plus an off-by-default GitHub Action input for stable/self-hosted runners.
 - Added optional compare-and-swap coordination: `status --json` exposes `coordinationRevision`, while `intent` and `resolve --if-revision` atomically reject stale multi-AI writes without a daemon or dependency.
 - Added read-only `reconcile` discovery for multiple visible npm executables, versions, prefixes, global roots, global packages, project package-manager expectations, and mixed lockfiles; no package version change or environment mutation is performed.
 - Added `onboard --dry-run` and marker-scoped `onboard --uninstall` so AI instruction pointers can be reviewed and removed without overwriting unrelated repository guidance.

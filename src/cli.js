@@ -131,7 +131,7 @@ Usage:
   aienvmap schema [--json]
   aienvmap start [--dir .] [--json]
   aienvmap discover [--dir .] [--json]
-  aienvmap reconcile [--dir .] [--json] [--write] [--quick|--full-packages] [--show-paths]
+  aienvmap reconcile [--dir .] [--json] [--write|--check] [--baseline file] [--quick|--full-packages] [--show-paths]
   aienvmap onboard [codex claude gemini] [--agents codex,claude,gemini,cursor,copilot] [--dry-run|--uninstall] [--no-sync]
   aienvmap demo [conflict] [--json]
 
@@ -169,7 +169,7 @@ Advanced:
   aienvmap summary [--dir .] [--write]
   aienvmap start [--dir .] [--json]
   aienvmap discover [--dir .] [--json]
-  aienvmap reconcile [--dir .] [--json] [--write] [--quick|--full-packages] [--show-paths]
+  aienvmap reconcile [--dir .] [--json] [--write|--check] [--baseline file] [--quick|--full-packages] [--show-paths]
   aienvmap demo [conflict] [--json]
   aienvmap dash [--dir .] [--open]
 `);

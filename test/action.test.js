@@ -11,6 +11,9 @@ test("GitHub Action writes compact status artifacts by default", async () => {
   assert.match(action, /write-doctor-json:/);
   assert.match(action, /write-sbom:/);
   assert.match(action, /write-summary:/);
+  assert.match(action, /reconcile-check:/);
+  assert.match(action, /default: "off"/);
+  assert.match(action, /reconcile .*--baseline .*--check --json/);
   assert.match(action, /status --dir/);
   assert.match(action, /--write --quiet/);
   assert.match(action, /sbom --dir.*--write --quiet/);

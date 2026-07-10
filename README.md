@@ -16,6 +16,7 @@
 - Start: run `npx aienvmap start`; it creates the env map, light SBOM, status, summary, discovery entry, and dashboard when missing or stale.
 - Existing environment: run `npx aienvmap reconcile`; it reports visible Node/npm and Python/pip installations, package locations, inventory digests/samples, project expectations, and lockfile conflicts without changing anything. Add `--write` to save the AI-readable report or `--full-packages` for package-level comparison.
 - Java, .NET, Ruby, Go, and Rust stay information-only: reconciliation reports visible executable paths and versions but does not inspect their packages or propose automatic cleanup.
+- Optional drift gate: save a reviewed baseline with `aienvmap reconcile --write`, then use `aienvmap reconcile --check --json` before environment-sensitive PR work. Exit `2` means review; it never authorizes cleanup.
 
 `discover` is read-only and reports `aiDiscovery.decision`: `auto-ready` or `fallback-required`. `onboard --dry-run` previews tiny marker-scoped pointers before `onboard` writes `AGENTS.md`, `CLAUDE.md`, or `GEMINI.md`; `onboard --uninstall` removes only those markers. Automatic discovery is best-effort; if pointers are missing, paste `copyPastePrompt` from `start --json` or `.aienvmap/discovery.json`, then follow `sessionUse` and `aiEntry`.
 
@@ -26,6 +27,7 @@ Formerly published as `aienvmp`. Use `aienvmap` going forward; new workspaces wr
 ```bash
 npx aienvmap start
 npx aienvmap reconcile
+npx aienvmap reconcile --check --json
 npx aienvmap onboard
 npx aienvmap discover
 npx aienvmap status
@@ -111,6 +113,8 @@ aienvmap onboard --agents cursor,copilot
 ## CI
 The GitHub Action writes discovery, status, summary, schema, doctor, plan, SBOM, and dashboard artifacts. `strict: "off"` reports warnings without failing the job. See [examples/github-action.yml](examples/github-action.yml).
 
+`reconcile-check` defaults to `off`. Enable it only on a stable workstation or self-hosted runner with a reviewed `.aienvmap/reconcile.json`; ephemeral hosted runners can legitimately have different runtime inventories.
+
 ```yaml
 - uses: soovwv/aienvmap@main
   with:
@@ -118,6 +122,7 @@ The GitHub Action writes discovery, status, summary, schema, doctor, plan, SBOM,
     write-plan: "true"
     write-sbom: "true"
     write-summary: "true"
+    reconcile-check: "off"
     strict: "off"
 ```
 
