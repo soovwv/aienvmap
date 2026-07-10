@@ -62,7 +62,7 @@ export async function inspectPackageManagers(dir, options = {}) {
     ...analyzeCommonRuntimes(commonRuntimes),
     ...analyzeJavaBuildTools(commonRuntimes.java)
   ];
-  const aiDecision = buildAiDecision({ node: nodeInstallations, npm: installations, python: pythonInstallations, project, findings, runtimeLinks: { npm: npmRuntimeLinks, pip: pipRuntimeLinks } });
+  const aiDecision = buildAiDecision({ node: nodeInstallations, npm: installations, python: pythonInstallations, java: commonRuntimes.java, project, findings, runtimeLinks: { npm: npmRuntimeLinks, pip: pipRuntimeLinks } });
   const publicPythonInstallations = pythonInstallations.map((item) => summarizePythonPackages(item, options.fullPackages));
   return {
     schemaName: "aienvmap.reconcile",
@@ -447,7 +447,7 @@ export function analyzePythonInstallations(installations, project = {}) {
   return findings;
 }
 
-export function buildAiDecision({ node = [], npm = [], python = [], project = {}, findings = [], runtimeLinks = {} }) {
+export function buildAiDecision({ node = [], npm = [], python = [], java = {}, project = {}, findings = [], runtimeLinks = {} }) {
   const actionCandidates = [];
   for (const item of node.filter((entry) => !entry.active)) actionCandidates.push({
     target: item.path,
@@ -496,6 +496,13 @@ export function buildAiDecision({ node = [], npm = [], python = [], project = {}
     },
     pythonInstallerEvidence: summarizeInstallerEvidence(python),
     pythonManagerEvidence: summarizePythonManagerEvidence(python),
+    javaManagerEvidence: {
+      managers: java.runtimeMetadata?.managers || [],
+      managedInstalls: java.runtimeMetadata?.managedInstallCount || 0,
+      routingManaged: java.runtimeMetadata?.routingManagedCount || 0,
+      removalAuthorized: false,
+      rule: "SDKMAN/mise canonical install roots may prove manager control; jenv and external registrations prove routing only, never removal permission."
+    },
     safeCommands: {
       pythonPackageCheck: "<selected-python> -m pip list --format=json",
       pythonInstallRule: "Use <selected-python> -m pip instead of bare pip so the target interpreter is explicit.",

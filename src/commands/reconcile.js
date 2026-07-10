@@ -61,7 +61,10 @@ export async function reconcileWorkspace(args = {}) {
   for (const runtime of Object.values(result.otherRuntimes)) {
     for (const item of runtime.installations) {
       console.log(`${item.runtime}: ${item.versions.length ? item.versions.join(",") : item.version} ${item.active ? "[active]" : "[inactive]"} ${item.source}/${item.scope} ${item.path}`);
-      if (item.runtime === "java") console.log(`  identity: ${item.vendor || "unknown-vendor"}; ${item.architecture || "unknown-arch"}; ${item.runtimeKind || "unknown-kind"}; home: ${item.javaHome || "unknown"} (${item.javaHomeSource || "unknown"})`);
+      if (item.runtime === "java") {
+        console.log(`  identity: ${item.vendor || "unknown-vendor"}; ${item.architecture || "unknown-arch"}; ${item.runtimeKind || "unknown-kind"}; home: ${item.javaHome || "unknown"} (${item.javaHomeSource || "unknown"})`);
+        console.log(`  manager: ${item.managerEvidence?.manager || "unknown"}; relationship: ${item.managerEvidence?.relationship || "unconfirmed"}; install ownership: ${item.managerEvidence?.ownershipProven ? "proven" : "not-proven"}; routing: ${item.managerEvidence?.routingManaged ? "managed" : "unconfirmed"}; removal: not-authorized`);
+      }
     }
     if (runtime.label === "Java") for (const binding of runtime.buildTools?.bindings || []) {
       console.log(`java tool: ${binding.tool}@${binding.toolVersion} (${binding.commandSource}) -> ${binding.runtimePath || "unresolved"} (${binding.relationship}/${binding.confidence})`);
@@ -109,6 +112,10 @@ export function summarizeReconciliation(value = {}) {
       runtimeKinds: value.otherRuntimes?.java?.runtimeMetadata?.runtimeKinds || [],
       propertyEvidence: value.otherRuntimes?.java?.runtimeMetadata?.propertyEvidenceCount || 0,
       compilers: value.otherRuntimes?.java?.runtimeMetadata?.compilerCount || 0,
+      managers: value.otherRuntimes?.java?.runtimeMetadata?.managers || [],
+      managedInstalls: value.otherRuntimes?.java?.runtimeMetadata?.managedInstallCount || 0,
+      routingManaged: value.otherRuntimes?.java?.runtimeMetadata?.routingManagedCount || 0,
+      removalAuthorized: false,
       buildTools: (value.otherRuntimes?.java?.buildTools?.bindings || []).map((item) => ({
         tool: item.tool,
         toolVersion: item.toolVersion,
