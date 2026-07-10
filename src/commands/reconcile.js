@@ -1,11 +1,29 @@
 import { inspectPackageManagers } from "../package-managers.js";
 import { reconcileJsonPath, workspaceDir } from "../paths.js";
 import { writeJson } from "../fsutil.js";
+import { readJson } from "../fsutil.js";
+import { compareReconciliation } from "../reconcile-drift.js";
 
 export async function reconcileWorkspace(args = {}) {
   if (args.quick && args.full_packages) throw new Error("use either --quick or --full-packages, not both");
+  if (args.check && args.write) throw new Error("use either --check or --write, not both; checking must not replace its baseline");
   const dir = workspaceDir(args);
-  const result = await inspectPackageManagers(dir, { showPaths: args.show_paths, fullPackages: args.full_packages, quick: args.quick });
+  const baselinePath = args.baseline || reconcileJsonPath(dir);
+  const baseline = args.check ? await readJson(baselinePath, null) : null;
+  if (args.check && !baseline) throw new Error(`missing reconciliation baseline at ${baselinePath}; run \`aienvmap reconcile --write\` first`);
+  const scanMode = args.quick || args.full_packages ? null : baseline?.scanMode;
+  const result = await inspectPackageManagers(dir, {
+    showPaths: args.show_paths,
+    fullPackages: args.full_packages || scanMode === "full-packages",
+    quick: args.quick || scanMode === "quick"
+  });
+  if (args.check) {
+    const check = compareReconciliation(baseline, result, { baselineArtifact: args.baseline || ".aienvmap/reconcile.json" });
+    if (args.json) console.log(JSON.stringify(check, null, 2));
+    else if (!args.quiet) printCheck(check);
+    if (check.exitCode) process.exitCode = check.exitCode;
+    return check;
+  }
   if (args.write) {
     result.written = reconcileJsonPath(dir);
     await writeJson(result.written, result);
@@ -50,6 +68,15 @@ export async function reconcileWorkspace(args = {}) {
   console.log("changes: none; review findings before changing runtimes, PATH, prefixes, or lockfiles");
   if (result.written) console.log(`written: ${result.written}`);
   return result;
+}
+
+function printCheck(check) {
+  console.log(`reconcile check: ${check.decision.toUpperCase()} (read-only)`);
+  console.log(`baseline: ${check.baseline.artifact} ${check.baseline.fingerprint}`);
+  console.log(`current: ${check.current.fingerprint}`);
+  if (!check.drift.detected) console.log("drift: none");
+  for (const item of check.drift.changes.slice(0, 20)) console.log(`[drift] ${item.field}: ${item.kind}`);
+  console.log(`next: ${check.aiDecision.nextCommand}`);
 }
 
 export function summarizeReconciliation(value = {}) {

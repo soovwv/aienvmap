@@ -194,3 +194,27 @@ test("reconcile --write saves only an aienvmap report", async () => {
   assert.equal(saved.written, json.written);
   assert.deepEqual((await fs.readdir(path.join(dir, ".aienvmap"))).sort(), ["reconcile.json"]);
 });
+
+test("reconcile --check reports project drift with stable exit code 2", async () => {
+  const dir = await fs.mkdtemp(path.join(os.tmpdir(), "aienvmap-reconcile-check-"));
+  const packageFile = path.join(dir, "package.json");
+  const cli = path.resolve("bin/aienvmap.js");
+  const { execFile } = await import("node:child_process");
+  const { promisify } = await import("node:util");
+  const run = promisify(execFile);
+  await fs.writeFile(packageFile, JSON.stringify({ packageManager: "npm@11" }), "utf8");
+  await run(process.execPath, [cli, "reconcile", "--json", "--write", "--quick", "--dir", dir], { cwd: path.resolve(".") });
+  await fs.writeFile(packageFile, JSON.stringify({ packageManager: "pnpm@10" }), "utf8");
+  await assert.rejects(
+    run(process.execPath, [cli, "reconcile", "--json", "--check", "--dir", dir], { cwd: path.resolve(".") }),
+    (error) => {
+      const json = JSON.parse(error.stdout);
+      assert.equal(error.code, 2);
+      assert.equal(json.schemaName, "aienvmap.reconcile-check");
+      assert.equal(json.decision, "review");
+      assert.ok(json.drift.changedSections.includes("project"));
+      assert.equal(json.aiDecision.safeToProceed, false);
+      return true;
+    }
+  );
+});
