@@ -412,6 +412,7 @@ export function buildAiDecision({ node = [], npm = [], python = [], project = {}
       pip: summarizeRuntimeLinkConfidence(runtimeLinks.pip),
       rule: "Runtime links are routing evidence, not proof of installation ownership or permission to remove software."
     },
+    pythonInstallerEvidence: summarizeInstallerEvidence(python),
     safeCommands: {
       pythonPackageCheck: "<selected-python> -m pip list --format=json",
       pythonInstallRule: "Use <selected-python> -m pip instead of bare pip so the target interpreter is explicit.",
@@ -425,6 +426,21 @@ export function buildAiDecision({ node = [], npm = [], python = [], project = {}
       "A removal candidate requires project ownership checks, package comparison, a rollback plan, and explicit human approval.",
       "If package digests differ and package-level evidence is needed, rerun `aienvmap reconcile --json --full-packages` before deciding."
     ]
+  };
+}
+
+function summarizeInstallerEvidence(installations = []) {
+  const evidence = installations.map((item) => item.installerEvidence || { collection: "not-requested" });
+  const installerCounts = {};
+  for (const item of evidence) for (const [name, count] of Object.entries(item.installerCounts || {})) installerCounts[name] = (installerCounts[name] || 0) + Number(count || 0);
+  return {
+    collectedRuntimes: evidence.filter((item) => item.collection === "collected").length,
+    notRequestedRuntimes: evidence.filter((item) => item.collection === "not-requested").length,
+    failedRuntimes: evidence.filter((item) => item.collection === "unsupported-or-failed").length,
+    installerCounts: Object.fromEntries(Object.entries(installerCounts).sort(([a], [b]) => a.localeCompare(b))),
+    requestedPackages: evidence.reduce((sum, item) => sum + Number(item.requestedCount || 0), 0),
+    editablePackages: evidence.reduce((sum, item) => sum + Number(item.editableCount || 0), 0),
+    rule: "Installer evidence describes Python distributions only; it does not prove who owns or may remove the interpreter."
   };
 }
 

@@ -211,6 +211,10 @@ test("AI decisions keep inactive virtual environments and require approval", () 
 
 test("AI decision summarizes strong, inferred, and unresolved runtime links", () => {
   const result = buildAiDecision({
+    python: [
+      { installerEvidence: { collection: "collected", installerCounts: { pip: 4, uv: 2 }, requestedCount: 2, editableCount: 1 } },
+      { installerEvidence: { collection: "unsupported-or-failed" } }
+    ],
     runtimeLinks: {
       npm: [{ confidence: "strong" }, { confidence: "medium" }],
       pip: [{ confidence: "none" }]
@@ -220,6 +224,12 @@ test("AI decision summarizes strong, inferred, and unresolved runtime links", ()
   assert.deepEqual(result.runtimeLinkSummary.pip, { total: 1, strong: 0, inferred: 0, unresolved: 1 });
   assert.match(result.runtimeLinkSummary.rule, /not proof/);
   assert.ok(result.readFirst.includes("npm.runtimeLinks"));
+  assert.deepEqual(result.pythonInstallerEvidence.installerCounts, { pip: 4, uv: 2 });
+  assert.equal(result.pythonInstallerEvidence.collectedRuntimes, 1);
+  assert.equal(result.pythonInstallerEvidence.failedRuntimes, 1);
+  assert.equal(result.pythonInstallerEvidence.requestedPackages, 2);
+  assert.equal(result.pythonInstallerEvidence.editablePackages, 1);
+  assert.match(result.pythonInstallerEvidence.rule, /does not prove/);
 });
 
 test("reconcile CLI is read-only and returns machine-readable package-manager state", async () => {
@@ -259,6 +269,7 @@ test("reconcile --full-packages exposes package-level evidence on demand", async
   assert.equal(json.python.packageDetail, "full");
   assert.ok(json.python.installations.every((item) => Array.isArray(item.packages)));
   assert.ok(json.python.installations.every((item) => ["collected", "unsupported-or-failed"].includes(item.installerEvidence.collection)));
+  assert.equal(json.aiDecision.pythonInstallerEvidence.notRequestedRuntimes, 0);
 });
 
 test("reconcile --quick keeps startup evidence compact", async () => {
