@@ -540,12 +540,14 @@ export function schemaContract() {
         command: "aienvmap reconcile --json --write",
         mode: "read-only environment; writes only the report when --write is explicit",
         rootFields: ["schemaName", "schemaVersion", "generatedAt", "mode", "scanMode", "scope", "limitations", "project", "node", "npm", "python", "otherRuntimes", "findings", "decision", "aiDecision", "written"],
-        aiDecisionFields: ["consumer", "decision", "readFirst", "canonicalCandidates", "actionCandidates", "runtimeLinkSummary", "pythonInstallerEvidence", "safeCommands", "rules"],
+        aiDecisionFields: ["consumer", "decision", "readFirst", "canonicalCandidates", "actionCandidates", "runtimeLinkSummary", "pythonInstallerEvidence", "pythonManagerEvidence", "safeCommands", "rules"],
         runtimeLinkFields: ["managerPath", "managerVersion", "runtimePath", "runtimeVersion", "relationship", "confidence", "evidence", "ownershipProven"],
         installerEvidenceFields: ["collection", "formatVersion", "pipVersion", "packageCount", "installerCounts", "requestedCount", "editableCount", "digest", "metadataSample", "semantics"],
+        managerEvidenceFields: ["manager", "managerVersion", "relationship", "confidence", "ownershipProven", "proofScope", "matchedKey", "removalAuthorized"],
+        uvManagerEvidenceFields: ["collection", "manager", "version", "managedRoot", "installationCount", "installations", "semantics"],
         detailedToolchains: ["node/npm", "python/pip"],
         informationOnlyRuntimes: ["java", "dotnet", "ruby", "go", "rust"],
-        rule: "AI agents may propose consolidation from this evidence, but runtime links and distribution installer metadata do not prove interpreter ownership; removal or PATH changes require explicit human approval and a rollback plan."
+        rule: "AI agents may propose consolidation from this evidence; uv managed-list matches may prove manager ownership, but never authorize removal or PATH changes without explicit human approval and a rollback plan."
       },
       reconcileCheck: {
         command: "aienvmap reconcile --check --json",

@@ -70,3 +70,16 @@ test("compareReconciliation detects Python installer evidence drift", () => {
   assert.deepEqual(installationChange.before[0].installerEvidence.installerCounts, { pip: 2 });
   assert.deepEqual(installationChange.after[0].installerEvidence.installerCounts, { pip: 1, uv: 1 });
 });
+
+test("compareReconciliation detects Python manager ownership evidence drift", () => {
+  const baseline = report();
+  baseline.python.installations = [{ path: "$HOME/python", version: "3.12", managerEvidence: { manager: "unknown", confidence: "none", ownershipProven: false } }];
+  baseline.python.managerEvidence = { collection: "not-requested" };
+  const current = report();
+  current.python.installations = [{ path: "$HOME/python", version: "3.12", managerEvidence: { manager: "uv", confidence: "strong", ownershipProven: true, removalAuthorized: false } }];
+  current.python.managerEvidence = { collection: "collected", manager: "uv", installationCount: 1 };
+  const result = compareReconciliation(baseline, current);
+  assert.equal(result.decision, "review");
+  assert.ok(result.drift.changedSections.includes("python"));
+  assert.match(result.drift.changes.map((item) => item.field).join(" "), /python\.managerEvidence/);
+});

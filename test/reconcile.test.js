@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
-import { analyzeNodeInstallations, analyzeNpmInstallations, analyzePythonCommandRouting, analyzePythonInstallations, analyzeRuntimeLinks, buildAiDecision, compareNpmGlobalPackages, comparePythonPackages, findPythonCandidates, linkNodeNpmRuntimes, linkPythonPipRuntimes, parsePackageManager, parsePipList, parsePipVersion, summarizePipInspect, summarizePythonPackages } from "../src/package-managers.js";
+import { analyzeNodeInstallations, analyzeNpmInstallations, analyzePythonCommandRouting, analyzePythonInstallations, analyzeRuntimeLinks, attachUvManagerEvidence, buildAiDecision, compareNpmGlobalPackages, comparePythonPackages, findPythonCandidates, linkNodeNpmRuntimes, linkPythonPipRuntimes, parsePackageManager, parsePipList, parsePipVersion, summarizePipInspect, summarizePythonPackages } from "../src/package-managers.js";
 
 test("parsePackageManager separates package manager and pinned version", () => {
   assert.deepEqual(parsePackageManager("npm@10.8.2"), { name: "npm", version: "10.8.2" });
@@ -133,6 +133,32 @@ test("Python/pip runtime links prefer package-location evidence and expose ambig
   assert.equal(links[1].confidence, "none");
 });
 
+test("uv manager evidence proves only managed-list matches and never authorizes removal", () => {
+  const managedRoot = path.join("home", "uv", "python");
+  const installations = attachUvManagerEvidence([
+    { path: path.join(managedRoot, "cpython-3.12", "python"), version: "3.12.13", source: "uv" },
+    { path: path.join("usr", "bin", "python"), version: "3.11.0", source: "system" }
+  ], {
+    collection: "collected",
+    version: "0.11.13",
+    managedRoot,
+    installations: [{ key: "cpython-3.12.13", version: "3.12.13", path: path.join(managedRoot, "cpython-3.12", "python") }]
+  });
+  assert.equal(installations[0].managerEvidence.relationship, "managed-python-list-match");
+  assert.equal(installations[0].managerEvidence.ownershipProven, true);
+  assert.equal(installations[0].managerEvidence.proofScope, "uv-managed-interpreter");
+  assert.equal(installations[0].managerEvidence.removalAuthorized, false);
+  assert.equal(installations[1].managerEvidence.relationship, "unconfirmed");
+  assert.equal(installations[1].managerEvidence.ownershipProven, false);
+});
+
+test("uv known-root evidence remains an inference when deep collection was not requested", () => {
+  const [python] = attachUvManagerEvidence([{ path: path.join("home", "uv", "python", "cpython", "python"), version: "3.12", source: "uv" }], { collection: "not-requested" });
+  assert.equal(python.managerEvidence.relationship, "managed-root-inference");
+  assert.equal(python.managerEvidence.confidence, "medium");
+  assert.equal(python.managerEvidence.ownershipProven, false);
+});
+
 test("uncertain active runtime links create review findings only with multiple runtimes", () => {
   const findings = analyzeRuntimeLinks(
     [{ confidence: "medium" }],
@@ -212,8 +238,8 @@ test("AI decisions keep inactive virtual environments and require approval", () 
 test("AI decision summarizes strong, inferred, and unresolved runtime links", () => {
   const result = buildAiDecision({
     python: [
-      { installerEvidence: { collection: "collected", installerCounts: { pip: 4, uv: 2 }, requestedCount: 2, editableCount: 1 } },
-      { installerEvidence: { collection: "unsupported-or-failed" } }
+      { installerEvidence: { collection: "collected", installerCounts: { pip: 4, uv: 2 }, requestedCount: 2, editableCount: 1 }, managerEvidence: { manager: "uv", confidence: "strong", ownershipProven: true } },
+      { installerEvidence: { collection: "unsupported-or-failed" }, managerEvidence: { manager: "uv", confidence: "medium", ownershipProven: false } }
     ],
     runtimeLinks: {
       npm: [{ confidence: "strong" }, { confidence: "medium" }],
@@ -230,6 +256,11 @@ test("AI decision summarizes strong, inferred, and unresolved runtime links", ()
   assert.equal(result.pythonInstallerEvidence.requestedPackages, 2);
   assert.equal(result.pythonInstallerEvidence.editablePackages, 1);
   assert.match(result.pythonInstallerEvidence.rule, /does not prove/);
+  assert.equal(result.pythonManagerEvidence.proven, 1);
+  assert.equal(result.pythonManagerEvidence.inferred, 1);
+  assert.deepEqual(result.pythonManagerEvidence.managers, ["uv"]);
+  assert.equal(result.pythonManagerEvidence.removalAuthorized, false);
+  assert.match(result.pythonManagerEvidence.rule, /never turns it into removal authorization/);
 });
 
 test("reconcile CLI is read-only and returns machine-readable package-manager state", async () => {
@@ -248,6 +279,8 @@ test("reconcile CLI is read-only and returns machine-readable package-manager st
   assert.ok(Array.isArray(json.node.installations));
   assert.ok(Array.isArray(json.npm.runtimeLinks));
   assert.ok(Array.isArray(json.python.runtimeLinks));
+  assert.equal(json.python.managerEvidence.collection, "not-requested");
+  assert.ok(json.python.installations.every((item) => item.managerEvidence));
   assert.ok(json.otherRuntimes.java);
   assert.ok(json.otherRuntimes.dotnet);
   assert.equal(json.aiDecision.consumer, "AI agent");
@@ -267,6 +300,7 @@ test("reconcile --full-packages exposes package-level evidence on demand", async
   const result = await promisify(execFile)(process.execPath, [path.resolve("bin/aienvmap.js"), "reconcile", "--json", "--full-packages", "--dir", dir], { cwd: path.resolve(".") });
   const json = JSON.parse(result.stdout);
   assert.equal(json.python.packageDetail, "full");
+  assert.ok(["collected", "unavailable", "unsupported-or-failed"].includes(json.python.managerEvidence.collection));
   assert.ok(json.python.installations.every((item) => Array.isArray(item.packages)));
   assert.ok(json.python.installations.every((item) => ["collected", "unsupported-or-failed"].includes(item.installerEvidence.collection)));
   assert.equal(json.aiDecision.pythonInstallerEvidence.notRequestedRuntimes, 0);
