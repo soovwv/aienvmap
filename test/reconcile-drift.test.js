@@ -118,7 +118,7 @@ test("compareReconciliation detects Java vendor and architecture drift", () => {
 });
 
 test("compareReconciliation detects Java build-tool JVM routing drift", () => {
-  const baseline = baseReconciliation();
+  const baseline = report();
   baseline.otherRuntimes.java = {
     installations: [{ path: "/jdk-21/bin/java", version: "21" }],
     distinctVersions: ["21"],
