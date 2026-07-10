@@ -59,7 +59,10 @@ export async function reconcileWorkspace(args = {}) {
   for (const item of result.python.pipCommands) console.log(`pip: ${item.version} -> Python ${item.pythonVersion} ${item.active ? "[active]" : "[inactive]"} ${item.path}`);
   for (const link of result.python.runtimeLinks || []) console.log(`pip runtime: ${link.managerPath} -> ${link.runtimePath || "unresolved"} (${link.relationship}/${link.confidence}; ownership not proven)`);
   for (const runtime of Object.values(result.otherRuntimes)) {
-    for (const item of runtime.installations) console.log(`${item.runtime}: ${item.versions.length ? item.versions.join(",") : item.version} ${item.active ? "[active]" : "[inactive]"} ${item.source}/${item.scope} ${item.path}`);
+    for (const item of runtime.installations) {
+      console.log(`${item.runtime}: ${item.versions.length ? item.versions.join(",") : item.version} ${item.active ? "[active]" : "[inactive]"} ${item.source}/${item.scope} ${item.path}`);
+      if (item.runtime === "java") console.log(`  identity: ${item.vendor || "unknown-vendor"}; ${item.architecture || "unknown-arch"}; ${item.runtimeKind || "unknown-kind"}; home: ${item.javaHome || "unknown"} (${item.javaHomeSource || "unknown"})`);
+    }
   }
   if (!result.findings.length) console.log("findings: no package-manager conflicts detected");
   for (const finding of result.findings) {
@@ -97,6 +100,13 @@ export function summarizeReconciliation(value = {}) {
     },
     informationOnlyRuntimes: Object.fromEntries(Object.entries(value.otherRuntimes || {}).map(([name, item]) => [name, item.installations?.length || 0])),
     osNativeEvidence: Object.fromEntries(Object.entries(value.otherRuntimes || {}).map(([name, item]) => [name, item.discoveryEvidence?.osNativeCount || 0])),
+    javaMetadata: {
+      vendors: value.otherRuntimes?.java?.runtimeMetadata?.vendors || [],
+      architectures: value.otherRuntimes?.java?.runtimeMetadata?.architectures || [],
+      runtimeKinds: value.otherRuntimes?.java?.runtimeMetadata?.runtimeKinds || [],
+      propertyEvidence: value.otherRuntimes?.java?.runtimeMetadata?.propertyEvidenceCount || 0,
+      compilers: value.otherRuntimes?.java?.runtimeMetadata?.compilerCount || 0
+    },
     runtimeLinks: {
       npmStrong: (value.npm?.runtimeLinks || []).filter((item) => item.confidence === "strong").length,
       pipStrong: (value.python?.runtimeLinks || []).filter((item) => item.confidence === "strong").length,

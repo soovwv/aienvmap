@@ -98,3 +98,21 @@ test("compareReconciliation detects OS-native Java discovery evidence drift", ()
   assert.ok(result.drift.changedSections.includes("otherRuntimes"));
   assert.match(result.drift.changes.map((item) => item.field).join(" "), /otherRuntimes\.java/);
 });
+
+test("compareReconciliation detects Java vendor and architecture drift", () => {
+  const baseline = report();
+  baseline.otherRuntimes.java = {
+    installations: [{ runtime: "java", path: "/java", version: "21", vendor: "Microsoft", architecture: "amd64", runtimeKind: "jdk" }],
+    distinctVersions: ["21"],
+    runtimeMetadata: { vendors: ["Microsoft"], architectures: ["amd64"], runtimeKinds: ["jdk"] }
+  };
+  const current = report();
+  current.otherRuntimes.java = {
+    installations: [{ runtime: "java", path: "/java", version: "21", vendor: "Eclipse Adoptium", architecture: "aarch64", runtimeKind: "jdk" }],
+    distinctVersions: ["21"],
+    runtimeMetadata: { vendors: ["Eclipse Adoptium"], architectures: ["aarch64"], runtimeKinds: ["jdk"] }
+  };
+  const result = compareReconciliation(baseline, current);
+  assert.equal(result.decision, "review");
+  assert.match(result.drift.changes.map((item) => item.field).join(" "), /otherRuntimes\.java\.runtimeMetadata/);
+});
