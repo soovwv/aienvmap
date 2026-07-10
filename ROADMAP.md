@@ -4,6 +4,22 @@
 
 Primary positioning: AI workspace coordination first, lightweight SBOM context second. Full SBOM generators and vulnerability scanners remain complementary optional inputs.
 
+## Reconciliation Track
+
+The default remains advisory and lightweight: observe existing state, explain conflicts, and write only aienvmap artifacts unless a human explicitly approves a targeted change.
+
+- Current evidence: `reconcile` discovers visible npm executables from PATH and known nvm/Volta/mise locations, compares versions, prefixes, global roots, global packages, `packageManager`, and lockfiles, and can optionally write `.aienvmap/reconcile.json`.
+- Instruction safety: preview pointer changes with `onboard --dry-run`, keep content inside marker blocks, remove only those blocks with `onboard --uninstall`, and reject paths outside the workspace.
+- Current Python coverage: discover PATH, project `.venv`/`venv`, python.org, pyenv, mise, uv, Homebrew, common Unix, and macOS Framework locations; record interpreter, prefix/base prefix, venv state, visible package locations, count/digest/sample, and optional full package evidence.
+- Next package-manager coverage: add pnpm, Yarn/Corepack, standalone pip/uv/pipx entry-point conflicts, Conda, and stronger manager ownership evidence without adding runtime dependencies.
+- Information-only runtime coverage stays lightweight: Java includes `java`/`javac`/`JAVA_HOME` plus standard JDK roots, .NET includes SDK/runtime lists, Rust includes rustup toolchains, Go includes core env paths, and Ruby includes gem home; package enumeration remains out of scope for these runtimes.
+- Current shared-server safety: distinguish project, current-user, and visible-host facts, redact user paths by default, atomically replace generated artifacts, serialize concurrent JSONL writes with stale-lock recovery, and optionally reject stale intent/resolution writes with `coordinationRevision` plus `--if-revision`.
+- Next shared-server safety: add explicit actor/session ownership and lease expiry before claiming complete concurrent multi-user coordination.
+- Next lifecycle integration: surface a compact reconciliation decision in AI startup/status, then add optional PR drift checks; do not run environment cleanup or package installation automatically.
+- SBOM boundary: keep manifest-derived light SBOM as coordination context and import Syft/Trivy/Grype evidence rather than building a competing vulnerability database.
+
+Acceptance gates: cross-platform fixtures for every manager, no writes in default reconciliation, explicit evidence and limitations in JSON, bounded scan time, no version bump as part of feature development, and full test/smoke/pack verification before release review.
+
 ## Near Term
 
 - Prepare `0.2.0` as one stabilized AI workspace contract release, not a per-commit npm stream
@@ -28,7 +44,7 @@ Primary positioning: AI workspace coordination first, lightweight SBOM context s
 ## Next
 
 - Deeper runtime discovery:
-  - nvm, fnm, volta
+  - expand the initial read-only npm discovery across nvm and Volta to cover fnm and richer Node ownership evidence
   - pyenv, uv, conda
   - mise, asdf
 - Global tool inventory:

@@ -10,6 +10,13 @@ test("schemaContract describes stable AI output contracts", () => {
   assert.equal(schema.name, "aienvmap-contract");
   assert.equal(schema.contractVersion, "0.1-prototype");
   assert.equal(schema.stableFrom, "0.2.0");
+  assert.equal(schema.outputs.reconcile.file, ".aienvmap/reconcile.json");
+  assert.equal(schema.outputs.reconcile.mode, "read-only environment; writes only the report when --write is explicit");
+  assert.ok(schema.outputs.reconcile.rootFields.includes("aiDecision"));
+  assert.deepEqual(schema.outputs.reconcile.detailedToolchains, ["node/npm", "python/pip"]);
+  assert.ok(schema.releaseReadiness.contractReview.surfaces.includes("reconcile"));
+  assert.ok(schema.outputs.status.rootFields.includes("coordinationRevision"));
+  assert.match(schema.outputs.status.compareAndSwap, /--if-revision/);
   assert.match(schema.compatibilityPolicy, /backward-compatible/);
   assert.match(schema.breakingChangePolicy, /contractVersion bump/);
   assert.equal(schema.recommendation.category, "AI workspace coordination");

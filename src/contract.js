@@ -448,7 +448,7 @@ export function schemaContract() {
       contractReview: {
         status: "pending-0.2.0-review",
         command: "node bin/aienvmap.js schema --json",
-        surfaces: ["discover", "start", "discovery", "status", "context", "handoff", "plan", "manifest", "sbom", "cyclonedxLite", "demo"],
+        surfaces: ["discover", "start", "discovery", "status", "context", "handoff", "plan", "manifest", "reconcile", "sbom", "cyclonedxLite", "demo"],
         reviewFields: ["outputs.*.rootFields", "outputs.*Fields", "compatibility.additiveRule", "stableContractRule"],
         rule: "Before 0.2.0, review documented rootFields as the compatibility floor; after 0.2.0, add fields only additively unless contractVersion changes."
       },
@@ -473,7 +473,8 @@ export function schemaContract() {
       status: {
         file: ".aienvmap/status.json",
         command: "aienvmap status --json",
-        rootFields: ["state", "readOrder", "aiSession", "aiBootstrap", "nextCommand", "nextSafeCommand", "artifactFreshness", "strictRecommendation", "operationalSafety", "qualitySignals", "decision", "counts", "aiReadiness", "collaboration", "coordinationResolution", "maintenanceLoop", "coordination", "agentPointers", "sbomRisk", "followUpPlan", "environmentChangeProtocol", "dependencyQuickCheck"],
+        rootFields: ["state", "readOrder", "aiSession", "aiBootstrap", "nextCommand", "nextSafeCommand", "artifactFreshness", "strictRecommendation", "operationalSafety", "qualitySignals", "decision", "counts", "aiReadiness", "collaboration", "coordinationRevision", "coordinationResolution", "maintenanceLoop", "coordination", "agentPointers", "sbomRisk", "followUpPlan", "environmentChangeProtocol", "dependencyQuickCheck", "reconciliation"],
+        compareAndSwap: "Use coordinationRevision with intent/resolve --if-revision to reject stale multi-AI coordination writes.",
         agentPointerFields: ["installedCount", "missingCount", "installed", "missing", "discovery", "discoveryDecision", "nextSetupCommand", "startupChecklist", "onboardCommand", "fallbackCommand", "fallbackRead", "next", "targets", "rule"],
         contract: preflightContract()
       },
@@ -489,7 +490,7 @@ export function schemaContract() {
       start: {
         command: "aienvmap start --json",
         mode: "read-mostly",
-        rootFields: ["status", "mode", "localMode", "purpose", "startHere", "readOrder", "decision", "summary", "nextCommand", "nextSetupCommand", "agentPointers", "aiDiscovery", "discoveryDecision", "startupChecklist", "resume", "sessionUse", "aiEntry", "fallbackPrompt", "copyPastePrompt", "promptUse", "statusText", "rule"],
+        rootFields: ["status", "mode", "localMode", "purpose", "startHere", "readOrder", "decision", "summary", "nextCommand", "nextSetupCommand", "agentPointers", "aiDiscovery", "discoveryDecision", "startupChecklist", "resume", "sessionUse", "aiEntry", "fallbackPrompt", "copyPastePrompt", "promptUse", "reconciliation", "statusText", "rule"],
         purpose: "One-command AI startup that syncs only when artifacts are missing or stale, then returns the discovery decision and shortest resume routine.",
         rule: "Use root discoveryDecision, startupChecklist, sessionUse, resume, and fallbackPrompt before assuming instruction-file automatic discovery worked."
       },
@@ -533,6 +534,16 @@ export function schemaContract() {
       manifest: {
         file: ".aienvmap/manifest.json",
         rootFields: ["schemaVersion", "workspace", "runtimes", "packageManagers", "dependencySnapshot", "lightSbom", "security", "trust"]
+      },
+      reconcile: {
+        file: ".aienvmap/reconcile.json",
+        command: "aienvmap reconcile --json --write",
+        mode: "read-only environment; writes only the report when --write is explicit",
+        rootFields: ["schemaName", "schemaVersion", "generatedAt", "mode", "scanMode", "scope", "limitations", "project", "node", "npm", "python", "otherRuntimes", "findings", "decision", "aiDecision", "written"],
+        aiDecisionFields: ["consumer", "decision", "readFirst", "canonicalCandidates", "actionCandidates", "safeCommands", "rules"],
+        detailedToolchains: ["node/npm", "python/pip"],
+        informationOnlyRuntimes: ["java", "dotnet", "ruby", "go", "rust"],
+        rule: "AI agents may propose consolidation from this evidence, but removal or PATH changes require explicit human approval and a rollback plan."
       },
       sbom: {
         file: ".aienvmap/sbom.json",

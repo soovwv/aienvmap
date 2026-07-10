@@ -1,11 +1,10 @@
-import fs from "node:fs/promises";
-import path from "node:path";
 import { diagnose } from "../doctor.js";
-import { readJson } from "../fsutil.js";
+import { jsonlRevision, readJson, writeJson } from "../fsutil.js";
 import { loadPolicy, policyWarnings } from "../policy.js";
-import { intentsPath, manifestPath, statusJsonPath, timelinePath, workspaceDir } from "../paths.js";
+import { intentsPath, manifestPath, reconcileJsonPath, statusJsonPath, timelinePath, workspaceDir } from "../paths.js";
 import { openIntents, readJsonl, readTimeline } from "../timeline.js";
 import { buildPreflight } from "../preflight.js";
+import { summarizeReconciliation } from "./reconcile.js";
 
 export async function statusWorkspace(args) {
   const dir = workspaceDir(args);
@@ -14,8 +13,23 @@ export async function statusWorkspace(args) {
   const policy = await loadPolicy(dir);
   const timeline = await readTimeline(timelinePath(dir));
   const intents = openIntents(await readJsonl(intentsPath(dir)));
+  const coordinationRevision = await jsonlRevision(intentsPath(dir));
   const warnings = [...diagnose(manifest, { timeline, intents }), ...policyWarnings(manifest, policy)];
-  const status = buildStatus(manifest, warnings, intents, timeline);
+  const built = buildStatus(manifest, warnings, intents, timeline);
+  const baseStatus = {
+    ...built,
+    coordinationRevision,
+    coordination: {
+      ...(built.coordination || {}),
+      revision: coordinationRevision,
+      compareAndSwap: "Pass --if-revision <coordinationRevision> to intent or resolve when acting on a previously read state."
+    }
+  };
+  const reconciliation = await readJson(reconcileJsonPath(dir), null);
+  const status = reconciliation ? { ...baseStatus, reconciliation: summarizeReconciliation(reconciliation) } : {
+    ...baseStatus,
+    reconciliation: { decision: "missing", artifact: ".aienvmap/reconcile.json", nextCommand: "aienvmap reconcile --write", rule: "Generate read-only reconciliation evidence before runtime or package-manager changes." }
+  };
   const artifact = args.write ? await writeStatusArtifact(dir, status) : "";
   const output = artifact ? { ...status, artifact } : status;
   if (args.json) {
@@ -28,8 +42,7 @@ export async function statusWorkspace(args) {
 
 export async function writeStatusArtifact(dir, status) {
   const out = statusJsonPath(dir);
-  await fs.mkdir(path.dirname(out), { recursive: true });
-  await fs.writeFile(out, JSON.stringify(status, null, 2), "utf8");
+  await writeJson(out, status);
   return out;
 }
 

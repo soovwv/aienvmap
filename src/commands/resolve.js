@@ -1,4 +1,4 @@
-import { appendJsonLine } from "../fsutil.js";
+import { appendJsonLinesChecked } from "../fsutil.js";
 import { readJsonl, openIntents } from "../timeline.js";
 import { intentsPath, workspaceDir } from "../paths.js";
 
@@ -15,15 +15,15 @@ export async function resolveWorkspace(args) {
     status: args.status || "resolved",
     reason: args.reason || ""
   }));
-  for (const entry of entries) {
-    await appendJsonLine(intentsPath(dir), entry);
-  }
+  const revision = await appendJsonLinesChecked(intentsPath(dir), entries, args.if_revision);
   const output = {
     status: args.status || "resolved",
     count: entries.length,
     refs,
     actor,
-    reason: args.reason || ""
+    reason: args.reason || "",
+    coordinationRevision: revision.revision,
+    previousRevision: revision.beforeRevision
   };
   if (args.json) {
     console.log(JSON.stringify(output, null, 2));

@@ -18,9 +18,10 @@ export async function onboardWorkspace(args = {}) {
     pointers.push(await snippetWorkspace({ ...args, _: [agent], write: true, quiet: true }));
   }
 
-  const synced = args.no_sync ? null : await syncWorkspace({ ...args, json: false, quiet: true });
+  const synced = args.no_sync || args.dry_run ? null : await syncWorkspace({ ...args, json: false, quiet: true });
   const result = {
-    status: "ok",
+    status: args.dry_run ? "preview" : args.uninstall ? "uninstalled" : "ok",
+    mode: args.dry_run ? "dry-run" : args.uninstall ? "uninstall" : "write",
     pointers,
     sync: synced ? "ok" : "skipped",
     startHere: ".aienvmap/discovery.json",
@@ -28,7 +29,7 @@ export async function onboardWorkspace(args = {}) {
     nextCommands: ["aienvmap status", "aienvmap context --json"],
     sessionStart,
     freshnessRule: "Use artifactFreshness.nextCommand; when stale or unknown, run aienvmap sync before environment-affecting work.",
-    aiDiscovery: `${synced ? "ready" : "pointers-written"}: ${discoveryTargets.join(", ")}`,
+    aiDiscovery: `${args.dry_run ? "preview" : args.uninstall ? "removed" : synced ? "ready" : "pointers-written"}: ${discoveryTargets.join(", ")}`,
     next: "Run aienvmap status; AI agents should read their instruction file pointer, then .aienvmap/discovery.json and .aienvmap/status.json."
   };
 

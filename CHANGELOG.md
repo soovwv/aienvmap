@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+- Added optional compare-and-swap coordination: `status --json` exposes `coordinationRevision`, while `intent` and `resolve --if-revision` atomically reject stale multi-AI writes without a daemon or dependency.
+- Added read-only `reconcile` discovery for multiple visible npm executables, versions, prefixes, global roots, global packages, project package-manager expectations, and mixed lockfiles; no package version change or environment mutation is performed.
+- Added `onboard --dry-run` and marker-scoped `onboard --uninstall` so AI instruction pointers can be reviewed and removed without overwriting unrelated repository guidance.
+- Restricted instruction-pointer writes to paths inside the selected workspace.
+- Extended reconciliation with cross-platform Python discovery, interpreter/prefix/venv evidence, pip package inventories, project Python expectations, and conservative AI action candidates that never authorize automatic removal.
+- Added bare `pip` command routing evidence and a review finding when active `python` and `pip` target different Python versions.
+- Added lightweight path-and-version-only discovery for Java, .NET SDKs, Ruby, Go, and Rust while keeping detailed package reconciliation limited to Node/npm and Python/pip.
+- Registered reconciliation in the AI JSON contract, generated/reused its report during `start`, summarized it in `status.json`, made artifact replacement atomic, and serialized concurrent JSONL event writes with stale-lock recovery.
 - Renamed the npm package and CLI from `aienvmp` to `aienvmap` as a clean `0.1.0` package start.
 - Kept the old package as a migration target for deprecation messaging instead of carrying its noisy npm version history into the new name.
 - Mirrored `sessionUse` in the dashboard Agent Pointers fallback table so human operators see the same compact proof command and fallback prompt rule as AI agents.

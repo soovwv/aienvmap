@@ -14,8 +14,10 @@
 - AI signal: shared Codex/Claude/Gemini work, version drift, or repeated env handoffs.
 - SBOM signal: use Syft, Trivy, Grype, or Dependency-Track for full evidence; keep `aienvmap` as the AI coordination layer.
 - Start: run `npx aienvmap start`; it creates the env map, light SBOM, status, summary, discovery entry, and dashboard when missing or stale.
+- Existing environment: run `npx aienvmap reconcile`; it reports visible Node/npm and Python/pip installations, package locations, inventory digests/samples, project expectations, and lockfile conflicts without changing anything. Add `--write` to save the AI-readable report or `--full-packages` for package-level comparison.
+- Java, .NET, Ruby, Go, and Rust stay information-only: reconciliation reports visible executable paths and versions but does not inspect their packages or propose automatic cleanup.
 
-`discover` is read-only and reports `aiDiscovery.decision`: `auto-ready` or `fallback-required`. `onboard` installs tiny pointers in `AGENTS.md`, `CLAUDE.md`, and `GEMINI.md`. Automatic discovery is best-effort; if pointers are missing, paste `copyPastePrompt` from `start --json` or `.aienvmap/discovery.json`, then follow `sessionUse` and `aiEntry`.
+`discover` is read-only and reports `aiDiscovery.decision`: `auto-ready` or `fallback-required`. `onboard --dry-run` previews tiny marker-scoped pointers before `onboard` writes `AGENTS.md`, `CLAUDE.md`, or `GEMINI.md`; `onboard --uninstall` removes only those markers. Automatic discovery is best-effort; if pointers are missing, paste `copyPastePrompt` from `start --json` or `.aienvmap/discovery.json`, then follow `sessionUse` and `aiEntry`.
 
 Formerly published as `aienvmp`. Use `aienvmap` going forward; new workspaces write `.aienvmap/` artifacts.
 
@@ -23,6 +25,7 @@ Formerly published as `aienvmp`. Use `aienvmap` going forward; new workspaces wr
 
 ```bash
 npx aienvmap start
+npx aienvmap reconcile
 npx aienvmap onboard
 npx aienvmap discover
 npx aienvmap status
@@ -38,6 +41,8 @@ npx aienvmap intent --actor agent:id --action "planned-change" --target dependen
 npx aienvmap checkpoint --actor agent:id --summary "dependency-change" --target dependency
 ```
 
+On a shared server, an AI can protect a decision made from an earlier read: take `coordinationRevision` from `aienvmap status --json`, then pass `--if-revision ir1:...` to `intent` or `resolve`. If another AI changed the intent log first, aienvmap rejects the stale write and tells the AI to refresh. Omitting the option preserves the lightweight advisory flow.
+
 Try `npx aienvmap demo` to see the multi-agent conflict flow without touching your workspace.
 
 For the shared-server story, read [AI workspace coordination case study](examples/ai-workspace-case-study.md). For recommendation criteria, read [AI adoption guide](examples/ai-adoption-guide.md).
@@ -50,6 +55,7 @@ For the shared-server story, read [AI workspace coordination case study](example
 - stays advisory and dependency-free by default; strict mode is opt-in
 - keeps light SBOM useful for coordination, not as a full compliance scanner replacement
 - AI loop: `sync` -> `status` -> `context --json` -> `intent` -> `checkpoint` -> `handoff`
+- Existing-state loop: `reconcile` -> review findings -> choose the canonical toolchain -> make only explicitly approved changes
 
 Local mode is warn-only. Use strict doctor checks only for CI or explicit human-requested gates.
 
@@ -79,6 +85,7 @@ AIENV.md                 # Markdown env map for AI agents
 - `agentPointers.discovery`, `aiDiscovery.decision`, `sessionUse`, `startupChecklist`, `aiEntry`, and `copyPastePrompt` tell AI whether discovery is `auto-ready` or `fallback-required`.
 - `.aienvmap/discovery.json`, `discovery.json.maintenance`, `agentDiscovery.sessionStart`, and `readOrder` give the fallback start path for schema-only or Markdown-first agents.
 - `environmentChangeProtocol`, `operationalSafety`, `followUpPlan`, `collaboration`, `coordination`, and `agentActivity` keep shared changes advisory; `followUpPlan` points to sync, status, or handoff when needed.
+- `coordinationRevision` enables optional compare-and-swap protection for intent and resolution writes without a daemon, database, or runtime dependency.
 - `aiUse`, `dependencyQuickCheck`, `sbomStrategy`, `scannerGuidance.decision`, `aiReviewPlan`, `externalTools`, and `evidenceWorkflow` keep SBOM review light while pointing to Syft, Trivy, Grype, or Dependency-Track when full evidence is needed.
 - `qualitySignals`, `releaseGate`, and `releaseReadiness` expose the AI-friendly, lightweight, batched stable-contract gate.
 - After `0.2.0`, documented JSON fields stay backward-compatible; new fields are additive.

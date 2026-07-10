@@ -375,6 +375,9 @@ test("statusWorkspace JSON reports review-required and strict suggestion", async
   }
 
   const json = JSON.parse(output);
+  assert.match(json.coordinationRevision, /^ir1:[a-f0-9]{16}$/);
+  assert.equal(json.coordination.revision, json.coordinationRevision);
+  assert.match(json.coordination.compareAndSwap, /--if-revision/);
   assert.equal(json.state, "review-required");
   assert.equal(json.contract.version, 1);
   assert.equal(json.enforcement.suggestedStrictScopes[0], "policy");
