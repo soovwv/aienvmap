@@ -45,3 +45,14 @@ test("compareReconciliation identifies runtime and project drift for AI review",
   assert.equal(result.aiDecision.safeToProceed, false);
   assert.match(result.aiDecision.rule, /does not authorize cleanup/);
 });
+
+test("compareReconciliation detects a package-manager runtime routing change", () => {
+  const baseline = report();
+  baseline.npm.runtimeLinks = [{ managerPath: "$HOME/npm", runtimePath: "$HOME/node20", relationship: "co-located-executables", confidence: "strong", ownershipProven: false }];
+  const current = report();
+  current.npm.runtimeLinks = [{ managerPath: "$HOME/npm", runtimePath: "$HOME/node24", relationship: "path-precedence-inference", confidence: "medium", ownershipProven: false }];
+  const result = compareReconciliation(baseline, current);
+  assert.equal(result.decision, "review");
+  assert.ok(result.drift.changedSections.includes("npm"));
+  assert.match(result.drift.changes.map((item) => item.field).join(" "), /npm\.runtimeLinks/);
+});

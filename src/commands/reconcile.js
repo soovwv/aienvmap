@@ -46,6 +46,7 @@ export async function reconcileWorkspace(args = {}) {
     if (item.globalRoot) console.log(`  global root: ${item.globalRoot}`);
     if (item.globalPackages.length) console.log(`  global packages: ${item.globalPackages.map((pkg) => `${pkg.name}@${pkg.version}`).join(", ")}`);
   }
+  for (const link of result.npm.runtimeLinks || []) console.log(`npm runtime: ${link.managerPath} -> ${link.runtimePath || "unresolved"} (${link.relationship}/${link.confidence}; ownership not proven)`);
   if (!result.python.installations.length) console.log("python: not detected");
   for (const item of result.python.installations) {
     console.log(`python: ${item.version} ${item.active ? "[active]" : "[inactive]"} ${item.source}/${item.scope} ${item.path}`);
@@ -54,6 +55,7 @@ export async function reconcileWorkspace(args = {}) {
     if (item.packageLocations.length) console.log(`  package locations: ${item.packageLocations.join(", ")}`);
   }
   for (const item of result.python.pipCommands) console.log(`pip: ${item.version} -> Python ${item.pythonVersion} ${item.active ? "[active]" : "[inactive]"} ${item.path}`);
+  for (const link of result.python.runtimeLinks || []) console.log(`pip runtime: ${link.managerPath} -> ${link.runtimePath || "unresolved"} (${link.relationship}/${link.confidence}; ownership not proven)`);
   for (const runtime of Object.values(result.otherRuntimes)) {
     for (const item of runtime.installations) console.log(`${item.runtime}: ${item.versions.length ? item.versions.join(",") : item.version} ${item.active ? "[active]" : "[inactive]"} ${item.source}/${item.scope} ${item.path}`);
   }
@@ -92,6 +94,11 @@ export function summarizeReconciliation(value = {}) {
       pip: value.python?.pipCommands?.length || 0
     },
     informationOnlyRuntimes: Object.fromEntries(Object.entries(value.otherRuntimes || {}).map(([name, item]) => [name, item.installations?.length || 0])),
+    runtimeLinks: {
+      npmStrong: (value.npm?.runtimeLinks || []).filter((item) => item.confidence === "strong").length,
+      pipStrong: (value.python?.runtimeLinks || []).filter((item) => item.confidence === "strong").length,
+      review: [...(value.npm?.runtimeLinks || []), ...(value.python?.runtimeLinks || [])].filter((item) => item.confidence !== "strong").length
+    },
     nextCommand: value.decision === "review" ? "aienvmap reconcile --json --full-packages" : "aienvmap status --json",
     rule: "Read the report before runtime or package-manager changes; removal still requires explicit human approval."
   };

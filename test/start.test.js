@@ -17,6 +17,9 @@ test("start syncs a missing workspace then returns the AI startup contract", asy
   assert.equal(result.readOrder.includes(".aienvmap/reconcile.json"), true);
   assert.ok(["clear", "review"].includes(result.reconciliation.decision));
   assert.equal(result.reconciliation.artifact, ".aienvmap/reconcile.json");
+  assert.equal(typeof result.reconciliation.runtimeLinks.npmStrong, "number");
+  assert.equal(typeof result.reconciliation.runtimeLinks.pipStrong, "number");
+  assert.equal(typeof result.reconciliation.runtimeLinks.review, "number");
   assert.equal(result.decision, "clear");
   assert.equal(result.aiDiscovery.safeStart, "npx aienvmap status");
   assert.equal(result.aiDiscovery.decision, "fallback-required");

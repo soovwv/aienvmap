@@ -540,10 +540,11 @@ export function schemaContract() {
         command: "aienvmap reconcile --json --write",
         mode: "read-only environment; writes only the report when --write is explicit",
         rootFields: ["schemaName", "schemaVersion", "generatedAt", "mode", "scanMode", "scope", "limitations", "project", "node", "npm", "python", "otherRuntimes", "findings", "decision", "aiDecision", "written"],
-        aiDecisionFields: ["consumer", "decision", "readFirst", "canonicalCandidates", "actionCandidates", "safeCommands", "rules"],
+        aiDecisionFields: ["consumer", "decision", "readFirst", "canonicalCandidates", "actionCandidates", "runtimeLinkSummary", "safeCommands", "rules"],
+        runtimeLinkFields: ["managerPath", "managerVersion", "runtimePath", "runtimeVersion", "relationship", "confidence", "evidence", "ownershipProven"],
         detailedToolchains: ["node/npm", "python/pip"],
         informationOnlyRuntimes: ["java", "dotnet", "ruby", "go", "rust"],
-        rule: "AI agents may propose consolidation from this evidence, but removal or PATH changes require explicit human approval and a rollback plan."
+        rule: "AI agents may propose consolidation from this evidence, but runtime links do not prove installation ownership; removal or PATH changes require explicit human approval and a rollback plan."
       },
       reconcileCheck: {
         command: "aienvmap reconcile --check --json",
