@@ -149,6 +149,15 @@ test("Java manager evidence separates managed installs from routing registration
   assert.equal(jenv.ownershipProven, false);
   assert.equal(jenv.routingManaged, true);
   assert.equal(jenv.proofScope, "jenv-routing-only");
+
+  const summary = summarizeJavaMetadata([
+    { managerEvidence: mise },
+    { managerEvidence: sdkmanLink },
+    { managerEvidence: jenv }
+  ]);
+  assert.deepEqual(summary.managers, ["jenv", "mise", "sdkman"]);
+  assert.equal(summary.managedInstallCount, 1);
+  assert.equal(summary.routingManagedCount, 3);
 });
 
 test("Maven version parser retains only build-tool JVM identity", () => {
