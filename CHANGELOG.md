@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Added Java SDKMAN/mise/jenv manager evidence with canonical-root ownership proof, routing-only treatment for external registrations and jenv, compact AI summaries, and drift detection while keeping removal unauthorized.
 - Added read-only Maven/Gradle JVM binding evidence with project-wrapper precedence, distinct Gradle Launcher/Daemon roles, conservative links to detected Java installations, AI review findings, compact startup summaries, and drift detection.
 - Added selected Java system-property identity evidence (vendor, architecture, runtime/VM, reported home) and sibling `javac` JDK classification, including AI summaries and drift detection without retaining unrelated properties.
 - Added cross-platform OS-native Java discovery through Windows Registry, macOS `java_home`, and Linux alternatives, with AI-readable provenance summaries and drift detection while keeping Java information-only.
