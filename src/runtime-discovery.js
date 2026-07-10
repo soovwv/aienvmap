@@ -2,7 +2,7 @@ import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { exists } from "./fsutil.js";
-import { commandOutput, commandVersion } from "./shell.js";
+import { commandOutput, commandResult, commandVersion } from "./shell.js";
 
 export async function inspectCommonRuntimes(options = {}) {
   const definitions = runtimeDefinitions(options.env || process.env, options.home || os.homedir());
@@ -36,10 +36,71 @@ export async function findRuntimeCandidates(definition, options = {}) {
     for (const name of definition.names) await add(path.join(dir, name), classifySource(dir), classifyScope(dir), "PATH");
   }
   for (const candidate of definition.direct || []) await add(candidate.path, candidate.source, candidate.scope, "known-path");
+  if (definition.id === "java") {
+    for (const candidate of await nativeJavaCandidates(options)) await add(candidate.path, candidate.source, candidate.scope, "os-native");
+  }
   for (const root of definition.roots || []) {
     for (const file of await namedFilesBelow(root.path, root.depth, definition.names)) await add(file, root.source, root.scope, "known-root");
   }
   return found;
+}
+
+export async function nativeJavaCandidates(options = {}) {
+  const platform = options.platform || process.platform;
+  if (platform === "win32") {
+    const roots = [
+      "HKLM\\SOFTWARE\\JavaSoft",
+      "HKLM\\SOFTWARE\\WOW6432Node\\JavaSoft",
+      "HKLM\\SOFTWARE\\Eclipse Adoptium",
+      "HKLM\\SOFTWARE\\Microsoft\\JDK"
+    ];
+    const outputs = await Promise.all(roots.map((root) => commandOutput("reg.exe", ["query", root, "/s"], { timeout: 3500, maxBuffer: 2 * 1024 * 1024 })));
+    return parseWindowsJavaRegistry(outputs.join("\n")).map((home) => ({
+      path: javaExecutableForHome(home, platform), source: "windows-registry", scope: "host"
+    }));
+  }
+  if (platform === "darwin") {
+    const result = await commandResult("/usr/libexec/java_home", ["-V"], { timeout: 5000, maxBuffer: 1024 * 1024 });
+    return parseMacJavaHomes(`${result.stdout}\n${result.stderr}`).map((home) => ({
+      path: javaExecutableForHome(home, platform), source: "macos-java-home", scope: "host"
+    }));
+  }
+  const raw = await commandOutput("update-alternatives", ["--list", "java"], { timeout: 3500, maxBuffer: 1024 * 1024 });
+  return parseLinuxJavaAlternatives(raw).map((file) => ({ path: file, source: "linux-alternatives", scope: "host" }));
+}
+
+export function parseWindowsJavaRegistry(raw) {
+  return uniquePaths(String(raw || "").split(/\r?\n/).map((line) => line.match(/^\s*(?:JavaHome|Path|InstallationPath)\s+REG_\w+\s+(.+?)\s*$/i)?.[1]).filter(Boolean));
+}
+
+export function parseMacJavaHomes(raw) {
+  const homes = [];
+  for (const line of String(raw || "").split(/\r?\n/)) {
+    const match = line.match(/(\/[^\r\n]*\/Contents\/Home)\s*$/);
+    if (match) homes.push(match[1].trim());
+  }
+  return uniquePaths(homes);
+}
+
+export function parseLinuxJavaAlternatives(raw) {
+  return uniquePaths(String(raw || "").split(/\r?\n/).map((line) => line.trim()).filter((line) => line.startsWith("/") && /(?:^|\/)java$/.test(line)));
+}
+
+function javaExecutableForHome(home, platform) {
+  const normalized = String(home || "").replace(/[\\/]+$/, "");
+  if (/(?:^|[\\/])java(?:\.exe)?$/i.test(normalized)) return normalized;
+  if (/(?:^|[\\/])bin$/i.test(normalized)) return path.join(normalized, platform === "win32" ? "java.exe" : "java");
+  return path.join(normalized, "bin", platform === "win32" ? "java.exe" : "java");
+}
+
+function uniquePaths(items) {
+  const seen = new Set();
+  return items.filter((item) => {
+    const key = normalize(item);
+    if (!key || seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
 }
 
 export function analyzeCommonRuntimes(runtimes = {}) {
