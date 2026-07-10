@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { analyzeCommonRuntimes, parseDotnetRuntimes, parseJavaProperties, parseLinuxJavaAlternatives, parseMacJavaHomes, parseRustToolchains, parseVersionLines, parseWindowsJavaRegistry, summarizeDiscoveryEvidence, summarizeJavaMetadata } from "../src/runtime-discovery.js";
+import { analyzeCommonRuntimes, linkJavaBuildTool, parseDotnetRuntimes, parseGradleVersion, parseJavaProperties, parseLinuxJavaAlternatives, parseMacJavaHomes, parseMavenVersion, parseRustToolchains, parseVersionLines, parseWindowsJavaRegistry, summarizeDiscoveryEvidence, summarizeJavaMetadata } from "../src/runtime-discovery.js";
 
 test("parseVersionLines extracts installed SDK versions", () => {
   assert.deepEqual(parseVersionLines("8.0.410 [C:\\dotnet\\sdk]\n9.0.100-preview.1 [C:\\dotnet\\sdk]\n"), ["8.0.410", "9.0.100-preview.1"]);
@@ -120,4 +120,44 @@ test("Java metadata summary exposes vendor, architecture, and JDK coverage", () 
   assert.equal(summary.propertyEvidenceCount, 2);
   assert.equal(summary.compilerCount, 1);
   assert.match(summary.rule, /does not authorize/);
+});
+
+test("Maven version parser retains only build-tool JVM identity", () => {
+  assert.deepEqual(parseMavenVersion([
+    "Apache Maven 3.9.9 (example)",
+    "Java version: 21.0.5, vendor: Microsoft, runtime: C:\\Program Files\\Microsoft\\jdk-21",
+    "Default locale: en_US, platform encoding: UTF-8"
+  ].join("\n")), {
+    toolVersion: "3.9.9",
+    javaVersion: "21.0.5",
+    vendor: "Microsoft",
+    javaHome: "C:\\Program Files\\Microsoft\\jdk-21"
+  });
+});
+
+test("Gradle version parser supports launcher and daemon JVM evidence", () => {
+  assert.deepEqual(parseGradleVersion([
+    "Gradle 8.10.2",
+    "Launcher JVM: 21.0.5 (Microsoft 21.0.5+11-LTS)",
+    "Daemon JVM: C:\\Program Files\\Microsoft\\jdk-21 (no JDK specified, using current Java home)"
+  ].join("\n")), {
+    toolVersion: "8.10.2",
+    javaVersion: "21.0.5",
+    vendor: "Microsoft 21.0.5+11-LTS",
+    javaHome: "C:\\Program Files\\Microsoft\\jdk-21"
+  });
+});
+
+test("Java build-tool binding prefers exact home and stays conservative otherwise", () => {
+  const installations = [
+    { path: "/jdk-17/bin/java", javaHome: "/jdk-17", runtimeVersion: "17.0.12" },
+    { path: "/jdk-21/bin/java", javaHome: "/jdk-21", runtimeVersion: "21.0.5" }
+  ];
+  const exact = linkJavaBuildTool({ javaHome: "/jdk-21", javaVersion: "21.0.5" }, installations);
+  assert.equal(exact.relationship, "exact-home");
+  assert.equal(exact.confidence, "strong");
+  assert.equal(exact.runtimePath, "/jdk-21/bin/java");
+  const inferred = linkJavaBuildTool({ javaHome: "", javaVersion: "17.0.12" }, installations);
+  assert.equal(inferred.relationship, "unique-major-version");
+  assert.equal(inferred.confidence, "medium");
 });

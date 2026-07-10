@@ -18,7 +18,7 @@ export async function inspectPackageManagers(dir, options = {}) {
     findNodeCandidates(options),
     findPythonCandidates({ ...options, projectDir: dir }),
     findPipCandidates({ ...options, projectDir: dir }),
-    inspectCommonRuntimes(options),
+    inspectCommonRuntimes({ ...options, projectDir: dir }),
     readProjectExpectation(dir),
     inspectUvPythonManager(options)
   ]);

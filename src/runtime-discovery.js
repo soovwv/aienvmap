@@ -10,6 +10,8 @@ export async function inspectCommonRuntimes(options = {}) {
     const candidates = await findRuntimeCandidates(definition, options);
     const installations = (await Promise.all(candidates.map((candidate) => inspectRuntimeCandidate(definition, candidate, options)))).filter(Boolean);
     installations.forEach((item, index) => { item.active = index === 0; });
+    const runtimeMetadata = definition.id === "java" ? summarizeJavaMetadata(installations) : null;
+    const buildTools = definition.id === "java" ? await inspectJavaBuildTools(installations, options) : null;
     return [definition.id, {
       label: definition.label,
       detailLevel: "path-and-version-only",
@@ -17,10 +19,73 @@ export async function inspectCommonRuntimes(options = {}) {
       active: installations.find((item) => item.active) || null,
       distinctVersions: [...new Set(installations.flatMap((item) => item.versions?.length ? item.versions : [item.version]).filter(Boolean))],
       discoveryEvidence: summarizeDiscoveryEvidence(installations),
-      ...(definition.id === "java" ? { runtimeMetadata: summarizeJavaMetadata(installations) } : {})
+      ...(definition.id === "java" ? { runtimeMetadata, buildTools } : {})
     }];
   }));
   return Object.fromEntries(entries);
+}
+
+export async function inspectJavaBuildTools(installations = [], options = {}) {
+  const projectDir = options.projectDir || process.cwd();
+  const win = (options.platform || process.platform) === "win32";
+  const definitions = [
+    { tool: "maven", wrapper: win ? "mvnw.cmd" : "mvnw", command: win ? "mvn.cmd" : "mvn", args: ["-version"], parser: parseMavenVersion },
+    { tool: "gradle", wrapper: win ? "gradlew.bat" : "gradlew", command: win ? "gradle.bat" : "gradle", args: ["--version"], parser: parseGradleVersion }
+  ];
+  const bindings = await Promise.all(definitions.map(async (definition) => {
+    const wrapper = path.join(projectDir, definition.wrapper);
+    const usesWrapper = await exists(wrapper);
+    const result = await commandResult(usesWrapper ? wrapper : definition.command, definition.args, {
+      cwd: projectDir, timeout: 6000, maxBuffer: 1024 * 1024
+    });
+    const parsed = definition.parser(`${result.stdout}\n${result.stderr}`);
+    if (!parsed.toolVersion) return null;
+    return linkJavaBuildTool({
+      tool: definition.tool,
+      toolVersion: parsed.toolVersion,
+      commandSource: usesWrapper ? "project-wrapper" : "PATH",
+      javaVersion: parsed.javaVersion,
+      vendor: parsed.vendor,
+      javaHome: displayPath(parsed.javaHome, options),
+      evidence: parsed.javaVersion || parsed.javaHome ? "reported-by-tool" : "tool-only"
+    }, installations);
+  }));
+  return {
+    bindings: bindings.filter(Boolean),
+    rule: "Build-tool JVM bindings are read-only evidence; they do not authorize wrapper, JAVA_HOME, PATH, or runtime changes."
+  };
+}
+
+export function parseMavenVersion(raw) {
+  const text = String(raw || "");
+  const runtime = text.match(/^Java version:\s*([^,\r\n]+)(?:,\s*vendor:\s*([^,\r\n]+))?(?:,\s*runtime:\s*(.+))?$/im);
+  return {
+    toolVersion: text.match(/^Apache Maven\s+([^\s\r\n]+)/im)?.[1] || "",
+    javaVersion: runtime?.[1]?.trim() || "",
+    vendor: runtime?.[2]?.trim() || "",
+    javaHome: runtime?.[3]?.trim() || ""
+  };
+}
+
+export function parseGradleVersion(raw) {
+  const text = String(raw || "");
+  const jvm = text.match(/^(?:Launcher JVM|JVM):\s*([^\s(,]+)(?:\s*\(([^)]+)\))?/im);
+  const daemon = text.match(/^Daemon JVM:\s*(.+?)(?:\s+\([^)]*\))?\s*$/im);
+  return {
+    toolVersion: text.match(/^Gradle\s+([^\s\r\n]+)/im)?.[1] || "",
+    javaVersion: jvm?.[1]?.trim() || "",
+    vendor: jvm?.[2]?.trim() || "",
+    javaHome: daemon?.[1]?.trim() || ""
+  };
+}
+
+export function linkJavaBuildTool(binding, installations = []) {
+  const exact = binding.javaHome && installations.find((item) => normalize(item.javaHome) === normalize(binding.javaHome));
+  if (exact) return { ...binding, runtimePath: exact.path, relationship: "exact-home", confidence: "strong" };
+  const major = String(binding.javaVersion || "").match(/^\d+/)?.[0];
+  const versionMatches = major ? installations.filter((item) => String(item.runtimeVersion || item.version || "").match(/^\d+/)?.[0] === major) : [];
+  if (versionMatches.length === 1) return { ...binding, runtimePath: versionMatches[0].path, relationship: "unique-major-version", confidence: "medium" };
+  return { ...binding, runtimePath: "", relationship: "unresolved", confidence: "none" };
 }
 
 export function summarizeDiscoveryEvidence(installations = []) {
