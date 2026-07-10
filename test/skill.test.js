@@ -26,6 +26,9 @@ test("packaged aienvmap skill points AI agents to current startup contracts", as
   assert.match(skill, /removalAuthorized: false/);
   assert.match(skill, /otherRuntimes\.java\.discoveryEvidence/);
   assert.match(skill, /Windows Registry, macOS `java_home`, and Linux alternatives/);
+  assert.match(skill, /otherRuntimes\.java\.runtimeMetadata/);
+  assert.match(skill, /jre-or-runtime-image/);
+  assert.match(skill, /sibling-`javac` evidence/);
   assert.match(skill, /aiAdoptionDecision/);
   assert.match(skill, /compact use\/recommend\/start\/skip block/);
   assert.match(skill, /recommendation\.decisionRoutine/);
