@@ -549,7 +549,9 @@ export function schemaContract() {
         informationOnlyRuntimes: ["java", "dotnet", "ruby", "go", "rust"],
         discoveryEvidenceFields: ["sources", "pathCount", "configuredCount", "knownRootCount", "osNativeCount", "rule"],
         javaNativeSources: ["windows-registry", "macos-java-home", "linux-alternatives"],
-        rule: "AI agents may propose consolidation from this evidence; manager ownership and OS-native discovery provenance never authorize removal or PATH changes without explicit human approval and a rollback plan."
+        javaIdentityFields: ["vendor", "vendorVersion", "architecture", "runtimeName", "runtimeVersion", "vmName", "vmVendor", "runtimeKind", "hasCompiler", "javaHome", "computedJavaHome", "javaHomeSource", "propertyEvidence"],
+        javaRuntimeMetadataFields: ["vendors", "architectures", "runtimeKinds", "propertyEvidenceCount", "compilerCount", "rule"],
+        rule: "AI agents may propose consolidation from this evidence; Java identity, manager ownership, and OS-native provenance never authorize removal or PATH changes without explicit human approval and a rollback plan."
       },
       reconcileCheck: {
         command: "aienvmap reconcile --check --json",

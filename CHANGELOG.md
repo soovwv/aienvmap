@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Added selected Java system-property identity evidence (vendor, architecture, runtime/VM, reported home) and sibling `javac` JDK classification, including AI summaries and drift detection without retaining unrelated properties.
 - Added cross-platform OS-native Java discovery through Windows Registry, macOS `java_home`, and Linux alternatives, with AI-readable provenance summaries and drift detection while keeping Java information-only.
 - Added full-scan uv-managed Python ownership evidence using offline JSON output, with inference-only defaults, AI/drift summaries, and an invariant that ownership proof never authorizes removal.
 - Added opt-in `pip inspect` installer evidence summaries to `reconcile --full-packages`, including Windows UTF-8 subprocess handling, bounded redacted metadata, AI aggregation, and drift detection without changing default scan cost.

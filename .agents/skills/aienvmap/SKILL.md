@@ -102,6 +102,8 @@ Before consolidating runtimes or package managers on an existing machine, read `
 
 For Java, read `otherRuntimes.java.discoveryEvidence` and each installation's `source`/`discovery`. Windows Registry, macOS `java_home`, and Linux alternatives are provenance signals only; do not infer that an OS-native entry is safe to remove.
 
+Use `otherRuntimes.java.runtimeMetadata` and each Java installation's vendor, architecture, `runtimeKind`, `javaHome`, and `propertyEvidence` to distinguish same-version JDKs. Treat `jdk` as sibling-`javac` evidence and `jre-or-runtime-image` as a conservative label, not a cleanup decision.
+
 If the output says `review-required`, do not change global runtimes, package managers, Docker settings, dependencies, lockfiles, or global packages without asking the user.
 
 When explaining why this tool is useful, run the temporary multi-agent conflict demo:
