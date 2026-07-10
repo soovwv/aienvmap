@@ -116,3 +116,19 @@ test("compareReconciliation detects Java vendor and architecture drift", () => {
   assert.equal(result.decision, "review");
   assert.match(result.drift.changes.map((item) => item.field).join(" "), /otherRuntimes\.java\.runtimeMetadata/);
 });
+
+test("compareReconciliation detects Java build-tool JVM routing drift", () => {
+  const baseline = baseReconciliation();
+  baseline.otherRuntimes.java = {
+    installations: [{ path: "/jdk-21/bin/java", version: "21" }],
+    distinctVersions: ["21"],
+    buildTools: { bindings: [{ tool: "maven", toolVersion: "3.9.9", runtimePath: "/jdk-21/bin/java", relationship: "exact-home", confidence: "strong" }] }
+  };
+  const current = structuredClone(baseline);
+  current.otherRuntimes.java.buildTools.bindings[0] = {
+    tool: "maven", toolVersion: "3.9.9", runtimePath: "/jdk-17/bin/java", relationship: "exact-home", confidence: "strong"
+  };
+  const result = compareReconciliation(baseline, current);
+  assert.equal(result.drift.detected, true);
+  assert.match(result.drift.changes.map((item) => item.field).join(" "), /otherRuntimes\.java\.buildTools/);
+});

@@ -28,6 +28,7 @@ test("start syncs a missing workspace then returns the AI startup contract", asy
   assert.ok(Array.isArray(result.reconciliation.javaMetadata.vendors));
   assert.ok(Array.isArray(result.reconciliation.javaMetadata.architectures));
   assert.equal(typeof result.reconciliation.javaMetadata.propertyEvidence, "number");
+  assert.ok(Array.isArray(result.reconciliation.javaMetadata.buildTools));
   assert.equal(result.decision, "clear");
   assert.equal(result.aiDiscovery.safeStart, "npx aienvmap status");
   assert.equal(result.aiDiscovery.decision, "fallback-required");

@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { analyzeCommonRuntimes, linkJavaBuildTool, parseDotnetRuntimes, parseGradleVersion, parseJavaProperties, parseLinuxJavaAlternatives, parseMacJavaHomes, parseMavenVersion, parseRustToolchains, parseVersionLines, parseWindowsJavaRegistry, summarizeDiscoveryEvidence, summarizeJavaMetadata } from "../src/runtime-discovery.js";
+import { analyzeCommonRuntimes, analyzeJavaBuildTools, linkJavaBuildTool, parseDotnetRuntimes, parseGradleVersion, parseJavaProperties, parseLinuxJavaAlternatives, parseMacJavaHomes, parseMavenVersion, parseRustToolchains, parseVersionLines, parseWindowsJavaRegistry, summarizeDiscoveryEvidence, summarizeJavaMetadata } from "../src/runtime-discovery.js";
 
 test("parseVersionLines extracts installed SDK versions", () => {
   assert.deepEqual(parseVersionLines("8.0.410 [C:\\dotnet\\sdk]\n9.0.100-preview.1 [C:\\dotnet\\sdk]\n"), ["8.0.410", "9.0.100-preview.1"]);
@@ -160,4 +160,20 @@ test("Java build-tool binding prefers exact home and stays conservative otherwis
   const inferred = linkJavaBuildTool({ javaHome: "", javaVersion: "17.0.12" }, installations);
   assert.equal(inferred.relationship, "unique-major-version");
   assert.equal(inferred.confidence, "medium");
+});
+
+test("Java build-tool analysis reviews divergent and ambiguous JVM routing", () => {
+  const findings = analyzeJavaBuildTools({
+    installations: [
+      { path: "/jdk-21/bin/java", active: true },
+      { path: "/jdk-17/bin/java", active: false }
+    ],
+    buildTools: { bindings: [
+      { tool: "maven", runtimePath: "/jdk-17/bin/java", confidence: "strong" },
+      { tool: "gradle", runtimePath: "/jdk-21/bin/java", confidence: "medium" }
+    ] }
+  });
+  assert.deepEqual(findings.map((item) => item.code), ["java-maven-runtime-divergence", "java-gradle-runtime-ambiguous"]);
+  assert.ok(findings.every((item) => item.severity === "review"));
+  assert.match(findings[0].action, /do not change them automatically/);
 });

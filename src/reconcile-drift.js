@@ -56,7 +56,8 @@ function runtimeSection(section = {}) {
     installations: normalizeInstallations(section.installations),
     distinctVersions: sorted(section.distinctVersions || []),
     discoveryEvidence: normalize(section.discoveryEvidence || {}),
-    runtimeMetadata: normalize(section.runtimeMetadata || {})
+    runtimeMetadata: normalize(section.runtimeMetadata || {}),
+    buildTools: normalize(section.buildTools || {})
   };
 }
 

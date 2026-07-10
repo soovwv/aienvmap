@@ -63,6 +63,9 @@ export async function reconcileWorkspace(args = {}) {
       console.log(`${item.runtime}: ${item.versions.length ? item.versions.join(",") : item.version} ${item.active ? "[active]" : "[inactive]"} ${item.source}/${item.scope} ${item.path}`);
       if (item.runtime === "java") console.log(`  identity: ${item.vendor || "unknown-vendor"}; ${item.architecture || "unknown-arch"}; ${item.runtimeKind || "unknown-kind"}; home: ${item.javaHome || "unknown"} (${item.javaHomeSource || "unknown"})`);
     }
+    if (runtime.label === "Java") for (const binding of runtime.buildTools?.bindings || []) {
+      console.log(`java tool: ${binding.tool}@${binding.toolVersion} (${binding.commandSource}) -> ${binding.runtimePath || "unresolved"} (${binding.relationship}/${binding.confidence})`);
+    }
   }
   if (!result.findings.length) console.log("findings: no package-manager conflicts detected");
   for (const finding of result.findings) {
@@ -105,7 +108,15 @@ export function summarizeReconciliation(value = {}) {
       architectures: value.otherRuntimes?.java?.runtimeMetadata?.architectures || [],
       runtimeKinds: value.otherRuntimes?.java?.runtimeMetadata?.runtimeKinds || [],
       propertyEvidence: value.otherRuntimes?.java?.runtimeMetadata?.propertyEvidenceCount || 0,
-      compilers: value.otherRuntimes?.java?.runtimeMetadata?.compilerCount || 0
+      compilers: value.otherRuntimes?.java?.runtimeMetadata?.compilerCount || 0,
+      buildTools: (value.otherRuntimes?.java?.buildTools?.bindings || []).map((item) => ({
+        tool: item.tool,
+        toolVersion: item.toolVersion,
+        commandSource: item.commandSource,
+        javaVersion: item.javaVersion,
+        relationship: item.relationship,
+        confidence: item.confidence
+      }))
     },
     runtimeLinks: {
       npmStrong: (value.npm?.runtimeLinks || []).filter((item) => item.confidence === "strong").length,

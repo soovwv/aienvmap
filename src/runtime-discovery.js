@@ -206,6 +206,27 @@ export function analyzeCommonRuntimes(runtimes = {}) {
   return findings;
 }
 
+export function analyzeJavaBuildTools(java = {}) {
+  const installations = java.installations || [];
+  if (installations.length <= 1) return [];
+  const activePath = installations.find((item) => item.active)?.path || "";
+  return (java.buildTools?.bindings || []).flatMap((binding) => {
+    if (binding.confidence === "strong" && normalize(binding.runtimePath) !== normalize(activePath)) return [{
+      code: `java-${binding.tool}-runtime-divergence`,
+      severity: "review",
+      message: `${binding.tool} reports a JVM different from the active java command.`,
+      action: "Review project wrapper settings, JAVA_HOME, and runtime requirements; do not change them automatically."
+    }];
+    if (binding.confidence !== "strong") return [{
+      code: `java-${binding.tool}-runtime-ambiguous`,
+      severity: "review",
+      message: `${binding.tool} JVM evidence does not identify one installed Java home exactly.`,
+      action: "Inspect the reported tool JVM and project requirements before changing Java routing."
+    }];
+    return [];
+  });
+}
+
 async function inspectRuntimeCandidate(definition, candidate, options) {
   const version = await commandVersion(candidate.path, definition.versionArgs);
   if (!version) return null;

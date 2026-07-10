@@ -29,6 +29,8 @@ test("schemaContract describes stable AI output contracts", () => {
   assert.ok(schema.outputs.reconcile.javaIdentityFields.includes("vendor"));
   assert.ok(schema.outputs.reconcile.javaIdentityFields.includes("runtimeKind"));
   assert.ok(schema.outputs.reconcile.javaRuntimeMetadataFields.includes("architectures"));
+  assert.ok(schema.outputs.reconcile.javaBuildToolFields.includes("relationship"));
+  assert.deepEqual(schema.outputs.reconcile.javaBuildToolRelationships, ["exact-home", "unique-major-version", "unresolved"]);
   assert.equal(schema.outputs.reconcileCheck.command, "aienvmap reconcile --check --json");
   assert.ok(schema.outputs.reconcileCheck.rootFields.includes("drift"));
   assert.match(schema.outputs.reconcileCheck.rule, /self-hosted/);
