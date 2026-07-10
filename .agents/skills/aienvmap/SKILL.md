@@ -100,6 +100,8 @@ Before dependency, lockfile, security remediation, or release-affecting dependen
 
 Before consolidating runtimes or package managers on an existing machine, read `.aienvmap/reconcile.json` or run `npx aienvmap reconcile --json`. Use `--full-packages` only when package-level, Python installer metadata, or uv-managed interpreter evidence is required. Treat `runtimeLinks`, `installerEvidence`, and `managerEvidence` as evidence; even `ownershipProven: true` never overrides `removalAuthorized: false` or human approval.
 
+For Java, read `otherRuntimes.java.discoveryEvidence` and each installation's `source`/`discovery`. Windows Registry, macOS `java_home`, and Linux alternatives are provenance signals only; do not infer that an OS-native entry is safe to remove.
+
 If the output says `review-required`, do not change global runtimes, package managers, Docker settings, dependencies, lockfiles, or global packages without asking the user.
 
 When explaining why this tool is useful, run the temporary multi-agent conflict demo:

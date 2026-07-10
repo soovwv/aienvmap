@@ -24,6 +24,7 @@ test("start syncs a missing workspace then returns the AI startup contract", asy
   assert.equal(result.reconciliation.installerEvidence.collected, 0);
   assert.equal(typeof result.reconciliation.managerEvidence.proven, "number");
   assert.equal(result.reconciliation.managerEvidence.removalAuthorized, false);
+  assert.equal(typeof result.reconciliation.osNativeEvidence.java, "number");
   assert.equal(result.decision, "clear");
   assert.equal(result.aiDiscovery.safeStart, "npx aienvmap status");
   assert.equal(result.aiDiscovery.decision, "fallback-required");

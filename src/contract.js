@@ -547,7 +547,9 @@ export function schemaContract() {
         uvManagerEvidenceFields: ["collection", "manager", "version", "managedRoot", "installationCount", "installations", "semantics"],
         detailedToolchains: ["node/npm", "python/pip"],
         informationOnlyRuntimes: ["java", "dotnet", "ruby", "go", "rust"],
-        rule: "AI agents may propose consolidation from this evidence; uv managed-list matches may prove manager ownership, but never authorize removal or PATH changes without explicit human approval and a rollback plan."
+        discoveryEvidenceFields: ["sources", "pathCount", "configuredCount", "knownRootCount", "osNativeCount", "rule"],
+        javaNativeSources: ["windows-registry", "macos-java-home", "linux-alternatives"],
+        rule: "AI agents may propose consolidation from this evidence; manager ownership and OS-native discovery provenance never authorize removal or PATH changes without explicit human approval and a rollback plan."
       },
       reconcileCheck: {
         command: "aienvmap reconcile --check --json",
