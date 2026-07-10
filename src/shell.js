@@ -49,6 +49,13 @@ export async function commandResult(command, args = [], options = {}) {
   }
 }
 
+export async function portableCommandResult(command, args = [], options = {}) {
+  const platform = options.platform || process.platform;
+  if (platform !== "win32" || !/\.(?:cmd|bat)$/i.test(command)) return commandResult(command, args, options);
+  const comspec = options.comspec || process.env.ComSpec || "cmd.exe";
+  return commandResult(comspec, ["/d", "/c", command, ...args], options);
+}
+
 export function firstVersion(text) {
   const match = String(text).match(/(?:v)?(\d+\.\d+(?:\.\d+)?(?:[-+][\w.]+)?)/);
   return match ? match[1] : null;
