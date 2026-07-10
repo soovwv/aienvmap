@@ -17,6 +17,8 @@
 
 `discover` is read-only and reports `aiDiscovery.decision`: `auto-ready` or `fallback-required`. `onboard` installs tiny pointers in `AGENTS.md`, `CLAUDE.md`, and `GEMINI.md`. Automatic discovery is best-effort; if pointers are missing, paste `copyPastePrompt` from `start --json` or `.aienvmap/discovery.json`, then follow `sessionUse` and `aiEntry`.
 
+Formerly published as `aienvmp`. Use `aienvmap` going forward; new workspaces write `.aienvmap/` artifacts.
+
 ## 10-Second Use
 
 ```bash
@@ -113,18 +115,12 @@ The GitHub Action writes discovery, status, summary, schema, doctor, plan, SBOM,
 ```
 
 ## Release Policy
-- `0.1.x` is the prototype history for fast AI-contract validation.
+- `0.1.x` is the clean `aienvmap` prototype line after the rename from `aienvmp`.
 - `0.2.x` starts the stabilized AI workspace contract.
 - npm releases are manually gated and batched around meaningful changes; security fixes are the exception.
 - Default publish decision is `hold`; publish only after several meaningful changes are batched, `npm run release:check` passes, and `schema --json` `releaseReadiness.currentBatch` is reviewed.
-- `schema --json` exposes `releaseGate`, `releaseReadiness.currentBatch`, `contractReview`, `nextStabilizationTasks`, `requiredBeforeStable`, and `evidenceCommands`; `0.1.x` is deprecated only after `0.2.0` is published.
+- `schema --json` exposes `releaseGate`, `releaseReadiness.currentBatch`, `contractReview`, `nextStabilizationTasks`, `requiredBeforeStable`, and `evidenceCommands`.
 - Broken or superseded versions are deprecated instead of unpublished.
-
-Post-`0.2.0` deprecation command:
-
-```bash
-npm deprecate 'aienvmap@<0.2.0' 'Prototype history: use aienvmap@0.2.0 or newer for the stabilized AI workspace contract.'
-```
 
 ## Development
 
