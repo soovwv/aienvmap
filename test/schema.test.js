@@ -24,6 +24,8 @@ test("schemaContract describes stable AI output contracts", () => {
   assert.ok(schema.outputs.reconcile.uvManagerEvidenceFields.includes("managedRoot"));
   assert.match(schema.outputs.reconcile.rule, /never authorize removal/);
   assert.deepEqual(schema.outputs.reconcile.detailedToolchains, ["node/npm", "python/pip"]);
+  assert.ok(schema.outputs.reconcile.discoveryEvidenceFields.includes("osNativeCount"));
+  assert.deepEqual(schema.outputs.reconcile.javaNativeSources, ["windows-registry", "macos-java-home", "linux-alternatives"]);
   assert.equal(schema.outputs.reconcileCheck.command, "aienvmap reconcile --check --json");
   assert.ok(schema.outputs.reconcileCheck.rootFields.includes("drift"));
   assert.match(schema.outputs.reconcileCheck.rule, /self-hosted/);

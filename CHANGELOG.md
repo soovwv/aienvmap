@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Added cross-platform OS-native Java discovery through Windows Registry, macOS `java_home`, and Linux alternatives, with AI-readable provenance summaries and drift detection while keeping Java information-only.
 - Added full-scan uv-managed Python ownership evidence using offline JSON output, with inference-only defaults, AI/drift summaries, and an invariant that ownership proof never authorizes removal.
 - Added opt-in `pip inspect` installer evidence summaries to `reconcile --full-packages`, including Windows UTF-8 subprocess handling, bounded redacted metadata, AI aggregation, and drift detection without changing default scan cost.
 - Added conservative npm-to-Node and pip-to-Python `runtimeLinks` with explicit evidence/confidence, AI summaries, drift detection, and `ownershipProven: false` safeguards.
