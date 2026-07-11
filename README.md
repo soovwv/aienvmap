@@ -44,11 +44,11 @@ Before an environment-affecting change:
 
 ```bash
 npx aienvmap sbom --json
-npx aienvmap intent --actor agent:id --action "planned-change" --target dependency
+npx aienvmap intent --actor agent:id --session thread:id --action "planned-change" --target dependency --lease-minutes 60
 npx aienvmap checkpoint --actor agent:id --summary "dependency-change" --target dependency
 ```
 
-On a shared server, an AI can protect a decision made from an earlier read: take `coordinationRevision` from `aienvmap status --json`, then pass `--if-revision ir1:...` to `intent` or `resolve`. If another AI changed the intent log first, aienvmap rejects the stale write and tells the AI to refresh. Omitting the option preserves the lightweight advisory flow.
+On a shared server, an AI can protect a decision made from an earlier read: take `coordinationRevision` from `aienvmap status --json`, then pass `--if-revision ir1:...` to `intent` or `resolve`. If another AI changed the intent log first, aienvmap rejects the stale write and tells the AI to refresh. When the same AI label can run concurrently, pass a host/thread identifier with `--session` and an advisory duration from 5 to 1440 minutes with `--lease-minutes`. Different sessions under the same actor are separate conflict owners; expiry stays open for review and never grants permission to modify the environment.
 
 Try `npx aienvmap demo` to see the multi-agent conflict flow without touching your workspace.
 
@@ -94,6 +94,7 @@ AIENV.md                 # Markdown env map for AI agents
 - `.aienvmap/discovery.json`, `discovery.json.maintenance`, `agentDiscovery.sessionStart`, and `readOrder` give the fallback start path for schema-only or Markdown-first agents.
 - `environmentChangeProtocol`, `operationalSafety`, `followUpPlan`, `collaboration`, `coordination`, and `agentActivity` keep shared changes advisory; `followUpPlan` points to sync, status, or handoff when needed.
 - `coordinationRevision` enables optional compare-and-swap protection for intent and resolution writes without a daemon, database, or runtime dependency.
+- Optional intent `session` and bounded lease evidence distinguish concurrent AI sessions on a shared server; expiry is advisory and never authorizes cleanup or changes.
 - `start`, `status`, and `context` expose a sample-free `externalSbom` signal; stale or component drift raises advisory review, while absent evidence and identity fallback stay non-blocking.
 - `qualitySignals`, `releaseGate`, and `releaseReadiness` expose the AI-friendly, lightweight, batched stable-contract gate.
 - After `0.2.0`, documented JSON fields stay backward-compatible; new fields are additive.
@@ -145,7 +146,6 @@ The GitHub Action writes discovery, status, summary, schema, doctor, plan, SBOM,
 ```bash
 node --test
 npm run smoke && npm run contract:check && npm run perf:check
-npm run demo:conflict
 npm run release:check
 npm pack --dry-run
 ```
