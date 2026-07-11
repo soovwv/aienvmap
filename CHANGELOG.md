@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Added opt-in Unix nvm and nvm-windows configured-root inventories, canonical path containment checks, exact version-path ownership proof, drift detection, and symlink-escape downgrade without sourcing shells or switching versions.
 - Added opt-in fnm local Node inventory, inactive installation-path discovery, exact list/version/path ownership proof, drift detection, and AI/schema guidance without shell activation or removal authority.
 - Surfaced a digest-verified, sample-free external SBOM signal in start/status/context/discovery; stale or component drift now raises advisory review while missing evidence and identity fallback remain non-blocking.
 - Preferred sanitized CycloneDX and SPDX Package URLs for cross-ecosystem component identity, with explicit identity confidence, fallback signaling, and no retained PURL qualifiers or subpaths.

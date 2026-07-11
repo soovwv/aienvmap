@@ -13,7 +13,7 @@ const pythonNames = process.platform === "win32" ? ["python.exe", "python3.exe"]
 const pipNames = process.platform === "win32" ? ["pip.exe", "pip3.exe"] : ["pip3", "pip"];
 
 export async function inspectPackageManagers(dir, options = {}) {
-  const [candidates, nodeCandidates, pythonCandidates, pipCandidates, commonRuntimes, project, uvPythonManager, pyenvPythonManager, voltaNodeManager, fnmNodeManager, miseRuntimeManager] = await Promise.all([
+  const [candidates, nodeCandidates, pythonCandidates, pipCandidates, commonRuntimes, project, uvPythonManager, pyenvPythonManager, voltaNodeManager, fnmNodeManager, nvmNodeManager, miseRuntimeManager] = await Promise.all([
     findNpmCandidates(options),
     findNodeCandidates(options),
     findPythonCandidates({ ...options, projectDir: dir }),
@@ -24,6 +24,7 @@ export async function inspectPackageManagers(dir, options = {}) {
     inspectPyenvPythonManager(options),
     inspectVoltaNodeManager({ ...options, projectDir: dir }),
     inspectFnmNodeManager({ ...options, projectDir: dir }),
+    inspectNvmNodeManager({ ...options, projectDir: dir }),
     inspectMiseRuntimeManager({ ...options, projectDir: dir })
   ]);
   const inspected = await Promise.all(candidates.map(async (candidate, index) => {
@@ -54,7 +55,7 @@ export async function inspectPackageManagers(dir, options = {}) {
   const inspectedPythonInstallations = await inspectPythonCandidates(pythonCandidates, options);
   const pythonInstallations = attachMisePythonEvidence(attachPyenvManagerEvidence(attachUvManagerEvidence(inspectedPythonInstallations, uvPythonManager), pyenvPythonManager), miseRuntimeManager);
   const pipCommands = await inspectPipCandidates(pipCandidates, options);
-  const nodeInstallations = attachMiseNodeEvidence(attachFnmManagerEvidence(attachVoltaManagerEvidence(await inspectNodeCandidates(nodeCandidates, options), voltaNodeManager), fnmNodeManager), miseRuntimeManager);
+  const nodeInstallations = attachMiseNodeEvidence(attachNvmManagerEvidence(attachFnmManagerEvidence(attachVoltaManagerEvidence(await inspectNodeCandidates(nodeCandidates, options), voltaNodeManager), fnmNodeManager), nvmNodeManager), miseRuntimeManager);
   const npmRuntimeLinks = linkNodeNpmRuntimes(nodeInstallations, installations);
   const pipRuntimeLinks = linkPythonPipRuntimes(pythonInstallations, pipCommands);
   const findings = [
@@ -85,7 +86,7 @@ export async function inspectPackageManagers(dir, options = {}) {
       installations: nodeInstallations,
       active: nodeInstallations.find((item) => item.active) || null,
       distinctVersions: [...new Set(nodeInstallations.map((item) => item.version))],
-      managerInventories: { volta: voltaNodeManager, fnm: fnmNodeManager, mise: miseInventoryForRuntime(miseRuntimeManager, "node") }
+      managerInventories: { volta: voltaNodeManager, fnm: fnmNodeManager, nvm: nvmNodeManager, mise: miseInventoryForRuntime(miseRuntimeManager, "node") }
     },
     npm: {
       installations,
@@ -112,6 +113,60 @@ export async function inspectPackageManagers(dir, options = {}) {
     decision: findings.some((item) => item.severity === "review") ? "review" : "clear",
     aiDecision
   };
+}
+
+export async function inspectNvmNodeManager(options = {}) {
+  const platform = options.platform || process.platform;
+  if (!options.fullPackages) return { collection: "not-requested", manager: platform === "win32" ? "nvm-windows" : "nvm", reason: "Use --full-packages for nvm-managed Node evidence." };
+  const env = options.env || process.env;
+  const home = options.home || os.homedir();
+  const configuredRoot = platform === "win32"
+    ? env.NVM_HOME || path.join(env.APPDATA || path.join(home, "AppData", "Roaming"), "nvm")
+    : env.NVM_DIR || path.join(env.XDG_CONFIG_HOME || home, env.XDG_CONFIG_HOME ? "nvm" : ".nvm");
+  const versionsRoot = platform === "win32" ? configuredRoot : path.join(configuredRoot, "versions", "node");
+  let canonicalRoot;
+  try { canonicalRoot = await fs.realpath(versionsRoot); } catch {
+    return { collection: "unavailable", manager: platform === "win32" ? "nvm-windows" : "nvm", managedRoot: displayPath(versionsRoot, options), reason: "Configured nvm versions root was not readable." };
+  }
+  let entries = [];
+  try { entries = await fs.readdir(canonicalRoot, { withFileTypes: true }); } catch {}
+  const installations = [];
+  for (const entry of entries.slice(0, 500)) {
+    if (!entry.isDirectory() && !entry.isSymbolicLink()) continue;
+    const match = entry.name.match(/^v?(\d+\.\d+\.\d+)$/);
+    if (!match) continue;
+    const installPath = path.join(canonicalRoot, entry.name);
+    const executable = platform === "win32" ? path.join(installPath, "node.exe") : path.join(installPath, "bin", "node");
+    if (!(await exists(executable))) continue;
+    let canonicalExecutable = "";
+    try { canonicalExecutable = await fs.realpath(executable); } catch {}
+    const canonicalInsideRoot = Boolean(canonicalExecutable && pathContains(canonicalRoot, canonicalExecutable));
+    installations.push({ version: match[1], installPath: displayPath(installPath, options), canonicalInsideRoot });
+  }
+  installations.sort((a, b) => a.version.localeCompare(b.version, undefined, { numeric: true }));
+  return {
+    collection: "collected", manager: platform === "win32" ? "nvm-windows" : "nvm", managedRoot: displayPath(canonicalRoot, options),
+    installationCount: Math.min(installations.length, 100), installations: installations.slice(0, 100), truncated: installations.length > 100,
+    semantics: "Read-only configured-root inventory; exact canonical version paths may prove manager control, never activation or removal authorization."
+  };
+}
+
+export function attachNvmManagerEvidence(nodeInstallations = [], nvm = {}) {
+  return nodeInstallations.map((node) => {
+    if (node.managerEvidence?.ownershipProven === true) return node;
+    const listed = nvm.collection === "collected" && (nvm.installations || []).find((item) => item.version === node.version);
+    const exact = listed?.canonicalInsideRoot && (pathContains(listed.installPath, node.reportedExecutable) || pathContains(listed.installPath, node.path));
+    const inferred = node.source === "nvm" || Boolean(nvm.managedRoot && (pathContains(nvm.managedRoot, node.path) || pathContains(nvm.managedRoot, node.reportedExecutable)));
+    if (exact) return { ...node, managerEvidence: {
+      manager: nvm.manager || "nvm", managerVersion: "", relationship: "configured-root-version-path-match", confidence: "strong", ownershipProven: true,
+      proofScope: "nvm-managed-runtime", matchedKey: listed.version, removalAuthorized: false
+    } };
+    if ((!listed && !inferred) || node.managerEvidence?.confidence === "medium") return node;
+    return { ...node, managerEvidence: {
+      manager: nvm.manager || "nvm", managerVersion: "", relationship: listed ? "inventory-version-match" : "managed-root-inference", confidence: "medium",
+      ownershipProven: false, proofScope: listed ? "version-and-routing-only" : "path-only", matchedKey: listed?.version || "", removalAuthorized: false
+    } };
+  });
 }
 
 export async function inspectFnmNodeManager(options = {}) {

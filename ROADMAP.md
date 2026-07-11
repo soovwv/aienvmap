@@ -15,7 +15,7 @@ Primary positioning: AI workspace coordination first, lightweight SBOM context s
 
 The default remains advisory and lightweight: observe existing state, explain conflicts, and write only aienvmap artifacts unless a human explicitly approves a targeted change.
 
-- Current evidence: `reconcile` discovers visible Node/npm executables from PATH and known nvm/Volta/fnm/mise locations; full scans add bounded Volta plain, fnm local, and mise JSON inventories with exact reported-path ownership evidence.
+- Current evidence: `reconcile` discovers Node/npm executables from PATH and nvm/Volta/fnm/mise roots; full scans add bounded manager inventories with exact path ownership and nvm symlink-containment checks.
 - Instruction safety: preview pointer changes with `onboard --dry-run`, keep content inside marker blocks, remove only those blocks with `onboard --uninstall`, and reject paths outside the workspace.
 - Current Python coverage: discover PATH, project `.venv`/`venv`, python.org, pyenv, mise, uv, Homebrew, common Unix, and macOS Framework locations; record interpreter, prefix/base prefix, venv state, visible package locations, count/digest/sample, and optional full package evidence.
 - Current runtime-link evidence: connect npm to Node and pip to Python using executable co-location, Python package locations, unique version matching, or explicit PATH inference; every link states that installation ownership is not proven.

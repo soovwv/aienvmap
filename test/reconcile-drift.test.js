@@ -77,6 +77,16 @@ test("compareReconciliation detects fnm Node inventory drift", () => {
   assert.match(result.drift.changes.map((item) => item.field).join(" "), /node\.managerInventories\.fnm/);
 });
 
+test("compareReconciliation detects nvm Node inventory drift", () => {
+  const baseline = report();
+  baseline.node.managerInventories = { nvm: { collection: "collected", installations: [{ version: "20.18.1" }] } };
+  const current = report();
+  current.node.managerInventories = { nvm: { collection: "collected", installations: [{ version: "22.14.0" }] } };
+  const result = compareReconciliation(baseline, current);
+  assert.equal(result.drift.detected, true);
+  assert.match(result.drift.changes.map((item) => item.field).join(" "), /node\.managerInventories\.nvm/);
+});
+
 test("compareReconciliation detects Python installer evidence drift", () => {
   const baseline = report();
   baseline.python.installations = [{ path: "$HOME/python", version: "3.12", installerEvidence: { collection: "collected", installerCounts: { pip: 2 }, digest: "one" } }];
