@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Isolated Node/Python/Conda routing judgment rules from discovery I/O while preserving package-manager compatibility exports and findings.
 - Added version-only Conda discovery by default and opt-in bounded `conda info --envs --json` path summaries, excluding packages, channels, credentials, and automatic activation.
 - Added bounded uv and pipx entry-point/version discovery plus duplicate pip/uv/pipx findings, portable evidence, and drift tracking while leaving tool package enumeration opt-in.
 - Added bounded read-only pnpm, Yarn, and Corepack executable/version discovery across PATH and known Node roots, including duplicate/project mismatch findings, portable evidence, and drift tracking without claiming shim ownership.
