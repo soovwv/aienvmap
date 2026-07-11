@@ -57,6 +57,16 @@ test("compareReconciliation detects a package-manager runtime routing change", (
   assert.match(result.drift.changes.map((item) => item.field).join(" "), /npm\.runtimeLinks/);
 });
 
+test("compareReconciliation detects pnpm and Corepack routing drift", () => {
+  const baseline = report();
+  baseline.npm.alternativeManagers = { pnpm: { installations: [{ manager: "pnpm", version: "9.0.0", path: "$HOME/pnpm", active: true, deliveryEvidence: "standalone-or-unknown" }] } };
+  const current = report();
+  current.npm.alternativeManagers = { pnpm: { installations: [{ manager: "pnpm", version: "10.0.0", path: "$HOME/pnpm", active: true, deliveryEvidence: "co-located-with-corepack" }] } };
+  const result = compareReconciliation(baseline, current);
+  assert.equal(result.decision, "review");
+  assert.match(result.drift.changes.map((item) => item.field).join(" "), /npm\.alternativeManagers\.pnpm/);
+});
+
 test("compareReconciliation detects Volta Node inventory drift", () => {
   const baseline = report();
   baseline.node.managerInventories = { volta: { collection: "collected", runtimes: [{ version: "20.18.1", state: "default" }] } };

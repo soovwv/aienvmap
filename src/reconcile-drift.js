@@ -67,7 +67,8 @@ function npmSection(section = {}) {
     ...runtimeSection(section),
     distinctGlobalRoots: sorted(section.distinctGlobalRoots || []),
     installations: normalizeInstallations(section.installations, ["prefix", "globalRoot", "globalPackages", "packageCollection"]),
-    runtimeLinks: normalizeRuntimeLinks(section.runtimeLinks)
+    runtimeLinks: normalizeRuntimeLinks(section.runtimeLinks),
+    alternativeManagers: normalize(section.alternativeManagers || {})
   };
 }
 
