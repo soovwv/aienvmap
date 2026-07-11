@@ -159,6 +159,8 @@ test("package publish allowlist stays small and intentional", async () => {
     "bin",
     "src",
     "scripts/performance-check.mjs",
+    "scripts/contract-check.mjs",
+    "contracts",
     "README.md",
     "LICENSE",
     "CHANGELOG.md",

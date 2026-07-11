@@ -434,6 +434,7 @@ export function schemaContract() {
       ],
       requiredBeforeStable: [
         "npm run release:check passes locally",
+        "npm run contract:check verifies the reviewed 0.2.0 root-field freeze candidate",
         "GitHub Release workflow passes with confirm_publish=publish",
         "published npm metadata exposes the expected version and registry integrity after provenance publish",
         "schema --json additive contract is reviewed",
@@ -444,13 +445,14 @@ export function schemaContract() {
       ],
       evidenceCommands: [
         "npm run release:check",
+        "npm run contract:check",
         "node bin/aienvmap.js schema --json",
         "node bin/aienvmap.js demo --json",
         "npm pack --dry-run",
         "npm view aienvmap version"
       ],
       nextStabilizationTasks: [
-        "freeze and review documented JSON root fields before 0.2.0",
+        "keep the reviewed JSON root-field freeze candidate unchanged unless an intentional contract review approves an update",
         "keep README, examples, schema, dashboard, and packaged skill aligned on AI workspace coordination",
         "keep aiAdoptionDecision as the shortest schema recommendation path for AI agents",
         "keep demo --json and packaged skill aligned with aiAdoptionDecision",
@@ -461,8 +463,10 @@ export function schemaContract() {
         "review CHANGELOG as one 0.2.0 release-note group before any npm publish"
       ],
       contractReview: {
-        status: "pending-0.2.0-review",
-        command: "node bin/aienvmap.js schema --json",
+        status: "freeze-candidate-verified",
+        command: "npm run contract:check",
+        baseline: "contracts/ai-json-root-fields.v1.json",
+        digestAlgorithm: "sha256(JSON.stringify(ordered surface-to-rootFields map))",
         surfaces: ["discover", "start", "discovery", "status", "context", "handoff", "plan", "manifest", "reconcile", "reconcileCheck", "sbom", "cyclonedxLite", "demo"],
         reviewFields: ["outputs.*.rootFields", "outputs.*Fields", "compatibility.additiveRule", "stableContractRule"],
         rule: "Before 0.2.0, review documented rootFields as the compatibility floor; after 0.2.0, add fields only additively unless contractVersion changes."

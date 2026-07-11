@@ -137,14 +137,14 @@ The GitHub Action writes discovery, status, summary, schema, doctor, plan, SBOM,
 - `0.2.x` starts the stabilized AI workspace contract.
 - npm releases are manually gated and batched; the workflow requires current main, a matching `v<version>` tag, an unpublished version, OIDC provenance, and post-publish registry integrity verification.
 - Default publish decision is `hold`; publish only after several meaningful changes are batched, `npm run release:check` passes, and `schema --json` `releaseReadiness.currentBatch` is reviewed.
-- `schema --json` exposes `releaseGate`, `releaseReadiness.currentBatch`, `contractReview`, `nextStabilizationTasks`, `requiredBeforeStable`, and `evidenceCommands`.
+- `schema --json` exposes `releaseGate`, `releaseReadiness.currentBatch`, `contractReview`, `nextStabilizationTasks`, `requiredBeforeStable`, and `evidenceCommands`. `npm run contract:check` fail-closes on an unreviewed change to the 13 documented AI JSON root-field surfaces.
 - Broken or superseded versions are deprecated instead of unpublished.
 
 ## Development
 
 ```bash
 node --test
-npm run smoke && npm run perf:check
+npm run smoke && npm run contract:check && npm run perf:check
 npm run demo:conflict
 npm run release:check
 npm pack --dry-run
