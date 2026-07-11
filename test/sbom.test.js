@@ -292,11 +292,13 @@ test("sbomWorkspace imports, persists, reuses, and clears external evidence", as
   assert.equal(refreshed.externalEvidence.summary.components, 2);
   assert.equal(refreshed.externalEvidence.baselineDigest, imported.externalEvidence.digest);
   assert.equal(refreshed.externalEvidence.baselineDrift.status, "changed");
+  assert.equal(refreshed.externalEvidenceDecision.decision, "component-drift-review");
 
   const cdx = await sbomWorkspace({ dir, format: "cyclonedx-lite", quiet: true });
   assert.equal(propertyValue(cdx.properties, "aienvmap:externalEvidence:artifact"), "syft.cdx.json");
   assert.equal(propertyValue(cdx.properties, "aienvmap:externalEvidence:digest"), refreshed.externalEvidence.digest);
   assert.equal(propertyValue(cdx.properties, "aienvmap:externalEvidence:verification"), "digest-match");
+  assert.match(propertyValue(cdx.properties, "aienvmap:externalEvidence:baselineDrift"), /"status":"changed"/);
 
   const cleared = await sbomWorkspace({ dir, clear_import: true, write: true, quiet: true });
   assert.equal(cleared.externalEvidence.status, "not-imported");

@@ -47,6 +47,8 @@ test("schemaContract describes stable AI output contracts", () => {
   assert.match(schema.outputs.reconcileCheck.rule, /self-hosted/);
   assert.ok(schema.outputs.sbom.rootFields.includes("externalEvidence"));
   assert.ok(schema.outputs.sbom.externalEvidenceFields.includes("verification"));
+  assert.ok(schema.outputs.sbom.externalEvidenceFields.includes("componentInventory"));
+  assert.ok(schema.outputs.sbom.externalEvidenceDecisionFields.includes("baselineDrift"));
   assert.ok(schema.outputs.sbom.externalEvidenceDecisionFields.includes("nextCommand"));
   assert.match(schema.outputs.sbom.importCommand, /--import/);
   assert.match(schema.outputs.sbom.clearImportCommand, /--clear-import/);

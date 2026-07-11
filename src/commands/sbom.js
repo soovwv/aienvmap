@@ -105,12 +105,14 @@ function noExternalEvidence() {
 function externalEvidenceDecision(evidence = {}) {
   const imported = evidence.status === "imported";
   const stale = evidence.status === "stale";
+  const drifted = imported && evidence.baselineDrift?.status === "changed";
   return {
-    decision: imported ? "read-original-before-claims" : stale ? "refresh-import-required" : "no-external-evidence",
+    decision: drifted ? "component-drift-review" : imported ? "read-original-before-claims" : stale ? "refresh-import-required" : "no-external-evidence",
     artifact: imported || stale ? evidence.artifact : "",
     digest: imported || stale ? evidence.digest : "",
     format: imported || stale ? evidence.format : "",
     securityEvidence: evidence.securityEvidence || "none",
+    baselineDrift: evidence.baselineDrift || { status: "baseline-unavailable", comparable: false },
     nextCommand: imported ? `review ${evidence.artifact}` : stale ? `aienvmap sbom --import ${evidence.artifact} --write` : "aienvmap sbom --import <workspace-sbom.json> --write",
     rule: imported
       ? "Use this summary for coordination only; read and validate the original external SBOM before security, compliance, remediation, or release claims."
@@ -392,6 +394,7 @@ export function buildCycloneDxLite(manifest = {}, externalEvidence = noExternalE
       { name: "aienvmap:externalEvidence:format", value: externalEvidence.format || "" },
       { name: "aienvmap:externalEvidence:specVersion", value: externalEvidence.specVersion || "" },
       { name: "aienvmap:externalEvidence:summary", value: JSON.stringify(externalEvidence.summary || {}) },
+      { name: "aienvmap:externalEvidence:baselineDrift", value: JSON.stringify(externalEvidence.baselineDrift || {}) },
       { name: "aienvmap:aiBootstrap:rule", value: aiBootstrap.rule }
     ]
   };

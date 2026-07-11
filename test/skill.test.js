@@ -25,6 +25,8 @@ test("packaged aienvmap skill points AI agents to current startup contracts", as
   assert.match(skill, /externalEvidenceDecision/);
   assert.match(skill, /digest-mismatch/);
   assert.match(skill, /--clear-import --write/);
+  assert.match(skill, /component-drift-review/);
+  assert.match(skill, /componentInventory\.truncated/);
   assert.match(skill, /python\.managerInventories/);
   assert.match(skill, /manager-native evidence/);
   assert.match(skill, /node\.managerInventories\.volta/);
