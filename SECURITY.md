@@ -20,3 +20,7 @@ Do not include secrets, private environment dumps, access tokens, or production 
 ## Sensitive Data
 
 Current manifests may include local paths, hostnames, shell paths, and runtime versions. Treat generated `.aienvmap/` outputs as workspace metadata and decide whether they belong in your repository.
+
+## Release provenance
+
+The manual npm workflow requests GitHub OIDC permission and publishes with provenance only from the current `main` commit when a matching `v<version>` tag exists. It rejects already-published versions and verifies registry version plus integrity afterward. Token authentication remains configured until npm trusted publishing is explicitly set up and verified; workflow readiness is not proof that an unpublished release already has provenance.

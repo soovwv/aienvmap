@@ -135,7 +135,7 @@ The GitHub Action writes discovery, status, summary, schema, doctor, plan, SBOM,
 ## Release Policy
 - `0.1.x` is the clean `aienvmap` prototype line after the rename from `aienvmp`.
 - `0.2.x` starts the stabilized AI workspace contract.
-- npm releases are manually gated and batched around meaningful changes; security fixes are the exception.
+- npm releases are manually gated and batched; the workflow requires current main, a matching `v<version>` tag, an unpublished version, OIDC provenance, and post-publish registry integrity verification.
 - Default publish decision is `hold`; publish only after several meaningful changes are batched, `npm run release:check` passes, and `schema --json` `releaseReadiness.currentBatch` is reviewed.
 - `schema --json` exposes `releaseGate`, `releaseReadiness.currentBatch`, `contractReview`, `nextStabilizationTasks`, `requiredBeforeStable`, and `evidenceCommands`.
 - Broken or superseded versions are deprecated instead of unpublished.
