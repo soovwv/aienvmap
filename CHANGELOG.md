@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Added bounded read-only pnpm, Yarn, and Corepack executable/version discovery across PATH and known Node roots, including duplicate/project mismatch findings, portable evidence, and drift tracking without claiming shim ownership.
 - Added optional actor/session intent ownership and bounded advisory leases so concurrent sessions sharing one AI label conflict correctly; expiry never resolves an intent or authorizes environment changes.
 - Added a fail-closed 0.2.0 root-field contract freeze candidate across 13 AI JSON surfaces, with an intentional-review baseline and release-check integration.
 - Isolated portable report construction, validation, fingerprinting, artifact loading, and comparison from the reconcile CLI while preserving command-module exports and JSON contracts.

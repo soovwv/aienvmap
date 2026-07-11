@@ -82,6 +82,10 @@ export async function reconcileWorkspace(args = {}) {
     if (item.globalPackages.length) console.log(`  global packages: ${item.globalPackages.map((pkg) => `${pkg.name}@${pkg.version}`).join(", ")}`);
   }
   for (const link of result.npm.runtimeLinks || []) console.log(`npm runtime: ${link.managerPath} -> ${link.runtimePath || "unresolved"} (${link.relationship}/${link.confidence}; ownership not proven)`);
+  for (const [manager, inventory] of Object.entries(result.npm.alternativeManagers || {})) {
+    if (!inventory.installations?.length) continue;
+    for (const item of inventory.installations) console.log(`${manager}: ${item.version} ${item.active ? "[active]" : "[inactive]"} ${item.source}/${item.scope} ${item.path} (${item.deliveryEvidence}; ownership not proven)`);
+  }
   if (!result.python.installations.length) console.log("python: not detected");
   for (const item of result.python.installations) {
     console.log(`python: ${item.version} ${item.active ? "[active]" : "[inactive]"} ${item.source}/${item.scope} ${item.path}`);
@@ -156,6 +160,9 @@ export function summarizeReconciliation(value = {}) {
     detailedToolchains: {
       node: value.node?.installations?.length || 0,
       npm: value.npm?.installations?.length || 0,
+      pnpm: value.npm?.alternativeManagers?.pnpm?.installations?.length || 0,
+      yarn: value.npm?.alternativeManagers?.yarn?.installations?.length || 0,
+      corepack: value.npm?.alternativeManagers?.corepack?.installations?.length || 0,
       python: value.python?.installations?.length || 0,
       pip: value.python?.pipCommands?.length || 0
     },

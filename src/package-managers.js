@@ -12,10 +12,14 @@ const npmNames = process.platform === "win32" ? ["npm.cmd", "npm.exe"] : ["npm"]
 const nodeNames = process.platform === "win32" ? ["node.exe"] : ["node"];
 const pythonNames = process.platform === "win32" ? ["python.exe", "python3.exe"] : ["python3", "python"];
 const pipNames = process.platform === "win32" ? ["pip.exe", "pip3.exe"] : ["pip3", "pip"];
+const nodePackageManagerNames = process.platform === "win32"
+  ? { pnpm: ["pnpm.cmd", "pnpm.exe"], yarn: ["yarn.cmd", "yarn.exe"], corepack: ["corepack.cmd", "corepack.exe"] }
+  : { pnpm: ["pnpm"], yarn: ["yarn"], corepack: ["corepack"] };
 
 export async function inspectPackageManagers(dir, options = {}) {
-  const [candidates, nodeCandidates, pythonCandidates, pipCandidates, commonRuntimes, project, uvPythonManager, pyenvPythonManager, voltaNodeManager, fnmNodeManager, nvmNodeManager, miseRuntimeManager] = await Promise.all([
+  const [candidates, nodePackageManagerCandidates, nodeCandidates, pythonCandidates, pipCandidates, commonRuntimes, project, uvPythonManager, pyenvPythonManager, voltaNodeManager, fnmNodeManager, nvmNodeManager, miseRuntimeManager] = await Promise.all([
     findNpmCandidates(options),
+    findNodePackageManagerCandidates(options),
     findNodeCandidates(options),
     findPythonCandidates({ ...options, projectDir: dir }),
     findPipCandidates({ ...options, projectDir: dir }),
@@ -53,6 +57,7 @@ export async function inspectPackageManagers(dir, options = {}) {
     ...item,
     active: index === 0
   })).map(({ candidateOrder: _candidateOrder, ...item }) => item);
+  const alternativeManagers = await inspectNodePackageManagerCandidates(nodePackageManagerCandidates, options);
   const inspectedPythonInstallations = await inspectPythonCandidates(pythonCandidates, options);
   const pythonInstallations = attachMisePythonEvidence(attachPyenvManagerEvidence(attachUvManagerEvidence(inspectedPythonInstallations, uvPythonManager), pyenvPythonManager), miseRuntimeManager);
   const pipCommands = await inspectPipCandidates(pipCandidates, options);
@@ -62,6 +67,7 @@ export async function inspectPackageManagers(dir, options = {}) {
   const findings = [
     ...analyzeNodeInstallations(nodeInstallations, project),
     ...analyzeNpmInstallations(installations, project),
+    ...analyzeNodePackageManagers(alternativeManagers, project),
     ...analyzePythonInstallations(pythonInstallations, project),
     ...analyzePythonCommandRouting(pythonInstallations, pipCommands),
     ...analyzeRuntimeLinks(npmRuntimeLinks, pipRuntimeLinks, nodeInstallations, pythonInstallations),
@@ -103,7 +109,8 @@ export async function inspectPackageManagers(dir, options = {}) {
       distinctVersions: [...new Set(installations.map((item) => item.version))],
       distinctGlobalRoots: [...new Set(installations.map((item) => item.globalRoot).filter(Boolean))],
       globalPackageComparisons: compareNpmGlobalPackages(installations),
-      runtimeLinks: npmRuntimeLinks
+      runtimeLinks: npmRuntimeLinks,
+      alternativeManagers
     },
     python: {
       packageDetail: options.quick ? "not collected in quick mode; rerun without --quick or use --full-packages" : options.fullPackages ? "full" : "summary; rerun with --full-packages when package-level comparison is required",
@@ -1071,6 +1078,83 @@ export async function findNpmCandidates(options = {}) {
     for (const file of await npmFilesBelow(root.path, root.depth)) await add(file, root.source, root.scope);
   }
   return found;
+}
+
+export async function findNodePackageManagerCandidates(options = {}) {
+  const found = [];
+  const seen = new Set();
+  const add = async (manager, file) => {
+    if (!(await exists(file))) return;
+    let key = `${manager}:${path.resolve(file).toLowerCase()}`;
+    try { key = `${manager}:${(await fs.realpath(file)).toLowerCase()}`; } catch {}
+    if (seen.has(key)) return;
+    seen.add(key);
+    const dir = path.dirname(file);
+    found.push({ manager, path: path.resolve(file), source: classifySource(dir), scope: classifyScope(dir) });
+  };
+  for (const dir of pathEntries(options.pathValue ?? process.env.PATH)) {
+    for (const [manager, names] of Object.entries(nodePackageManagerNames)) {
+      for (const name of names) await add(manager, path.join(dir, name));
+    }
+  }
+  for (const root of knownNodeRoots(options.env || process.env, options.home || os.homedir())) {
+    for (const npmFile of await npmFilesBelow(root.path, root.depth)) {
+      const dir = path.dirname(npmFile);
+      for (const [manager, names] of Object.entries(nodePackageManagerNames)) {
+        for (const name of names) await add(manager, path.join(dir, name));
+      }
+    }
+  }
+  return found;
+}
+
+export async function inspectNodePackageManagerCandidates(candidates = [], options = {}) {
+  const inspected = await Promise.all(candidates.map(async (candidate) => {
+    const result = await portableCommandResult(candidate.path, ["--version"], { timeout: 3500, platform: options.platform || process.platform });
+    const version = result.ok ? firstVersion(`${result.stdout}\n${result.stderr}`) : null;
+    if (!version) return null;
+    return { manager: candidate.manager, version, path: displayPath(candidate.path, options), source: candidate.source, scope: candidate.scope };
+  }));
+  const byManager = new Map();
+  for (const item of inspected.filter(Boolean)) {
+    const list = byManager.get(item.manager) || [];
+    list.push({ ...item, active: list.length === 0 });
+    byManager.set(item.manager, list);
+  }
+  const corepackDirs = new Set((byManager.get("corepack") || []).map((item) => path.dirname(item.path).toLowerCase()));
+  return Object.fromEntries(["pnpm", "yarn", "corepack"].map((manager) => {
+    const installations = (byManager.get(manager) || []).map((item) => ({
+      ...item,
+      deliveryEvidence: manager === "corepack" ? "corepack-command" : corepackDirs.has(path.dirname(item.path).toLowerCase()) ? "co-located-with-corepack" : "standalone-or-unknown",
+      ownershipProven: false,
+      removalAuthorized: false
+    }));
+    return [manager, { installations, active: installations[0] || null, distinctVersions: [...new Set(installations.map((item) => item.version))] }];
+  }));
+}
+
+export function analyzeNodePackageManagers(managers = {}, project = {}) {
+  const findings = [];
+  for (const manager of ["pnpm", "yarn"]) {
+    const inventory = managers[manager] || {};
+    const installations = inventory.installations || [];
+    if (installations.length > 1) findings.push({
+      code: `multiple-${manager}-installations`, severity: (inventory.distinctVersions || []).length > 1 ? "review" : "info",
+      message: `${installations.length} ${manager} executables were detected${(inventory.distinctVersions || []).length > 1 ? ` with versions ${inventory.distinctVersions.join(", ")}` : ""}.`,
+      action: `Review PATH and the project packageManager declaration before choosing or removing any ${manager} entry point.`
+    });
+    const expected = project.packageManager?.name === manager ? project.packageManager.version : "";
+    if (expected && !installations.length) findings.push({
+      code: `${manager}-not-detected`, severity: "review", message: `Project declares ${manager}@${expected}, but no readable ${manager} executable was detected.`,
+      action: `Review the project's Node/Corepack setup; aienvmap will not install or enable ${manager}.`
+    });
+    if (expected && inventory.active && !versionMatches(expected, inventory.active.version)) findings.push({
+      code: `active-${manager}-project-mismatch`, severity: "review",
+      message: `Project declares ${manager}@${expected}, but active ${manager} is ${inventory.active.version}.`,
+      action: `Review Corepack or PATH routing before dependency changes; do not switch versions automatically.`
+    });
+  }
+  return findings;
 }
 
 export function analyzeNpmInstallations(installations, project = {}) {

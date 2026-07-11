@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
-import { analyzeNodeInstallations, analyzeNpmInstallations, analyzePythonCommandRouting, analyzePythonInstallations, analyzeRuntimeLinks, attachFnmManagerEvidence, attachMiseNodeEvidence, attachMisePythonEvidence, attachNvmManagerEvidence, attachPyenvManagerEvidence, attachUvManagerEvidence, attachVoltaManagerEvidence, buildAiDecision, buildConsolidationPlan, compareNpmGlobalPackages, comparePythonPackages, findNodeCandidates, findPythonCandidates, inspectFnmNodeManager, inspectMiseRuntimeManager, inspectNvmNodeManager, inspectPyenvPythonManager, inspectVoltaNodeManager, linkNodeNpmRuntimes, linkPythonPipRuntimes, miseInventoryForRuntime, parseFnmNodeList, parseMiseRuntimeInventory, parsePackageManager, parsePipList, parsePipVersion, parsePyenvVersions, parseVoltaNodeList, summarizePipInspect, summarizePythonPackages } from "../src/package-managers.js";
+import { analyzeNodeInstallations, analyzeNodePackageManagers, analyzeNpmInstallations, analyzePythonCommandRouting, analyzePythonInstallations, analyzeRuntimeLinks, attachFnmManagerEvidence, attachMiseNodeEvidence, attachMisePythonEvidence, attachNvmManagerEvidence, attachPyenvManagerEvidence, attachUvManagerEvidence, attachVoltaManagerEvidence, buildAiDecision, buildConsolidationPlan, compareNpmGlobalPackages, comparePythonPackages, findNodeCandidates, findNodePackageManagerCandidates, findPythonCandidates, inspectFnmNodeManager, inspectMiseRuntimeManager, inspectNodePackageManagerCandidates, inspectNvmNodeManager, inspectPyenvPythonManager, inspectVoltaNodeManager, linkNodeNpmRuntimes, linkPythonPipRuntimes, miseInventoryForRuntime, parseFnmNodeList, parseMiseRuntimeInventory, parsePackageManager, parsePipList, parsePipVersion, parsePyenvVersions, parseVoltaNodeList, summarizePipInspect, summarizePythonPackages } from "../src/package-managers.js";
 import { buildPortableReconciliation, comparePortableReconciliations, portableEvidenceFingerprint } from "../src/commands/reconcile.js";
 import * as portableReconcile from "../src/portable-reconcile.js";
 
@@ -31,6 +31,40 @@ test("analyzeNpmInstallations reports multiple versions and global roots", () =>
     "active-npm-project-mismatch"
   ]);
   assert.ok(findings.every((item) => item.action));
+});
+
+test("node package-manager analysis catches duplicate versions and project mismatch", () => {
+  const findings = analyzeNodePackageManagers({
+    pnpm: { installations: [{ version: "9.0.0" }, { version: "10.0.0" }], active: { version: "9.0.0" }, distinctVersions: ["9.0.0", "10.0.0"] },
+    yarn: { installations: [], active: null, distinctVersions: [] }
+  }, { packageManager: { name: "pnpm", version: "10.0.0" } });
+  assert.deepEqual(findings.map((item) => item.code), ["multiple-pnpm-installations", "active-pnpm-project-mismatch"]);
+  assert.ok(findings.every((item) => item.severity === "review"));
+});
+
+test("node package-manager analysis reports a declared manager missing", () => {
+  const findings = analyzeNodePackageManagers({ yarn: { installations: [] } }, { packageManager: { name: "yarn", version: "4.2.0" } });
+  assert.equal(findings[0].code, "yarn-not-detected");
+  assert.match(findings[0].action, /will not install or enable/);
+});
+
+test("node package-manager candidate discovery stays bounded to PATH", async () => {
+  const dir = await fs.mkdtemp(path.join(os.tmpdir(), "aienvmap-node-pm-"));
+  const name = process.platform === "win32" ? "pnpm.cmd" : "pnpm";
+  await fs.writeFile(path.join(dir, name), "", "utf8");
+  const candidates = await findNodePackageManagerCandidates({ pathValue: dir, env: {}, home: dir });
+  assert.ok(candidates.some((item) => item.manager === "pnpm" && item.path === path.join(dir, name)));
+});
+
+test("node package-manager inspection reads versions without claiming shim ownership", async () => {
+  const dir = await fs.mkdtemp(path.join(os.tmpdir(), "aienvmap-node-pm-version-"));
+  const file = path.join(dir, process.platform === "win32" ? "pnpm.cmd" : "pnpm");
+  await fs.writeFile(file, process.platform === "win32" ? "@echo 10.2.1\r\n" : "#!/bin/sh\necho 10.2.1\n", "utf8");
+  if (process.platform !== "win32") await fs.chmod(file, 0o755);
+  const result = await inspectNodePackageManagerCandidates([{ manager: "pnpm", path: file, source: "PATH", scope: "current-user" }], { showPaths: true });
+  assert.equal(result.pnpm.active.version, "10.2.1");
+  assert.equal(result.pnpm.active.ownershipProven, false);
+  assert.equal(result.pnpm.active.removalAuthorized, false);
 });
 
 test("analyzeNpmInstallations keeps same-version duplicates informational", () => {
@@ -553,7 +587,7 @@ test("portable reconciliation keeps diagnostic facts and strips local identifier
     generatedAt: "2026-07-12T01:02:03Z",
     project: { name: "secret-project", path: "C:/Users/alice/secret", packageManager: { name: "npm", version: "10" }, lockManagers: ["npm"], node: { versionFile: "22" }, python: { versionFile: "3.12" } },
     node: { distinctVersions: ["22.1.0", "20.9.0"], installations: [{ version: "22.1.0", active: true, path: "C:/Users/alice/node.exe", source: "path", scope: "user", managerEvidence: { manager: "fnm", relationship: "inventory-version-match", confidence: "medium" } }] },
-    npm: { distinctVersions: ["10"], installations: [{ version: "10", active: true, path: "C:/secret/npm.cmd", globalPackages: [{ name: "private-tool", version: "1" }] }] },
+    npm: { distinctVersions: ["10"], installations: [{ version: "10", active: true, path: "C:/secret/npm.cmd", globalPackages: [{ name: "private-tool", version: "1" }] }], alternativeManagers: { pnpm: { distinctVersions: ["10.2.0"], installations: [{ version: "10.2.0", active: true, path: "C:/secret/pnpm.cmd", source: "corepack", scope: "user", deliveryEvidence: "co-located-with-corepack" }] } } },
     python: { distinctVersions: ["3.12"], installations: [{ version: "3.12", path: "C:/Users/alice/python.exe", virtualEnvironment: true, packages: [{ name: "private-package" }], packageDigest: "secret-digest" }] },
     otherRuntimes: { java: { installations: [{ version: "21", path: "C:/Users/alice/jdk/bin/java.exe", vendor: "Temurin", architecture: "x64", runtimeKind: "jdk", hasCompiler: true }] } },
     findings: [{ code: "multiple-node-installations", severity: "review", message: "secret path" }],
@@ -564,10 +598,13 @@ test("portable reconciliation keeps diagnostic facts and strips local identifier
   assert.equal(result.schemaName, "aienvmap.reconcile-portable");
   assert.deepEqual(result.inventory.node.distinctVersions, ["22.1.0", "20.9.0"]);
   assert.equal(result.inventory.node.installations[0].manager.name, "fnm");
+  assert.deepEqual(result.inventory.nodePackageManagers.pnpm.distinctVersions, ["10.2.0"]);
+  assert.equal(result.inventory.nodePackageManagers.pnpm.installations[0].deliveryEvidence, "co-located-with-corepack");
+  assert.equal(result.inventory.nodePackageManagers.pnpm.installations[0].removalAuthorized, false);
   assert.equal(result.inventory.otherRuntimes.java.installations[0].vendor, "Temurin");
   assert.deepEqual(result.findings, [{ code: "multiple-node-installations", severity: "review" }]);
   assert.equal(result.consolidation.candidateCount, 1);
-  for (const secret of ["alice", "secret-project", "private-tool", "private-package", "secret-digest", "node.exe", "java.exe", "2026-07-12"]) assert.equal(serialized.includes(secret), false);
+  for (const secret of ["alice", "secret-project", "private-tool", "private-package", "secret-digest", "node.exe", "pnpm.cmd", "java.exe", "2026-07-12"]) assert.equal(serialized.includes(secret), false);
   assert.equal(result.consolidation.removalAuthorized, false);
   assert.match(result.evidenceFingerprint, /^aerp1:[a-f0-9]{24}$/);
   assert.equal(result.fingerprintSemantics.machineIdentifier, false);
