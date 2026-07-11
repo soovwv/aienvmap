@@ -11,6 +11,18 @@ export async function reconcileWorkspace(args = {}) {
   if (args.check && args.write) throw new Error("use either --check or --write, not both; checking must not replace its baseline");
   if (args.portable && (args.write || args.check || args.show_paths || args.full_packages || args.baseline)) throw new Error("--portable is quick, read-only, and cannot be combined with --write, --check, --baseline, --show-paths, or --full-packages");
   const dir = workspaceDir(args);
+  if (args.portable_compare) {
+    if (args.portable || args.portable_from || args.write || args.check || args.quick || args.full_packages || args.show_paths || args.baseline) throw new Error("--portable-compare cannot be combined with scanning, writing, checking, baseline, or path options");
+    if (args.portable_compare === true || !args.against || args.against === true) throw new Error("--portable-compare <before.json> requires --against <after.json>");
+    const [before, after] = await Promise.all([
+      readPortableEvidence(path.resolve(dir, String(args.portable_compare))),
+      readPortableEvidence(path.resolve(dir, String(args.against)))
+    ]);
+    const comparison = comparePortableReconciliations(before, after);
+    if (args.json) console.log(JSON.stringify(comparison, null, 2));
+    else if (!args.quiet) printPortableComparison(comparison);
+    return comparison;
+  }
   if (args.portable_from) {
     if (args.portable || args.write || args.check || args.quick || args.full_packages || args.show_paths || args.baseline) throw new Error("--portable-from cannot be combined with scanning, writing, checking, baseline, or path options");
     if (args.portable_from === true) throw new Error("--portable-from requires a reconciliation JSON file");
@@ -136,9 +148,9 @@ export function buildPortableReconciliation(value = {}, runtime = {}) {
       excluded: ["paths", "workspace and project names", "package names", "package digests", "timestamps", "raw manager inventories"],
       warning: "Review before sharing: runtime versions, platform, architecture, sources, and finding codes remain visible."
     },
-    platform: runtime.platform || process.platform,
-    architecture: runtime.arch || process.arch,
-    source: { mode: runtime.sourceMode || "in-memory", scanMode: value.scanMode || "unknown", artifactPathIncluded: false },
+    platform: value.platform || runtime.platform || process.platform,
+    architecture: value.architecture || runtime.arch || process.arch,
+    source: { mode: runtime.sourceMode || "in-memory", scanMode: value.scanMode || "unknown", platformEvidence: value.platform && value.architecture ? "embedded" : runtime.platform && runtime.arch ? "provided" : "current-host-fallback", artifactPathIncluded: false },
     scanMode: value.scanMode || "unknown",
     projectSignals: {
       packageManager: value.project?.packageManager ? { name: value.project.packageManager.name, version: value.project.packageManager.version } : null,
@@ -194,6 +206,59 @@ export function portableEvidenceFingerprint(report = {}) {
   return `aerp1:${createHash("sha256").update(JSON.stringify(canonicalEvidence(evidence))).digest("hex").slice(0, 24)}`;
 }
 
+export function comparePortableReconciliations(before = {}, after = {}) {
+  validatePortable(before);
+  validatePortable(after);
+  const beforeFacts = portableComparisonFacts(before);
+  const afterFacts = portableComparisonFacts(after);
+  const allChanges = diffPortableFacts(beforeFacts, afterFacts);
+  const same = before.evidenceFingerprint === after.evidenceFingerprint && allChanges.length === 0;
+  return {
+    schemaName: "aienvmap.reconcile-portable-compare",
+    schemaVersion: 1,
+    mode: "offline-redacted-compare",
+    before: { evidenceFingerprint: before.evidenceFingerprint, scanMode: before.scanMode || "unknown" },
+    after: { evidenceFingerprint: after.evidenceFingerprint, scanMode: after.scanMode || "unknown" },
+    same,
+    decision: same ? "clear" : "review",
+    changeCount: allChanges.length,
+    changedSections: [...new Set(allChanges.map((item) => item.section))],
+    changes: allChanges.slice(0, 100),
+    truncated: allChanges.length > 100,
+    environmentChangesAuthorized: false,
+    removalAuthorized: false,
+    rule: "Compare redacted facts only; differences require review and never authorize environment changes, cleanup, or removal."
+  };
+}
+
+async function readPortableEvidence(file) {
+  const value = await readJson(file, null);
+  if (value?.schemaName === "aienvmap.reconcile-portable" && value?.schemaVersion === 1) {
+    validatePortable(value);
+    return value;
+  }
+  if (value?.schemaName === "aienvmap.reconcile" && value?.schemaVersion === 1) {
+    if (!value.platform || !value.architecture) throw new Error("raw reconciliation comparison inputs require embedded platform and architecture; regenerate them or convert each artifact to portable evidence on its source host");
+    return buildPortableReconciliation(value, { sourceMode: "artifact" });
+  }
+  throw new Error("portable comparison inputs must be aienvmap.reconcile or aienvmap.reconcile-portable v1 JSON artifacts");
+}
+
+function validatePortable(value) {
+  if (value?.schemaName !== "aienvmap.reconcile-portable" || value?.schemaVersion !== 1 || !value.evidenceFingerprint) throw new Error("expected an aienvmap.reconcile-portable v1 artifact with evidenceFingerprint");
+  if (portableEvidenceFingerprint(value) !== value.evidenceFingerprint) throw new Error("portable evidence fingerprint does not match its retained facts");
+}
+
+function portableComparisonFacts(value) {
+  return canonicalEvidence({ platform: value.platform, architecture: value.architecture, scanMode: value.scanMode, projectSignals: value.projectSignals, inventory: value.inventory, findings: value.findings, decision: value.decision, consolidation: value.consolidation });
+}
+
+function diffPortableFacts(before, after, keys = []) {
+  if (JSON.stringify(before) === JSON.stringify(after)) return [];
+  if (!before || !after || typeof before !== "object" || typeof after !== "object" || Array.isArray(before) || Array.isArray(after)) return [{ section: keys[0] || "root", field: keys.join("."), kind: before === undefined ? "added" : after === undefined ? "removed" : "changed", before: before ?? null, after: after ?? null }];
+  return [...new Set([...Object.keys(before), ...Object.keys(after)])].sort().flatMap((key) => diffPortableFacts(before[key], after[key], [...keys, key]));
+}
+
 function canonicalEvidence(value) {
   if (Array.isArray(value)) return value.map(canonicalEvidence).sort((a, b) => JSON.stringify(a).localeCompare(JSON.stringify(b)));
   if (value && typeof value === "object") return Object.fromEntries(Object.keys(value).sort().map((key) => [key, canonicalEvidence(value[key])]));
@@ -207,6 +272,15 @@ function printPortable(value) {
   console.log(`findings: ${value.findings.map((item) => item.code).join(", ") || "none"}`);
   console.log(`evidence: ${value.evidenceFingerprint}`);
   console.log(`privacy: ${value.privacy.excluded.join(", ")}`);
+  console.log(`rule: ${value.rule}`);
+}
+
+function printPortableComparison(value) {
+  console.log(`portable compare: ${value.decision.toUpperCase()}`);
+  console.log(`before: ${value.before.evidenceFingerprint}`);
+  console.log(`after: ${value.after.evidenceFingerprint}`);
+  console.log(`changes: ${value.changeCount}; sections: ${value.changedSections.join(", ") || "none"}`);
+  for (const item of value.changes.slice(0, 20)) console.log(`- ${item.field}: ${item.kind}`);
   console.log(`rule: ${value.rule}`);
 }
 
