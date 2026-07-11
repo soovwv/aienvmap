@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Added an evidence-bounded `scorecard --json` that separates technical readiness from market validation and records adjacent-tool boundaries, limitations, and improvement priorities.
 - Extended `aiDecisionEnvelope` to reconcile, light SBOM, and CycloneDX-lite, and added explicit always-review action classes for removal, global installs, runtime switching, and lockfile rewrites.
 - Added one additive `aiDecisionEnvelope` across start/status/context with bounded reason codes, evidence references, next safe command, approval state, and permanent no-removal authority.
 - Added opt-in Unix nvm and nvm-windows configured-root inventories, canonical path containment checks, exact version-path ownership proof, drift detection, and symlink-escape downgrade without sourcing shells or switching versions.

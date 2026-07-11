@@ -4,6 +4,8 @@
 
 Primary positioning: AI workspace coordination first, lightweight SBOM context second. Full SBOM generators and vulnerability scanners remain complementary optional inputs.
 
+Product scoring is evidence-bounded in `SCORECARD.md` and `aienvmap scorecard --json`; technical readiness must remain separate from independent market validation.
+
 ## Competitive Boundary
 
 - mise, Flox, and Devbox declare, install, lock, or reproduce environments; aienvmap observes the runtime state that already exists on a host and gives AI agents review-first coordination evidence.

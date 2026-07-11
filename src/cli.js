@@ -22,6 +22,7 @@ import { demoWorkspace } from "./commands/demo.js";
 import { discoverWorkspace } from "./commands/discover.js";
 import { startWorkspace } from "./commands/start.js";
 import { reconcileWorkspace } from "./commands/reconcile.js";
+import { scorecardWorkspace } from "./commands/scorecard.js";
 import { readFileSync } from "node:fs";
 
 const commands = new Map([
@@ -48,7 +49,8 @@ const commands = new Map([
   ["demo", demoWorkspace],
   ["discover", discoverWorkspace],
   ["start", startWorkspace],
-  ["reconcile", reconcileWorkspace]
+  ["reconcile", reconcileWorkspace],
+  ["scorecard", scorecardWorkspace]
 ]);
 
 const version = JSON.parse(readFileSync(new URL("../package.json", import.meta.url), "utf8")).version;
@@ -132,6 +134,7 @@ Usage:
   aienvmap start [--dir .] [--json]
   aienvmap discover [--dir .] [--json]
   aienvmap reconcile [--dir .] [--json] [--write|--check] [--baseline file] [--quick|--full-packages] [--show-paths]
+  aienvmap scorecard [--json]
   aienvmap onboard [codex claude gemini] [--agents codex,claude,gemini,cursor,copilot] [--dry-run|--uninstall] [--no-sync]
   aienvmap demo [conflict] [--json]
 
@@ -149,6 +152,7 @@ Common:
   aienvmap schema    print the stable AI-readable output contract
   aienvmap discover  read-only detection plus aiDiscovery.decision and copy-paste prompt
   aienvmap reconcile read-only package-manager traffic report for existing, non-clean environments
+  aienvmap scorecard evidence-bounded technical readiness and market validation scores
   aienvmap snippet   print an AGENTS.md pointer snippet
   aienvmap demo      run the temporary multi-agent conflict demo
   aienvmap dash      regenerate/open the lightweight dashboard

@@ -1,0 +1,28 @@
+# aienvmap scorecard
+
+This scorecard deliberately separates product engineering from market proof. Run `aienvmap scorecard --json` for the bounded AI-readable evidence and methodology.
+
+| Category | Score | Interpretation |
+| --- | ---: | --- |
+| Technical readiness | 87/100 | Strong prototype: dependency-free, cross-platform tested, AI-readable, safety-bounded, and interoperable; contract is not stable until 0.2.0. |
+| Market validation | 43/100 | Differentiated position and usable proof flows exist, but independent users, external cases, and ecosystem verification remain limited. |
+| Weighted overall | 74/100 | 70% technical readiness and 30% market validation; never use this number alone as an adoption or release decision. |
+
+## Position
+
+aienvmap is an AI workspace coordination and environment-evidence layer. It observes existing runtime installations, gives multiple AI agents a shared map and change protocol, and provides a light SBOM bridge. It does not replace a runtime manager, dependency update bot, vulnerability scanner, or full SBOM generator.
+
+Adjacent tools establish the boundaries: [mise](https://mise.jdx.dev/) manages tool versions, [Renovate](https://docs.renovatebot.com/) automates dependency updates, [Syft](https://github.com/anchore/syft) generates full software inventories, and [CycloneDX](https://cyclonedx.org/capabilities/sbom/) defines a broader SBOM ecosystem.
+
+## Evidence policy
+
+- Repository features and CI count toward technical readiness.
+- Repository-owned demos do not count as independent adoption.
+- Unknown or uncited evidence receives no credit.
+- Scores increase only when the cited proof changes.
+
+## Improvement order
+
+1. Document at least three reproducible external runtime-drift environments with before/after evidence.
+2. Verify integration examples on major coding-agent hosts.
+3. Generate reversible, human-approval-gated consolidation plans without executing environment changes.

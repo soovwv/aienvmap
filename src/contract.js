@@ -601,6 +601,11 @@ export function schemaContract() {
         rootFields: ["bomFormat", "specVersion", "metadata", "components", "vulnerabilities", "properties"],
         aiDecisionEnvelopeProperties: ["decision", "reasonCodes", "nextSafeCommand", "requiresHumanApprovalBefore"]
       },
+      scorecard: {
+        command: "aienvmap scorecard --json",
+        rootFields: ["schemaName", "schemaVersion", "status", "overall", "technicalReadiness", "marketValidation", "positioning", "adjacentAlternatives", "strengths", "weaknesses", "nextPriorities", "limitations", "rule"],
+        rule: "Keep technical readiness separate from market validation and require cited evidence before increasing either score."
+      },
       demo: {
         command: "aienvmap demo --json",
         rootFields: ["name", "workspace", "recommendation", "adoptionSignals", "aiProofSignals", "evidenceDocs", "recommendationDecision", "aiDiscovery", "collaboration", "conflictTargets", "dependencyQuickCheck", "nextCommand", "aiEntry", "maintenance", "startHere", "readFirst", "readOrder", "artifactFreshness", "contextFields", "point"],
