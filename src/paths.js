@@ -28,6 +28,10 @@ export function cyclonedxSbomPath(dir) {
   return path.join(stateDir(dir), "sbom.cdx.json");
 }
 
+export function externalSbomEvidencePath(dir) {
+  return path.join(stateDir(dir), "external-sbom-evidence.json");
+}
+
 export function previousManifestPath(dir) {
   return path.join(stateDir(dir), "manifest.previous.json");
 }
