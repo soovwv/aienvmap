@@ -8,6 +8,8 @@ test("schemaContract describes stable AI output contracts", () => {
   const schema = schemaContract();
 
   assert.equal(schema.name, "aienvmap-contract");
+  assert.equal(schema.performanceBudget.mode, "regression-guard-not-benchmark");
+  assert.equal(schema.performanceBudget.commands.start.maxDurationMs, 30000);
   assert.equal(schema.contractVersion, "0.1-prototype");
   assert.equal(schema.stableFrom, "0.2.0");
   assert.equal(schema.outputs.reconcile.file, ".aienvmap/reconcile.json");

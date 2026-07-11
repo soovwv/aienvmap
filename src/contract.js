@@ -1,5 +1,6 @@
 import { dashboardDiscoveryFallback, dashboardEssentialSurfaces, dashboardQualityDefaults, dashboardReleaseDefaults, dashboardSurfaceBudget } from "./dashboard.js";
 import { aiDefaultReadOrder, aiEntryContract, aiFallbackPrompt, aiFallbackRead, aiSessionUseContract, aiStartupChecklist } from "./ai-contract.js";
+import { performanceBudget } from "./performance-budget.js";
 
 export function preflightContract() {
   return {
@@ -97,6 +98,7 @@ export function schemaContract() {
     stableFrom: "0.2.0",
     name: "aienvmap-contract",
     purpose: "Stable AI-readable contract for aienvmap outputs.",
+    performanceBudget,
     compatibilityPolicy: "Additive and backward-compatible after 0.2.0: consumers should ignore unknown fields and rely only on documented root fields.",
     breakingChangePolicy: "Breaking JSON contract changes require a future contractVersion bump and migration notes.",
     recommendation: {
