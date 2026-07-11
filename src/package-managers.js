@@ -865,7 +865,7 @@ function summarizeNodeManagerEvidence(installations = []) {
     unconfirmed: evidence.filter((item) => item.confidence === "none" || !item.confidence).length,
     managers: [...new Set(evidence.map((item) => item.manager).filter((item) => item && item !== "unknown"))].sort(),
     removalAuthorized: false,
-    rule: "Volta inventory plus image-path evidence may prove Node manager control, but never removal authorization."
+    rule: "Volta image-path or mise installed-path evidence may prove Node manager control, but never removal authorization."
   };
 }
 

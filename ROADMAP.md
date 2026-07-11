@@ -15,13 +15,13 @@ Primary positioning: AI workspace coordination first, lightweight SBOM context s
 
 The default remains advisory and lightweight: observe existing state, explain conflicts, and write only aienvmap artifacts unless a human explicitly approves a targeted change.
 
-- Current evidence: `reconcile` discovers visible Node/npm executables from PATH and known nvm/Volta/mise locations, compares versions, prefixes, global roots/packages, project expectations, and lockfiles; full scans add bounded Volta plain inventory and exact reported-image ownership evidence.
+- Current evidence: `reconcile` discovers visible Node/npm executables from PATH and known nvm/Volta/mise locations, compares versions, prefixes, global roots/packages, project expectations, and lockfiles; full scans add bounded Volta plain and mise installed JSON inventory with exact reported-path ownership evidence.
 - Instruction safety: preview pointer changes with `onboard --dry-run`, keep content inside marker blocks, remove only those blocks with `onboard --uninstall`, and reject paths outside the workspace.
 - Current Python coverage: discover PATH, project `.venv`/`venv`, python.org, pyenv, mise, uv, Homebrew, common Unix, and macOS Framework locations; record interpreter, prefix/base prefix, venv state, visible package locations, count/digest/sample, and optional full package evidence.
 - Current runtime-link evidence: connect npm to Node and pip to Python using executable co-location, Python package locations, unique version matching, or explicit PATH inference; every link states that installation ownership is not proven.
 - Current Python installer evidence: `--full-packages` summarizes pip's stable inspect report, including installer/requested/editable metadata and redacted locations, while default and quick scans remain unchanged.
-- Current Python manager proof: `--full-packages` uses uv's offline managed-Python JSON list and bounded pyenv root/version inventory to prove exact interpreter or prefix matches while keeping removal authorization false; defaults remain inference-only.
-- Next package-manager coverage: add mise manager proof, pnpm, Yarn/Corepack, standalone pip/uv/pipx entry-point conflicts, and Conda without adding runtime dependencies.
+- Current Python manager proof: `--full-packages` uses uv's offline JSON, bounded pyenv root/version inventory, and mise installed JSON to prove exact interpreter/prefix/install-path matches while keeping removal authorization false; defaults remain inference-only.
+- Next package-manager coverage: add pnpm, Yarn/Corepack, standalone pip/uv/pipx entry-point conflicts, and Conda without adding runtime dependencies.
 - Information-only runtime coverage stays lightweight: Java includes `java`/`javac`/`JAVA_HOME` plus standard JDK roots, .NET includes SDK/runtime lists, Rust includes rustup toolchains, Go includes core env paths, and Ruby includes gem home; package enumeration remains out of scope for these runtimes.
 - Current Java native discovery: add read-only Windows Registry, macOS `java_home`, and Linux alternatives candidates with bounded command timeouts and explicit provenance; inaccessible sources fall back to PATH and known roots.
 - Current Java identity: use selected standard Java system properties plus sibling `javac` evidence to report vendor, architecture, VM/runtime names, reported home, and conservative `jdk` versus `jre-or-runtime-image` classification.
@@ -58,7 +58,7 @@ Acceptance gates: cross-platform fixtures for every manager, no writes in defaul
 ## Next
 
 - Deeper runtime discovery:
-  - expand Node ownership evidence from Volta to safe nvm, fnm, and mise manager-native inventories
+  - expand Node ownership evidence from Volta/mise to safe nvm and fnm inventories
   - pyenv, uv, conda
   - mise, asdf
 - Global tool inventory:
