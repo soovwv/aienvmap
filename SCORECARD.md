@@ -20,6 +20,8 @@ Adjacent tools establish the boundaries: [mise](https://mise.jdx.dev/) manages t
 - Repository-owned demos do not count as independent adoption.
 - Unknown or uncited evidence receives no credit.
 - Scores increase only when the cited proof changes.
+- External cases progress through submitted, reproducible, outcome-verified, and longitudinal levels; market credit starts only at independent outcome-verified evidence.
+- The [portable environment case guide](examples/portable-environment-case-guide.md) defines manual submission, privacy review, AI judgment assessment, and no-double-counting rules.
 
 ## Improvement order
 

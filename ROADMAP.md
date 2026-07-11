@@ -40,6 +40,7 @@ The default remains advisory and lightweight: observe existing state, explain co
 - Reviewed evidence conversion: `reconcile --portable-from <artifact> --json` preserves manager-native ownership confidence from a saved full report without rescanning or exposing the source artifact path.
 - Case comparison: portable reports expose canonical `aerp1` fingerprints that ignore identifiers and ordering but change with retained environment facts; identical fingerprints are linkable pseudonymous tokens, never machine IDs.
 - Offline case diff: `reconcile --portable-compare <before> --against <after> --json` validates fingerprints, converts raw v1 inputs before diffing, bounds redacted changes, and refuses cross-host raw artifacts that lack embedded platform evidence.
+- External validation intake: the portable environment case issue template records independent problem evidence, AI judgment, human verification, privacy review, and before/after outcomes; only outcome-verified or longitudinal cases may raise market validation.
 - Current AI decision simplification: startup, reconciliation, and SBOM surfaces expose one bounded additive envelope while legacy detailed contracts remain compatible.
 - SBOM boundary: keep manifest-derived light SBOM as coordination context; explicitly import workspace-local CycloneDX/SPDX JSON as digest-verified summaries, never auto-run generators, and never build a competing vulnerability database.
 
