@@ -218,6 +218,9 @@ test("schemaContract describes stable AI output contracts", () => {
   assert.equal(schema.releaseGate.localCommand, "npm run release:check");
   assert.equal(schema.releaseGate.workflow, ".github/workflows/release.yml");
   assert.ok(schema.releaseGate.beforePublish.includes("npm run release:check"));
+  assert.equal(schema.releaseGate.provenance.status, "workflow-ready-unpublished");
+  assert.equal(schema.releaseGate.provenance.oidcPermission, "id-token: write");
+  assert.match(schema.releaseGate.provenance.trustedPublishing, /not-configured/);
   assert.match(schema.releaseGate.rule, /batch meaningful changes/);
   assert.equal(schema.releaseReadiness.target, "0.2.0");
   assert.equal(schema.releaseReadiness.status, "prototype-hardening");
@@ -272,6 +275,7 @@ test("schemaContract describes stable AI output contracts", () => {
   assert.match(schema.releaseReadiness.publishGate.rule, /single AI-readable npm publish decision/);
   assert.match(schema.releaseReadiness.doNotPublishUntil.join(" "), /currentBatch changes/);
   assert.match(schema.releaseReadiness.doNotPublishUntil.join(" "), /package\.json version/);
+  assert.match(schema.releaseReadiness.doNotPublishUntil.join(" "), /v<version> tag/);
   assert.ok(schema.releaseReadiness.requiredBeforeStable.includes("npm run release:check passes locally"));
   assert.ok(schema.releaseReadiness.requiredBeforeStable.includes("package metadata and CLI help match AI workspace coordination positioning"));
   assert.ok(schema.releaseReadiness.evidenceCommands.includes("npm run release:check"));

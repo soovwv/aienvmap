@@ -58,6 +58,7 @@ Acceptance gates: cross-platform fixtures for every manager, no writes in defaul
 - Keep README, examples, schema, dashboard, and packaged skill aligned on AI workspace coordination
 - Validate start/onboard/discover fallback behavior across Codex, Claude, Gemini, Cursor, and Copilot surfaces
 - Keep JSON contracts additive after `0.2.0`; breaking changes require a contract version bump and migration notes
+- Keep release provenance fail-closed: current main, matching version tag, unpublished version, explicit confirmation, OIDC attestation, and post-publish registry verification; migrate from the token only after npm trusted publisher configuration is verified
 - Deprecate `0.1.x` prototype versions after `0.2.0` is published
 - Strengthen trust states: observed, planned, changed, review, verified, stale
 - Detect multi-agent environment intent conflicts

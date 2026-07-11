@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Hardened the manual npm provenance workflow to require current main, a matching version tag, an unpublished version, explicit confirmation, OIDC provenance, and post-publish registry version/integrity verification.
 - Restored the canonical Apache-2.0 license text, added a dated market/traction snapshot with adjacent-tool boundaries, exposed its caveats in the scorecard, and aligned GitHub description/topics with the product position.
 - Added a privacy-reviewed portable environment case issue template, external evidence maturity rubric, AI judgment evaluation fields, and scorecard gates that exclude unverified or repository-owned examples from market credit.
 - Added offline `reconcile --portable-compare <before> --against <after> --json` with fingerprint validation, bounded redacted diffs, embedded platform evidence, and no environment-change authority.

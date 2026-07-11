@@ -328,9 +328,20 @@ export function schemaContract() {
       workflow: ".github/workflows/release.yml",
       publishWorkflow: "GitHub Actions Release workflow_dispatch",
       npmTokenSecret: "NPM_TOKEN",
+      provenance: {
+        status: "workflow-ready-unpublished",
+        oidcPermission: "id-token: write",
+        publishFlag: "--provenance",
+        sourcePolicy: "current main commit with matching v<version> tag",
+        duplicatePolicy: "fail when aienvmap@<version> already exists",
+        postPublishVerification: "npm registry version and dist.integrity",
+        trustedPublishing: "not-configured; token authentication remains until npm-side trusted publisher setup is explicitly verified"
+      },
       beforePublish: [
         "npm run release:check",
         "verify package.json version matches the workflow input",
+        "verify the workflow runs from current main and v<version> resolves to the same commit",
+        "verify aienvmap@<version> is not already published",
         "confirm npm publish with confirm_publish=publish"
       ],
       afterStablePublish: "Deprecate aienvmap@<0.2.0 as prototype history after 0.2.0 is published.",
@@ -418,11 +429,13 @@ export function schemaContract() {
         "README, examples, schema, and CHANGELOG describe the same AI workspace coordination contract",
         "npm run release:check passes after the final batched change",
         "package.json version is intentionally bumped for 0.2.0 or the chosen release",
+        "v<version> tag resolves to the exact current main release commit",
         "GitHub Release workflow is run manually with explicit publish confirmation"
       ],
       requiredBeforeStable: [
         "npm run release:check passes locally",
         "GitHub Release workflow passes with confirm_publish=publish",
+        "published npm metadata exposes the expected version and registry integrity after provenance publish",
         "schema --json additive contract is reviewed",
         "README quick start and AI contract are current",
         "package metadata and CLI help match AI workspace coordination positioning",
