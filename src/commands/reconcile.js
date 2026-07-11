@@ -82,6 +82,7 @@ export async function reconcileWorkspace(args = {}) {
     console.log("AI action candidates (review only):");
     for (const item of result.aiDecision.actionCandidates) console.log(`- ${item.kind} ${item.recommendation}: ${item.target} (${item.confidence})`);
   }
+  console.log(`consolidation plan: ${result.aiDecision.consolidationPlan.status}; apply: none; approval: required for environment changes`);
   console.log("changes: none; review findings before changing runtimes, PATH, prefixes, or lockfiles");
   if (result.written) console.log(`written: ${result.written}`);
   return result;

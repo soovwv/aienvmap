@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
-import { analyzeNodeInstallations, analyzeNpmInstallations, analyzePythonCommandRouting, analyzePythonInstallations, analyzeRuntimeLinks, attachFnmManagerEvidence, attachMiseNodeEvidence, attachMisePythonEvidence, attachNvmManagerEvidence, attachPyenvManagerEvidence, attachUvManagerEvidence, attachVoltaManagerEvidence, buildAiDecision, compareNpmGlobalPackages, comparePythonPackages, findNodeCandidates, findPythonCandidates, inspectFnmNodeManager, inspectMiseRuntimeManager, inspectNvmNodeManager, inspectPyenvPythonManager, inspectVoltaNodeManager, linkNodeNpmRuntimes, linkPythonPipRuntimes, miseInventoryForRuntime, parseFnmNodeList, parseMiseRuntimeInventory, parsePackageManager, parsePipList, parsePipVersion, parsePyenvVersions, parseVoltaNodeList, summarizePipInspect, summarizePythonPackages } from "../src/package-managers.js";
+import { analyzeNodeInstallations, analyzeNpmInstallations, analyzePythonCommandRouting, analyzePythonInstallations, analyzeRuntimeLinks, attachFnmManagerEvidence, attachMiseNodeEvidence, attachMisePythonEvidence, attachNvmManagerEvidence, attachPyenvManagerEvidence, attachUvManagerEvidence, attachVoltaManagerEvidence, buildAiDecision, buildConsolidationPlan, compareNpmGlobalPackages, comparePythonPackages, findNodeCandidates, findPythonCandidates, inspectFnmNodeManager, inspectMiseRuntimeManager, inspectNvmNodeManager, inspectPyenvPythonManager, inspectVoltaNodeManager, linkNodeNpmRuntimes, linkPythonPipRuntimes, miseInventoryForRuntime, parseFnmNodeList, parseMiseRuntimeInventory, parsePackageManager, parsePipList, parsePipVersion, parsePyenvVersions, parseVoltaNodeList, summarizePipInspect, summarizePythonPackages } from "../src/package-managers.js";
 
 test("parsePackageManager separates package manager and pinned version", () => {
   assert.deepEqual(parsePackageManager("npm@10.8.2"), { name: "npm", version: "10.8.2" });
@@ -513,6 +513,30 @@ test("AI decisions keep inactive virtual environments and require approval", () 
   assert.equal(result.actionCandidates[0].destructive, false);
   assert.match(result.rules.join(" "), /Do not delete/);
   assert.match(result.rules.join(" "), /routing evidence only/);
+  assert.equal(result.consolidationPlan.mode, "proposal-only");
+  assert.equal(result.consolidationPlan.applyCommand, null);
+  assert.equal(result.consolidationPlan.removalAuthorized, false);
+  assert.equal(result.consolidationPlan.candidates[0].requiresHumanApproval, true);
+  assert.match(result.consolidationPlan.rule, /never authorizes or executes/);
+});
+
+test("consolidation plan is evidence-only and has explicit stop conditions", () => {
+  const result = buildConsolidationPlan({
+    actionCandidates: [{ target: "/old/node", kind: "node-installation", recommendation: "review-candidate", confidence: "low" }],
+    canonicalCandidates: { node: { path: "/active/node", version: "22" } }
+  });
+  assert.equal(result.status, "review");
+  assert.deepEqual(result.phases.map((item) => item.effect), ["read-only", "read-only", "read-only", "human-gate"]);
+  assert.ok(result.candidates[0].stopWhen.includes("ownership is unconfirmed"));
+  assert.ok(result.requiresHumanApprovalBefore.includes("PATH-edit"));
+  assert.equal(result.environmentChangesAuthorized, false);
+});
+
+test("consolidation plan stays clear when no inactive installation exists", () => {
+  const result = buildConsolidationPlan();
+  assert.equal(result.status, "no-candidates");
+  assert.deepEqual(result.candidates, []);
+  assert.equal(result.nextSafeCommand, "aienvmap status --json");
 });
 
 test("AI decision summarizes strong, inferred, and unresolved runtime links", () => {
