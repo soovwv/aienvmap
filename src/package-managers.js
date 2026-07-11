@@ -18,13 +18,14 @@ const nodePackageManagerNames = process.platform === "win32"
   : { pnpm: ["pnpm"], yarn: ["yarn"], corepack: ["corepack"] };
 
 export async function inspectPackageManagers(dir, options = {}) {
-  const [candidates, nodePackageManagerCandidates, nodeCandidates, pythonCandidates, pipCandidates, pythonToolCandidates, commonRuntimes, project, uvPythonManager, pyenvPythonManager, voltaNodeManager, fnmNodeManager, nvmNodeManager, miseRuntimeManager] = await Promise.all([
+  const [candidates, nodePackageManagerCandidates, nodeCandidates, pythonCandidates, pipCandidates, pythonToolCandidates, condaCandidates, commonRuntimes, project, uvPythonManager, pyenvPythonManager, voltaNodeManager, fnmNodeManager, nvmNodeManager, miseRuntimeManager] = await Promise.all([
     findNpmCandidates(options),
     findNodePackageManagerCandidates(options),
     findNodeCandidates(options),
     findPythonCandidates({ ...options, projectDir: dir }),
     findPipCandidates({ ...options, projectDir: dir }),
     findPythonToolCandidates(options),
+    findCondaCandidates(options),
     inspectCommonRuntimes({ ...options, projectDir: dir }),
     readProjectExpectation(dir),
     inspectUvPythonManager(options),
@@ -64,6 +65,7 @@ export async function inspectPackageManagers(dir, options = {}) {
   const pythonInstallations = attachMisePythonEvidence(attachPyenvManagerEvidence(attachUvManagerEvidence(inspectedPythonInstallations, uvPythonManager), pyenvPythonManager), miseRuntimeManager);
   const pipCommands = await inspectPipCandidates(pipCandidates, options);
   const toolEntryPoints = await inspectPythonToolCandidates(pythonToolCandidates, pipCommands, options);
+  const conda = await inspectCondaCandidates(condaCandidates, options);
   const nodeInstallations = attachMiseNodeEvidence(attachNvmManagerEvidence(attachFnmManagerEvidence(attachVoltaManagerEvidence(await inspectNodeCandidates(nodeCandidates, options), voltaNodeManager), fnmNodeManager), nvmNodeManager), miseRuntimeManager);
   const npmRuntimeLinks = linkNodeNpmRuntimes(nodeInstallations, installations);
   const pipRuntimeLinks = linkPythonPipRuntimes(pythonInstallations, pipCommands);
@@ -74,6 +76,7 @@ export async function inspectPackageManagers(dir, options = {}) {
     ...analyzePythonInstallations(pythonInstallations, project),
     ...analyzePythonCommandRouting(pythonInstallations, pipCommands),
     ...analyzePythonToolEntryPoints(pipCommands, toolEntryPoints),
+    ...analyzeCondaRouting(conda, pythonInstallations, options.env || process.env),
     ...analyzeRuntimeLinks(npmRuntimeLinks, pipRuntimeLinks, nodeInstallations, pythonInstallations),
     ...analyzeCommonRuntimes(commonRuntimes),
     ...analyzeJavaBuildTools(commonRuntimes.java)
@@ -124,6 +127,7 @@ export async function inspectPackageManagers(dir, options = {}) {
       packageLocations: [...new Set(pythonInstallations.flatMap((item) => item.packageLocations || []).filter(Boolean))],
       pipCommands,
       toolEntryPoints,
+      conda,
       runtimeLinks: pipRuntimeLinks,
       packageComparisons: comparePythonPackages(pythonInstallations),
       managerEvidence: uvPythonManager,
@@ -771,6 +775,64 @@ export function analyzePythonToolEntryPoints(pipCommands = [], tools = {}) {
       action: `Review Python/tool ownership and PATH ordering before using or removing a ${tool} entry point.`
     });
   }
+  return findings;
+}
+
+export async function findCondaCandidates(options = {}) {
+  const platform = options.platform || process.platform;
+  const env = options.env || process.env;
+  const home = options.home || os.homedir();
+  const names = platform === "win32" ? ["conda.exe", "conda.bat"] : ["conda"];
+  const found = [];
+  const seen = new Set();
+  const add = async (file, discovery) => {
+    if (!file || !(await exists(file))) return;
+    let key = path.resolve(file).toLowerCase();
+    try { key = (await fs.realpath(file)).toLowerCase(); } catch {}
+    if (seen.has(key)) return;
+    seen.add(key);
+    const dir = path.dirname(file);
+    found.push({ path: path.resolve(file), source: classifySource(dir), scope: classifyScope(dir), discovery });
+  };
+  if (env.CONDA_EXE) await add(env.CONDA_EXE, "CONDA_EXE");
+  for (const dir of pathEntries(options.pathValue ?? env.PATH)) for (const name of names) await add(path.join(dir, name), "PATH");
+  const roots = ["miniconda3", "anaconda3", "miniforge3", "mambaforge"];
+  for (const root of roots) {
+    const base = path.join(home, root);
+    for (const name of names) await add(platform === "win32" ? path.join(base, "Scripts", name) : path.join(base, "bin", name), "known-user-root");
+  }
+  return found;
+}
+
+export async function inspectCondaCandidates(candidates = [], options = {}) {
+  const installations = [];
+  for (const candidate of candidates.slice(0, 20)) {
+    const versionResult = await portableCommandResult(candidate.path, ["--version"], { timeout: 4000, platform: options.platform || process.platform });
+    const version = versionResult.ok ? firstVersion(`${versionResult.stdout}\n${versionResult.stderr}`) : null;
+    if (!version) continue;
+    let environmentEvidence = { collection: options.fullPackages ? "unsupported-or-failed" : "not-requested", count: 0, activePrefix: "", prefixes: [], truncated: false };
+    if (options.fullPackages) {
+      const envResult = await portableCommandResult(candidate.path, ["info", "--envs", "--json"], { timeout: 8000, maxBuffer: 2 * 1024 * 1024, platform: options.platform || process.platform });
+      environmentEvidence = parseCondaEnvironmentInfo(envResult.ok ? envResult.stdout : "", options);
+    }
+    installations.push({ manager: "conda", version, path: displayPath(candidate.path, options), source: candidate.source, scope: candidate.scope, discovery: candidate.discovery, environmentEvidence, ownershipProven: false, removalAuthorized: false, active: installations.length === 0 });
+  }
+  return { installations, active: installations[0] || null, distinctVersions: [...new Set(installations.map((item) => item.version))], collection: options.fullPackages ? "environment-summary-requested" : "version-only" };
+}
+
+export function parseCondaEnvironmentInfo(raw, options = {}) {
+  let value;
+  try { value = JSON.parse(String(raw || "")); } catch { return { collection: "unsupported-or-failed", count: 0, activePrefix: "", prefixes: [], truncated: false }; }
+  const all = Array.isArray(value.envs) ? value.envs.filter((item) => typeof item === "string").slice(0, 501) : [];
+  return { collection: "collected", count: Math.min(all.length, 500), activePrefix: displayPath(value.active_prefix || "", options), prefixes: all.slice(0, 500).map((item) => displayPath(item, options)), truncated: all.length > 500, semantics: "Environment paths only; packages, channels, credentials, and tokens are not collected." };
+}
+
+export function analyzeCondaRouting(conda = {}, pythonInstallations = [], env = process.env) {
+  const findings = [];
+  if ((conda.installations || []).length > 1) findings.push({ code: "multiple-conda-installations", severity: (conda.distinctVersions || []).length > 1 ? "review" : "info", message: `${conda.installations.length} Conda entry points were detected.`, action: "Review the intended Conda base and PATH order; do not remove or initialize a base automatically." });
+  if (!env.CONDA_PREFIX) return findings;
+  const activePython = pythonInstallations.find((item) => item.active);
+  if (activePython && !pathContains(env.CONDA_PREFIX, activePython.path) && !pathContains(env.CONDA_PREFIX, activePython.prefix)) findings.push({ code: "conda-active-python-routing-mismatch", severity: "review", message: "CONDA_PREFIX is active, but the active Python does not resolve inside that prefix.", action: "Review shell activation and Python routing before installing packages; prefer the explicitly selected interpreter." });
   return findings;
 }
 

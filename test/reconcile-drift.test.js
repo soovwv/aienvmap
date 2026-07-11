@@ -77,6 +77,16 @@ test("compareReconciliation detects uv entry-point routing drift", () => {
   assert.match(result.drift.changes.map((item) => item.field).join(" "), /python\.toolEntryPoints\.uv/);
 });
 
+test("compareReconciliation detects Conda environment routing drift", () => {
+  const baseline = report();
+  baseline.python.conda = { installations: [{ version: "25.1", environmentEvidence: { count: 1, activePrefix: "$HOME/conda" } }] };
+  const current = report();
+  current.python.conda = { installations: [{ version: "25.1", environmentEvidence: { count: 2, activePrefix: "$HOME/conda/envs/dev" } }] };
+  const result = compareReconciliation(baseline, current);
+  assert.equal(result.decision, "review");
+  assert.match(result.drift.changes.map((item) => item.field).join(" "), /python\.conda/);
+});
+
 test("compareReconciliation detects Volta Node inventory drift", () => {
   const baseline = report();
   baseline.node.managerInventories = { volta: { collection: "collected", runtimes: [{ version: "20.18.1", state: "default" }] } };

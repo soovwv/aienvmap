@@ -59,6 +59,7 @@ export function buildPortableReconciliation(value = {}, runtime = {}) {
       nodePackageManagers,
       python: { count: value.python?.installations?.length || 0, distinctVersions: value.python?.distinctVersions || [], installations: summarizeInstallations(value.python?.installations, { python: true }) },
       pythonTools,
+      conda: { count: value.python?.conda?.installations?.length || 0, distinctVersions: value.python?.conda?.distinctVersions || [], environmentCounts: (value.python?.conda?.installations || []).map((item) => item.environmentEvidence?.count || 0).sort((a, b) => a - b), ownershipProven: false, removalAuthorized: false },
       otherRuntimes
     },
     findings: (value.findings || []).map((item) => ({ code: item.code, severity: item.severity })),

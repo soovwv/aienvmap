@@ -97,6 +97,7 @@ export async function reconcileWorkspace(args = {}) {
   }
   for (const item of result.python.pipCommands) console.log(`pip: ${item.version} -> Python ${item.pythonVersion} ${item.active ? "[active]" : "[inactive]"} ${item.path}`);
   for (const [tool, inventory] of Object.entries(result.python.toolEntryPoints || {})) for (const item of inventory.installations || []) console.log(`${tool}: ${item.version} ${item.active ? "[active]" : "[inactive]"} ${item.source}/${item.scope} ${item.path} (${item.routingEvidence}; ownership not proven)`);
+  for (const item of result.python.conda?.installations || []) console.log(`conda: ${item.version} ${item.active ? "[active]" : "[inactive]"} ${item.source}/${item.scope} ${item.path}; environments: ${item.environmentEvidence.collection === "collected" ? item.environmentEvidence.count : item.environmentEvidence.collection}; ownership not proven`);
   for (const link of result.python.runtimeLinks || []) console.log(`pip runtime: ${link.managerPath} -> ${link.runtimePath || "unresolved"} (${link.relationship}/${link.confidence}; ownership not proven)`);
   for (const runtime of Object.values(result.otherRuntimes)) {
     for (const item of runtime.installations) {
@@ -167,7 +168,8 @@ export function summarizeReconciliation(value = {}) {
       python: value.python?.installations?.length || 0,
       pip: value.python?.pipCommands?.length || 0,
       uv: value.python?.toolEntryPoints?.uv?.installations?.length || 0,
-      pipx: value.python?.toolEntryPoints?.pipx?.installations?.length || 0
+      pipx: value.python?.toolEntryPoints?.pipx?.installations?.length || 0,
+      conda: value.python?.conda?.installations?.length || 0
     },
     informationOnlyRuntimes: Object.fromEntries(Object.entries(value.otherRuntimes || {}).map(([name, item]) => [name, item.installations?.length || 0])),
     osNativeEvidence: Object.fromEntries(Object.entries(value.otherRuntimes || {}).map(([name, item]) => [name, item.discoveryEvidence?.osNativeCount || 0])),
