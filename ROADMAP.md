@@ -6,6 +6,8 @@ Primary positioning: AI workspace coordination first, lightweight SBOM context s
 
 Product scoring is evidence-bounded in `SCORECARD.md` and `aienvmap scorecard --json`; technical readiness must remain separate from independent market validation.
 
+Market research is a dated snapshot in `MARKET.md`; npm request counts, stars, and feature breadth never substitute for independent outcome-verified cases.
+
 Reconciliation may propose consolidation evidence and approval gates, but never executes uninstall, deletion, PATH edits, runtime switching, or package migration.
 
 `npm run perf:check` enforces cross-platform regression ceilings for AI startup, quick reconciliation, scorecard output, and generated artifact size; these are CI guards, not latency promises.

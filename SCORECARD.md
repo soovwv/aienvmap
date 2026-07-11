@@ -2,11 +2,13 @@
 
 This scorecard deliberately separates product engineering from market proof. Run `aienvmap scorecard --json` for the bounded AI-readable evidence and methodology.
 
+The dated public traction and adjacent-tool comparison live in [MARKET.md](MARKET.md); download requests are not counted as verified users.
+
 | Category | Score | Interpretation |
 | --- | ---: | --- |
-| Technical readiness | 90/100 | Strong prototype: dependency-free, cross-platform tested, AI-readable, safety-bounded, performance-budgeted, privacy-bounded case evidence, and SBOM interoperability; contract is not stable until 0.2.0. |
+| Technical readiness | 91/100 | Strong prototype: dependency-free, cross-platform tested, AI-readable, safety-bounded, canonical-license verified, performance-budgeted, privacy-bounded case evidence, and SBOM interoperability; contract is not stable until 0.2.0. |
 | Market validation | 43/100 | Differentiated position and usable proof flows exist, but independent users, external cases, and ecosystem verification remain limited. |
-| Weighted overall | 76/100 | 70% technical readiness and 30% market validation; never use this number alone as an adoption or release decision. |
+| Weighted overall | 77/100 | 70% technical readiness and 30% market validation; never use this number alone as an adoption or release decision. |
 
 ## Position
 
