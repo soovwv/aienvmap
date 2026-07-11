@@ -14,7 +14,7 @@ The dated public traction and adjacent-tool comparison live in [MARKET.md](MARKE
 
 aienvmap is an AI workspace coordination and environment-evidence layer. It observes existing runtime installations, gives multiple AI agents a shared map and change protocol, and provides a light SBOM bridge. It does not replace a runtime manager, dependency update bot, vulnerability scanner, or full SBOM generator.
 
-Adjacent tools establish the boundaries: [mise](https://mise.jdx.dev/) manages tool versions, [Renovate](https://docs.renovatebot.com/) automates dependency updates, [Syft](https://github.com/anchore/syft) generates full software inventories, and [CycloneDX](https://cyclonedx.org/capabilities/sbom/) defines a broader SBOM ecosystem.
+Adjacent tools establish the boundaries: [Microsoft APM](https://github.com/microsoft/apm) packages agent context, [Devbox](https://github.com/jetify-com/devbox), [Flox](https://github.com/flox/flox), and [mise](https://mise.jdx.dev/) create or manage environments, [Renovate](https://docs.renovatebot.com/) automates dependency updates, and [Syft](https://github.com/anchore/syft) generates full inventories. aienvmap remains the observed mixed-host evidence and coordination layer.
 
 ## Evidence policy
 
