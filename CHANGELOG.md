@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Added cross-platform performance budgets for AI startup, quick reconciliation, scorecard output, and generated workspace artifacts, and wired them into CI and release checks.
 - Added proposal-only reconcile consolidation plans with evidence phases, stop conditions, rollback requirements, and explicit human gates; no apply or removal command is generated.
 - Added an evidence-bounded `scorecard --json` that separates technical readiness from market validation and records adjacent-tool boundaries, limitations, and improvement priorities.
 - Extended `aiDecisionEnvelope` to reconcile, light SBOM, and CycloneDX-lite, and added explicit always-review action classes for removal, global installs, runtime switching, and lockfile rewrites.
