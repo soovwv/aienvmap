@@ -573,6 +573,13 @@ export function schemaContract() {
         javaBuildToolRelationships: ["exact-home", "unique-major-version", "unresolved"],
         rule: "AI agents may propose consolidation from this evidence; Java identity, manager ownership, and OS-native provenance never authorize removal or PATH changes without explicit human approval and a rollback plan."
       },
+      reconcilePortable: {
+        command: "aienvmap reconcile --portable --json",
+        mode: "quick, read-only, path/package/timestamp-redacted diagnostic evidence",
+        rootFields: ["schemaName", "schemaVersion", "privacy", "platform", "architecture", "scanMode", "projectSignals", "inventory", "findings", "decision", "consolidation", "nextSafeCommand", "rule"],
+        excluded: ["paths", "workspace and project names", "package names", "package digests", "timestamps", "raw manager inventories"],
+        rule: "Review before sharing because runtime versions, platform, architecture, sources, and finding codes remain visible."
+      },
       reconcileCheck: {
         command: "aienvmap reconcile --check --json",
         mode: "read-only opt-in drift gate; exit 0 means unchanged, exit 2 means review",

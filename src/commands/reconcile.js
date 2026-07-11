@@ -8,6 +8,7 @@ import path from "node:path";
 export async function reconcileWorkspace(args = {}) {
   if (args.quick && args.full_packages) throw new Error("use either --quick or --full-packages, not both");
   if (args.check && args.write) throw new Error("use either --check or --write, not both; checking must not replace its baseline");
+  if (args.portable && (args.write || args.check || args.show_paths || args.full_packages || args.baseline)) throw new Error("--portable is quick, read-only, and cannot be combined with --write, --check, --baseline, --show-paths, or --full-packages");
   const dir = workspaceDir(args);
   const baselinePath = args.baseline ? path.resolve(dir, String(args.baseline)) : reconcileJsonPath(dir);
   const baseline = args.check ? await readJson(baselinePath, null) : null;
@@ -16,8 +17,14 @@ export async function reconcileWorkspace(args = {}) {
   const result = await inspectPackageManagers(dir, {
     showPaths: args.show_paths,
     fullPackages: args.full_packages || scanMode === "full-packages",
-    quick: args.quick || scanMode === "quick"
+    quick: args.portable || args.quick || scanMode === "quick"
   });
+  if (args.portable) {
+    const portable = buildPortableReconciliation(result);
+    if (args.json) console.log(JSON.stringify(portable, null, 2));
+    else if (!args.quiet) printPortable(portable);
+    return portable;
+  }
   if (args.check) {
     const check = compareReconciliation(baseline, result, { baselineArtifact: args.baseline || ".aienvmap/reconcile.json" });
     if (args.json) console.log(JSON.stringify(check, null, 2));
@@ -86,6 +93,76 @@ export async function reconcileWorkspace(args = {}) {
   console.log("changes: none; review findings before changing runtimes, PATH, prefixes, or lockfiles");
   if (result.written) console.log(`written: ${result.written}`);
   return result;
+}
+
+export function buildPortableReconciliation(value = {}, runtime = {}) {
+  const summarizeInstallations = (items = [], options = {}) => items.map((item) => ({
+    version: item.version || (item.versions || []).join(","),
+    active: item.active === true,
+    source: item.source || "unknown",
+    scope: item.scope || "unknown",
+    ...(options.python ? { virtualEnvironment: item.virtualEnvironment === true, pipAvailable: item.pipAvailable === true } : {}),
+    ...(options.java ? { vendor: item.vendor || "unknown", architecture: item.architecture || "unknown", runtimeKind: item.runtimeKind || "unknown", hasCompiler: item.hasCompiler === true } : {}),
+    manager: {
+      name: item.managerEvidence?.manager || "unknown",
+      relationship: item.managerEvidence?.relationship || "unconfirmed",
+      confidence: item.managerEvidence?.confidence || "none",
+      ownershipProven: item.managerEvidence?.ownershipProven === true,
+      removalAuthorized: false
+    }
+  }));
+  const otherRuntimes = Object.fromEntries(Object.entries(value.otherRuntimes || {}).map(([name, item]) => [name, {
+    count: item.installations?.length || 0,
+    distinctVersions: [...new Set((item.installations || []).flatMap((entry) => entry.versions || [entry.version]).filter(Boolean))],
+    installations: summarizeInstallations(item.installations, { java: name === "java" })
+  }]));
+  const plan = value.aiDecision?.consolidationPlan || {};
+  return {
+    schemaName: "aienvmap.reconcile-portable",
+    schemaVersion: 1,
+    privacy: {
+      mode: "portable-redacted",
+      excluded: ["paths", "workspace and project names", "package names", "package digests", "timestamps", "raw manager inventories"],
+      warning: "Review before sharing: runtime versions, platform, architecture, sources, and finding codes remain visible."
+    },
+    platform: runtime.platform || process.platform,
+    architecture: runtime.arch || process.arch,
+    scanMode: "quick",
+    projectSignals: {
+      packageManager: value.project?.packageManager ? { name: value.project.packageManager.name, version: value.project.packageManager.version } : null,
+      lockManagers: value.project?.lockManagers || [],
+      nodeVersion: value.project?.node?.versionFile || "",
+      pythonVersion: value.project?.python?.versionFile || ""
+    },
+    inventory: {
+      node: { count: value.node?.installations?.length || 0, distinctVersions: value.node?.distinctVersions || [], installations: summarizeInstallations(value.node?.installations) },
+      npm: { count: value.npm?.installations?.length || 0, distinctVersions: value.npm?.distinctVersions || [], installations: summarizeInstallations(value.npm?.installations) },
+      python: { count: value.python?.installations?.length || 0, distinctVersions: value.python?.distinctVersions || [], installations: summarizeInstallations(value.python?.installations, { python: true }) },
+      otherRuntimes
+    },
+    findings: (value.findings || []).map((item) => ({ code: item.code, severity: item.severity })),
+    decision: value.decision || "unknown",
+    consolidation: {
+      status: plan.status || "no-candidates",
+      candidateKinds: [...new Set((plan.candidates || []).map((item) => item.kind).filter(Boolean))],
+      candidateCount: plan.candidates?.length || 0,
+      phases: (plan.phases || []).map((item) => ({ id: item.id, effect: item.effect })),
+      requiresHumanApprovalBefore: plan.requiresHumanApprovalBefore || [],
+      environmentChangesAuthorized: false,
+      removalAuthorized: false
+    },
+    nextSafeCommand: "aienvmap reconcile --json --full-packages",
+    rule: "Portable evidence is diagnostic context only; it omits local identifiers and never authorizes environment changes or removal."
+  };
+}
+
+function printPortable(value) {
+  console.log(`portable reconcile: ${value.decision.toUpperCase()} (redacted/read-only)`);
+  console.log(`platform: ${value.platform}/${value.architecture}`);
+  console.log(`inventory: node=${value.inventory.node.count}, npm=${value.inventory.npm.count}, python=${value.inventory.python.count}, java=${value.inventory.otherRuntimes.java?.count || 0}`);
+  console.log(`findings: ${value.findings.map((item) => item.code).join(", ") || "none"}`);
+  console.log(`privacy: ${value.privacy.excluded.join(", ")}`);
+  console.log(`rule: ${value.rule}`);
 }
 
 function printCheck(check) {

@@ -1,7 +1,7 @@
 const technicalDimensions = [
   dimension("lightweight-runtime", 15, 15, ["package.json#dependencies", "npm pack --dry-run"], "Keep zero runtime dependencies and a bounded package."),
   dimension("ai-readable-contract", 14, 15, ["aienvmap schema --json", "src/ai-decision-envelope.js"], "Stabilize the additive contract at 0.2.0."),
-  dimension("environment-inventory", 18, 20, ["aienvmap reconcile --json --full-packages", "test/reconcile.test.js"], "Validate consolidation plans against external, mixed-manager environments."),
+  dimension("environment-inventory", 19, 20, ["aienvmap reconcile --json --full-packages", "aienvmap reconcile --portable --json", "test/reconcile.test.js"], "Validate portable reports and consolidation plans against external, mixed-manager environments."),
   dimension("multi-ai-coordination", 13, 15, ["aienvmap demo --json", "test/multi-agent-demo.test.js"], "Validate the workflow in an external multi-user case study."),
   dimension("sbom-interoperability", 12, 15, ["aienvmap sbom --json", "test/sbom.test.js"], "Validate imported CycloneDX and SPDX evidence against more generators."),
   dimension("safety-and-quality", 17, 20, ["npm test", "npm run perf:check", ".github/workflows/ci.yml"], "Add signed release provenance and validate performance budgets with more environments.")
