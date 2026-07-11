@@ -1088,11 +1088,13 @@ function pathEntries(value) {
 
 function knownNodeRoots(env, home) {
   const roots = [];
+  const fnmInstalls = path.join(env.FNM_DIR || defaultFnmDir(process.platform, env, home), "node-versions");
   const miseInstalls = env.MISE_INSTALLS_DIR || (process.platform === "win32"
     ? path.join(env.LOCALAPPDATA || path.join(home, "AppData", "Local"), "mise", "installs")
     : path.join(home, ".local", "share", "mise", "installs"));
   if (env.NVM_HOME) roots.push({ path: env.NVM_HOME, depth: 3, source: "nvm", scope: "user" });
   if (env.NVM_SYMLINK) roots.push({ path: env.NVM_SYMLINK, depth: 1, source: "nvm", scope: "user" });
+  roots.push({ path: fnmInstalls, depth: 5, source: "fnm", scope: "user" });
   if (process.platform === "win32") {
     roots.push({ path: path.join(home, "AppData", "Local", "Volta", "tools", "image", "node"), depth: 4, source: "volta", scope: "user" });
     roots.push({ path: path.join(miseInstalls, "node"), depth: 4, source: "mise", scope: "user" });
@@ -1170,6 +1172,7 @@ function classifySource(value) {
   const lower = String(value).toLowerCase();
   if (lower.includes("nvm")) return "nvm";
   if (lower.includes("volta")) return "volta";
+  if (lower.includes("fnm")) return "fnm";
   if (lower.includes("mise")) return "mise";
   if (lower.includes("pyenv")) return "pyenv";
   if (lower.includes("uv")) return "uv";

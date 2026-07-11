@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
-import { analyzeNodeInstallations, analyzeNpmInstallations, analyzePythonCommandRouting, analyzePythonInstallations, analyzeRuntimeLinks, attachFnmManagerEvidence, attachMiseNodeEvidence, attachMisePythonEvidence, attachPyenvManagerEvidence, attachUvManagerEvidence, attachVoltaManagerEvidence, buildAiDecision, compareNpmGlobalPackages, comparePythonPackages, findPythonCandidates, inspectFnmNodeManager, inspectMiseRuntimeManager, inspectPyenvPythonManager, inspectVoltaNodeManager, linkNodeNpmRuntimes, linkPythonPipRuntimes, miseInventoryForRuntime, parseFnmNodeList, parseMiseRuntimeInventory, parsePackageManager, parsePipList, parsePipVersion, parsePyenvVersions, parseVoltaNodeList, summarizePipInspect, summarizePythonPackages } from "../src/package-managers.js";
+import { analyzeNodeInstallations, analyzeNpmInstallations, analyzePythonCommandRouting, analyzePythonInstallations, analyzeRuntimeLinks, attachFnmManagerEvidence, attachMiseNodeEvidence, attachMisePythonEvidence, attachPyenvManagerEvidence, attachUvManagerEvidence, attachVoltaManagerEvidence, buildAiDecision, compareNpmGlobalPackages, comparePythonPackages, findNodeCandidates, findPythonCandidates, inspectFnmNodeManager, inspectMiseRuntimeManager, inspectPyenvPythonManager, inspectVoltaNodeManager, linkNodeNpmRuntimes, linkPythonPipRuntimes, miseInventoryForRuntime, parseFnmNodeList, parseMiseRuntimeInventory, parsePackageManager, parsePipList, parsePipVersion, parsePyenvVersions, parseVoltaNodeList, summarizePipInspect, summarizePythonPackages } from "../src/package-managers.js";
 
 test("parsePackageManager separates package manager and pinned version", () => {
   assert.deepEqual(parsePackageManager("npm@10.8.2"), { name: "npm", version: "10.8.2" });
@@ -111,6 +111,17 @@ test("Windows fnm inventory is collected with read-only commands", async () => {
     assert.equal(result.runtimes[0].version, "22.14.0");
     assert.match(result.managedRoot, /AppData[\\/]Roaming[\\/]fnm[\\/]node-versions$/);
     assert.match(result.semantics, /no shell activation, install, use, or uninstall/);
+  } finally { await fs.rm(dir, { recursive: true, force: true }); }
+});
+
+test("Node discovery includes inactive fnm installation paths", async () => {
+  const dir = await fs.mkdtemp(path.join(os.tmpdir(), "aienvmap-fnm-root-"));
+  const binary = path.join(dir, "node-versions", "v22.14.0", "installation", process.platform === "win32" ? "node.exe" : "bin/node");
+  await fs.mkdir(path.dirname(binary), { recursive: true });
+  await fs.writeFile(binary, "");
+  try {
+    const candidates = await findNodeCandidates({ env: { FNM_DIR: dir }, home: dir, pathValue: "" });
+    assert.equal(candidates.some((item) => item.path === path.resolve(binary) && item.source === "fnm" && item.discovery === "known-root"), true);
   } finally { await fs.rm(dir, { recursive: true, force: true }); }
 });
 
