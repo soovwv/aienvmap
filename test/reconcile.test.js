@@ -5,6 +5,14 @@ import os from "node:os";
 import path from "node:path";
 import { analyzeNodeInstallations, analyzeNpmInstallations, analyzePythonCommandRouting, analyzePythonInstallations, analyzeRuntimeLinks, attachFnmManagerEvidence, attachMiseNodeEvidence, attachMisePythonEvidence, attachNvmManagerEvidence, attachPyenvManagerEvidence, attachUvManagerEvidence, attachVoltaManagerEvidence, buildAiDecision, buildConsolidationPlan, compareNpmGlobalPackages, comparePythonPackages, findNodeCandidates, findPythonCandidates, inspectFnmNodeManager, inspectMiseRuntimeManager, inspectNvmNodeManager, inspectPyenvPythonManager, inspectVoltaNodeManager, linkNodeNpmRuntimes, linkPythonPipRuntimes, miseInventoryForRuntime, parseFnmNodeList, parseMiseRuntimeInventory, parsePackageManager, parsePipList, parsePipVersion, parsePyenvVersions, parseVoltaNodeList, summarizePipInspect, summarizePythonPackages } from "../src/package-managers.js";
 import { buildPortableReconciliation, comparePortableReconciliations, portableEvidenceFingerprint } from "../src/commands/reconcile.js";
+import * as portableReconcile from "../src/portable-reconcile.js";
+
+test("reconcile command preserves the portable helper compatibility exports", async () => {
+  const reconcileCommand = await import("../src/commands/reconcile.js");
+  assert.equal(reconcileCommand.buildPortableReconciliation, portableReconcile.buildPortableReconciliation);
+  assert.equal(reconcileCommand.comparePortableReconciliations, portableReconcile.comparePortableReconciliations);
+  assert.equal(reconcileCommand.portableEvidenceFingerprint, portableReconcile.portableEvidenceFingerprint);
+});
 
 test("parsePackageManager separates package manager and pinned version", () => {
   assert.deepEqual(parsePackageManager("npm@10.8.2"), { name: "npm", version: "10.8.2" });
