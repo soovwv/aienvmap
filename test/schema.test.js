@@ -365,6 +365,10 @@ test("schemaContract describes stable AI output contracts", () => {
   assert.ok(schema.outputs.status.contract.aiEntryFields.includes("environmentChangeProtocol"));
   assert.ok(schema.outputs.status.contract.aiEntryFields.includes("agentPointers"));
   assert.ok(schema.outputs.status.contract.aiEntryFields.includes("dependencyQuickCheck"));
+  assert.ok(schema.outputs.status.contract.aiEntryFields.includes("externalSbom"));
+  assert.ok(schema.outputs.status.rootFields.includes("externalSbom"));
+  assert.ok(schema.outputs.status.externalSbomFields.includes("identityConfidence"));
+  assert.ok(schema.outputs.context.rootFields.includes("externalSbom"));
   assert.ok(schema.outputs.status.rootFields.includes("nextSafeCommand"));
   assert.ok(schema.outputs.status.rootFields.includes("readOrder"));
   assert.ok(schema.outputs.status.rootFields.includes("aiSession"));
