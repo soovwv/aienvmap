@@ -100,7 +100,7 @@ test("fnm ownership requires list and exact version installation path", () => {
   assert.equal(unrelated.managerEvidence.manager, undefined);
 });
 
-test("Windows fnm inventory is collected with read-only commands", async () => {
+test("Windows fnm inventory is collected with read-only commands", { skip: process.platform !== "win32" }, async () => {
   const dir = await fs.mkdtemp(path.join(os.tmpdir(), "aienvmap-fnm-"));
   const command = path.join(dir, "fnm.cmd");
   await fs.writeFile(command, "@echo off\r\nif \"%1\"==\"--version\" echo fnm 1.38.1\r\nif \"%1\"==\"list\" echo * v22.14.0 default\r\n", "utf8");
