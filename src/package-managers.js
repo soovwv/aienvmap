@@ -102,10 +102,10 @@ export async function inspectPackageManagers(dir, options = {}) {
     architecture: process.arch,
     mode: "read-only",
     scanMode: options.quick ? "quick" : options.fullPackages ? "full-packages" : "standard",
-    scope: "project+current-user+visible-host",
+    scope: options.inspectedHome ? "project+explicit-user-home+visible-host" : "project+current-user+visible-host",
     limitations: [
-      "Only the current user's readable paths and visible host installations are inspected.",
-      "Other users' home directories are not scanned.",
+      options.inspectedHome ? "Only bounded known roots under the explicit readable user home and visible host installations are inspected; the invoking session PATH is excluded." : "Only the current user's readable paths and visible host installations are inspected.",
+      options.inspectedHome ? "User-specific environment variables from the invoking account are not attributed to the inspected home." : "Other users' home directories are not scanned.",
       "No runtime, package manager, prefix, lockfile, or configuration is changed."
     ],
     project,
