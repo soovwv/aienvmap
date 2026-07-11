@@ -4,7 +4,7 @@ import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { analyzeNodeInstallations, analyzeNpmInstallations, analyzePythonCommandRouting, analyzePythonInstallations, analyzeRuntimeLinks, attachFnmManagerEvidence, attachMiseNodeEvidence, attachMisePythonEvidence, attachNvmManagerEvidence, attachPyenvManagerEvidence, attachUvManagerEvidence, attachVoltaManagerEvidence, buildAiDecision, buildConsolidationPlan, compareNpmGlobalPackages, comparePythonPackages, findNodeCandidates, findPythonCandidates, inspectFnmNodeManager, inspectMiseRuntimeManager, inspectNvmNodeManager, inspectPyenvPythonManager, inspectVoltaNodeManager, linkNodeNpmRuntimes, linkPythonPipRuntimes, miseInventoryForRuntime, parseFnmNodeList, parseMiseRuntimeInventory, parsePackageManager, parsePipList, parsePipVersion, parsePyenvVersions, parseVoltaNodeList, summarizePipInspect, summarizePythonPackages } from "../src/package-managers.js";
-import { buildPortableReconciliation } from "../src/commands/reconcile.js";
+import { buildPortableReconciliation, portableEvidenceFingerprint } from "../src/commands/reconcile.js";
 
 test("parsePackageManager separates package manager and pinned version", () => {
   assert.deepEqual(parsePackageManager("npm@10.8.2"), { name: "npm", version: "10.8.2" });
@@ -561,6 +561,26 @@ test("portable reconciliation keeps diagnostic facts and strips local identifier
   assert.equal(result.consolidation.candidateCount, 1);
   for (const secret of ["alice", "secret-project", "private-tool", "private-package", "secret-digest", "node.exe", "java.exe", "2026-07-12"]) assert.equal(serialized.includes(secret), false);
   assert.equal(result.consolidation.removalAuthorized, false);
+  assert.match(result.evidenceFingerprint, /^aerp1:[a-f0-9]{24}$/);
+  assert.equal(result.fingerprintSemantics.machineIdentifier, false);
+  assert.match(result.fingerprintSemantics.linkabilityWarning, /pseudonymous/);
+});
+
+test("portable evidence fingerprint ignores identifiers and ordering but changes with runtime facts", () => {
+  const base = {
+    scanMode: "quick",
+    project: { name: "alpha", path: "/home/alice/project", packageManager: null, lockManagers: [] },
+    node: { distinctVersions: ["20", "22"], installations: [{ version: "22", active: true, path: "/home/alice/node22" }, { version: "20", path: "/home/alice/node20" }] },
+    npm: { distinctVersions: [], installations: [] }, python: { distinctVersions: [], installations: [] }, otherRuntimes: {},
+    findings: [{ code: "multiple-node-installations", severity: "review" }], decision: "review",
+    aiDecision: { consolidationPlan: { status: "review", candidates: [{ kind: "node-installation" }], phases: [], requiresHumanApprovalBefore: ["removal"] } }
+  };
+  const first = buildPortableReconciliation(base, { platform: "linux", arch: "x64" });
+  const reordered = buildPortableReconciliation({ ...base, project: { ...base.project, name: "beta", path: "/Users/bob/project" }, node: { distinctVersions: ["22", "20"], installations: [...base.node.installations].reverse() } }, { platform: "linux", arch: "x64" });
+  const changed = buildPortableReconciliation({ ...base, node: { distinctVersions: ["20", "24"], installations: [{ version: "24", active: true }, { version: "20" }] } }, { platform: "linux", arch: "x64" });
+  assert.equal(first.evidenceFingerprint, reordered.evidenceFingerprint);
+  assert.notEqual(first.evidenceFingerprint, changed.evidenceFingerprint);
+  assert.equal(portableEvidenceFingerprint(first), first.evidenceFingerprint);
 });
 
 test("AI decision summarizes strong, inferred, and unresolved runtime links", () => {

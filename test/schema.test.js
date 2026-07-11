@@ -44,6 +44,8 @@ test("schemaContract describes stable AI output contracts", () => {
   assert.equal(schema.outputs.reconcilePortable.command, "aienvmap reconcile --portable --json");
   assert.match(schema.outputs.reconcilePortable.artifactCommand, /--portable-from/);
   assert.ok(schema.outputs.reconcilePortable.excluded.includes("package names"));
+  assert.match(schema.outputs.reconcilePortable.fingerprintRule, /not machine/);
+  assert.match(schema.outputs.reconcilePortable.fingerprintRule, /pseudonymous/);
   assert.deepEqual(schema.outputs.reconcile.detailedToolchains, ["node/npm", "python/pip"]);
   assert.ok(schema.outputs.reconcile.discoveryEvidenceFields.includes("osNativeCount"));
   assert.deepEqual(schema.outputs.reconcile.javaNativeSources, ["windows-registry", "macos-java-home", "linux-alternatives"]);

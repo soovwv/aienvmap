@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Added canonical `aerp1` portable evidence fingerprints for identifier-independent case comparison and deduplication, with explicit pseudonymous-linkability and no-machine-ID semantics.
 - Added `reconcile --portable-from <artifact> --json` to redact a validated reconciliation v1 artifact offline, preserving full-scan ownership evidence without rescanning or exposing the source path.
 - Added `reconcile --portable --json` for quick, read-only case evidence that excludes paths, project/package names, digests, timestamps, and raw manager inventories while retaining version, manager, finding, and approval signals.
 - Added cross-platform performance budgets for AI startup, quick reconciliation, scorecard output, and generated workspace artifacts, and wired them into CI and release checks.

@@ -4,6 +4,7 @@ import { writeJson } from "../fsutil.js";
 import { readJson } from "../fsutil.js";
 import { compareReconciliation } from "../reconcile-drift.js";
 import path from "node:path";
+import { createHash } from "node:crypto";
 
 export async function reconcileWorkspace(args = {}) {
   if (args.quick && args.full_packages) throw new Error("use either --quick or --full-packages, not both");
@@ -127,7 +128,7 @@ export function buildPortableReconciliation(value = {}, runtime = {}) {
     installations: summarizeInstallations(item.installations, { java: name === "java" })
   }]));
   const plan = value.aiDecision?.consolidationPlan || {};
-  return {
+  const report = {
     schemaName: "aienvmap.reconcile-portable",
     schemaVersion: 1,
     privacy: {
@@ -162,9 +163,41 @@ export function buildPortableReconciliation(value = {}, runtime = {}) {
       environmentChangesAuthorized: false,
       removalAuthorized: false
     },
+    evidenceFingerprint: "",
+    fingerprintSemantics: {
+      algorithm: "sha256",
+      prefix: "aerp1",
+      stableAcross: ["path changes", "project-name changes", "package-name changes", "timestamp changes", "discovery ordering"],
+      changesWith: ["platform or architecture", "scan depth", "runtime versions or activation", "manager ownership evidence", "finding or consolidation state"],
+      machineIdentifier: false,
+      linkabilityWarning: "Reports with identical retained facts share a fingerprint; treat it as a pseudonymous comparison token and review before publishing longitudinal data.",
+      rule: "Use only to compare or deduplicate portable environment evidence; never use as a machine, user, or installation identifier."
+    },
     nextSafeCommand: value.scanMode === "quick" ? "aienvmap reconcile --json --full-packages" : "aienvmap status --json",
     rule: "Portable evidence is diagnostic context only; it omits local identifiers and never authorizes environment changes or removal."
   };
+  report.evidenceFingerprint = portableEvidenceFingerprint(report);
+  return report;
+}
+
+export function portableEvidenceFingerprint(report = {}) {
+  const evidence = {
+    platform: report.platform || "unknown",
+    architecture: report.architecture || "unknown",
+    scanMode: report.scanMode || "unknown",
+    projectSignals: report.projectSignals || {},
+    inventory: report.inventory || {},
+    findings: report.findings || [],
+    decision: report.decision || "unknown",
+    consolidation: report.consolidation || {}
+  };
+  return `aerp1:${createHash("sha256").update(JSON.stringify(canonicalEvidence(evidence))).digest("hex").slice(0, 24)}`;
+}
+
+function canonicalEvidence(value) {
+  if (Array.isArray(value)) return value.map(canonicalEvidence).sort((a, b) => JSON.stringify(a).localeCompare(JSON.stringify(b)));
+  if (value && typeof value === "object") return Object.fromEntries(Object.keys(value).sort().map((key) => [key, canonicalEvidence(value[key])]));
+  return value;
 }
 
 function printPortable(value) {
@@ -172,6 +205,7 @@ function printPortable(value) {
   console.log(`platform: ${value.platform}/${value.architecture}`);
   console.log(`inventory: node=${value.inventory.node.count}, npm=${value.inventory.npm.count}, python=${value.inventory.python.count}, java=${value.inventory.otherRuntimes.java?.count || 0}`);
   console.log(`findings: ${value.findings.map((item) => item.code).join(", ") || "none"}`);
+  console.log(`evidence: ${value.evidenceFingerprint}`);
   console.log(`privacy: ${value.privacy.excluded.join(", ")}`);
   console.log(`rule: ${value.rule}`);
 }
