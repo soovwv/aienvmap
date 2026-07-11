@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
-import { analyzeNodeInstallations, analyzeNpmInstallations, analyzePythonCommandRouting, analyzePythonInstallations, analyzeRuntimeLinks, attachPyenvManagerEvidence, attachUvManagerEvidence, buildAiDecision, compareNpmGlobalPackages, comparePythonPackages, findPythonCandidates, inspectPyenvPythonManager, linkNodeNpmRuntimes, linkPythonPipRuntimes, parsePackageManager, parsePipList, parsePipVersion, parsePyenvVersions, summarizePipInspect, summarizePythonPackages } from "../src/package-managers.js";
+import { analyzeNodeInstallations, analyzeNpmInstallations, analyzePythonCommandRouting, analyzePythonInstallations, analyzeRuntimeLinks, attachPyenvManagerEvidence, attachUvManagerEvidence, attachVoltaManagerEvidence, buildAiDecision, compareNpmGlobalPackages, comparePythonPackages, findPythonCandidates, inspectPyenvPythonManager, inspectVoltaNodeManager, linkNodeNpmRuntimes, linkPythonPipRuntimes, parsePackageManager, parsePipList, parsePipVersion, parsePyenvVersions, parseVoltaNodeList, summarizePipInspect, summarizePythonPackages } from "../src/package-managers.js";
 
 test("parsePackageManager separates package manager and pinned version", () => {
   assert.deepEqual(parsePackageManager("npm@10.8.2"), { name: "npm", version: "10.8.2" });
@@ -45,6 +45,56 @@ test("analyzeNodeInstallations compares active Node with .nvmrc", () => {
     { version: "20.19.0", active: false }
   ], { node: { versionFile: "20" } });
   assert.deepEqual(findings.map((item) => item.code), ["multiple-node-installations", "active-node-project-mismatch"]);
+});
+
+test("Volta plain inventory parser preserves runtime state without project paths", () => {
+  assert.deepEqual(parseVoltaNodeList([
+    "runtime node@22.12.0 (default)",
+    "runtime node@20.18.1 (current @ C:\\private\\project)",
+    "runtime node@18.20.5",
+    "package-manager npm@10.9.0 (default)",
+    "runtime node@22.12.0 (default)"
+  ].join("\n")), [
+    { version: "22.12.0", state: "default" },
+    { version: "20.18.1", state: "current-project" },
+    { version: "18.20.5", state: "installed" }
+  ]);
+});
+
+test("Volta ownership requires inventory and reported image path", () => {
+  const root = path.join("home", ".volta", "tools", "image", "node");
+  const inventory = { collection: "collected", version: "2.0.2", managedRoot: root, runtimes: [{ version: "22.12.0", state: "default" }] };
+  const [managed, routed, inferred] = attachVoltaManagerEvidence([
+    { version: "22.12.0", path: path.join("home", ".volta", "bin", "node"), reportedExecutable: path.join(root, "22.12.0", "bin", "node"), source: "volta" },
+    { version: "22.12.0", path: path.join("home", ".volta", "bin", "node"), reportedExecutable: "", source: "volta" },
+    { version: "20.18.1", path: path.join(root, "20.18.1", "bin", "node"), reportedExecutable: "", source: "volta" }
+  ], inventory);
+  assert.equal(managed.managerEvidence.relationship, "inventory-and-image-path-match");
+  assert.equal(managed.managerEvidence.ownershipProven, true);
+  assert.equal(managed.managerEvidence.removalAuthorized, false);
+  assert.equal(routed.managerEvidence.relationship, "inventory-version-match");
+  assert.equal(routed.managerEvidence.ownershipProven, false);
+  assert.equal(inferred.managerEvidence.relationship, "managed-root-inference");
+  assert.equal(inferred.managerEvidence.ownershipProven, false);
+});
+
+test("Windows Volta plain inventory is collected read-only", { skip: process.platform !== "win32" }, async () => {
+  const dir = await fs.mkdtemp(path.join(os.tmpdir(), "aienvmap volta "));
+  try {
+    const command = path.join(dir, "volta.cmd");
+    await fs.writeFile(command, [
+      "@echo off",
+      "if \"%1\"==\"--version\" echo 2.0.2",
+      "if \"%1\"==\"list\" echo runtime node@22.12.0 (default)"
+    ].join("\r\n"));
+    const result = await inspectVoltaNodeManager({ fullPackages: true, voltaCommand: command, platform: "win32", home: dir, env: {}, showPaths: true, projectDir: dir });
+    assert.equal(result.collection, "collected");
+    assert.equal(result.version, "2.0.2");
+    assert.deepEqual(result.runtimes, [{ version: "22.12.0", state: "default" }]);
+    assert.equal(result.runtimeCount, 1);
+  } finally {
+    await fs.rm(dir, { recursive: true, force: true });
+  }
 });
 
 test("parsePipList normalizes Python package inventories", () => {

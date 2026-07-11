@@ -13,7 +13,7 @@ const pythonNames = process.platform === "win32" ? ["python.exe", "python3.exe"]
 const pipNames = process.platform === "win32" ? ["pip.exe", "pip3.exe"] : ["pip3", "pip"];
 
 export async function inspectPackageManagers(dir, options = {}) {
-  const [candidates, nodeCandidates, pythonCandidates, pipCandidates, commonRuntimes, project, uvPythonManager, pyenvPythonManager] = await Promise.all([
+  const [candidates, nodeCandidates, pythonCandidates, pipCandidates, commonRuntimes, project, uvPythonManager, pyenvPythonManager, voltaNodeManager] = await Promise.all([
     findNpmCandidates(options),
     findNodeCandidates(options),
     findPythonCandidates({ ...options, projectDir: dir }),
@@ -21,7 +21,8 @@ export async function inspectPackageManagers(dir, options = {}) {
     inspectCommonRuntimes({ ...options, projectDir: dir }),
     readProjectExpectation(dir),
     inspectUvPythonManager(options),
-    inspectPyenvPythonManager(options)
+    inspectPyenvPythonManager(options),
+    inspectVoltaNodeManager({ ...options, projectDir: dir })
   ]);
   const inspected = await Promise.all(candidates.map(async (candidate, index) => {
     const version = await npmCandidateVersion(candidate.path);
@@ -51,7 +52,7 @@ export async function inspectPackageManagers(dir, options = {}) {
   const inspectedPythonInstallations = await inspectPythonCandidates(pythonCandidates, options);
   const pythonInstallations = attachPyenvManagerEvidence(attachUvManagerEvidence(inspectedPythonInstallations, uvPythonManager), pyenvPythonManager);
   const pipCommands = await inspectPipCandidates(pipCandidates, options);
-  const nodeInstallations = await inspectNodeCandidates(nodeCandidates, options);
+  const nodeInstallations = attachVoltaManagerEvidence(await inspectNodeCandidates(nodeCandidates, options), voltaNodeManager);
   const npmRuntimeLinks = linkNodeNpmRuntimes(nodeInstallations, installations);
   const pipRuntimeLinks = linkPythonPipRuntimes(pythonInstallations, pipCommands);
   const findings = [
@@ -81,7 +82,8 @@ export async function inspectPackageManagers(dir, options = {}) {
     node: {
       installations: nodeInstallations,
       active: nodeInstallations.find((item) => item.active) || null,
-      distinctVersions: [...new Set(nodeInstallations.map((item) => item.version))]
+      distinctVersions: [...new Set(nodeInstallations.map((item) => item.version))],
+      managerInventories: { volta: voltaNodeManager }
     },
     npm: {
       installations,
@@ -108,6 +110,100 @@ export async function inspectPackageManagers(dir, options = {}) {
     decision: findings.some((item) => item.severity === "review") ? "review" : "clear",
     aiDecision
   };
+}
+
+export async function inspectVoltaNodeManager(options = {}) {
+  if (!options.fullPackages) return {
+    collection: "not-requested",
+    reason: "Use --full-packages for Volta-managed Node evidence."
+  };
+  const platform = options.platform || process.platform;
+  const command = options.voltaCommand || (platform === "win32" ? "volta.exe" : "volta");
+  const versionResult = await portableCommandResult(command, ["--version"], { timeout: 3500, platform, cwd: options.projectDir });
+  const managerVersion = firstVersion(`${versionResult.stdout}\n${versionResult.stderr}`);
+  if (!versionResult.ok || !managerVersion) return { collection: "unavailable", manager: "volta", reason: "Volta was not available." };
+  const listResult = await portableCommandResult(command, ["list", "--format", "plain", "node"], {
+    timeout: 5000, maxBuffer: 1024 * 1024, platform, cwd: options.projectDir
+  });
+  if (!listResult.ok) return {
+    collection: "unsupported-or-failed", manager: "volta", version: managerVersion, reason: "Volta did not return its plain Node inventory."
+  };
+  const parsedRuntimes = parseVoltaNodeList(listResult.stdout);
+  const runtimes = parsedRuntimes.slice(0, 100);
+  const home = options.home || os.homedir();
+  const env = options.env || process.env;
+  const voltaHome = env.VOLTA_HOME || (platform === "win32"
+    ? path.join(env.LOCALAPPDATA || path.join(home, "AppData", "Local"), "Volta")
+    : path.join(home, ".volta"));
+  return {
+    collection: "collected",
+    manager: "volta",
+    version: managerVersion,
+    managedRoot: displayPath(path.join(voltaHome, "tools", "image", "node"), options),
+    runtimeCount: runtimes.length,
+    runtimes,
+    truncated: parsedRuntimes.length > 100,
+    semantics: "Volta plain Node inventory; exact version plus reported executable inside the image root proves management, never removal authorization."
+  };
+}
+
+export function parseVoltaNodeList(raw) {
+  const runtimes = [];
+  for (const line of String(raw || "").split(/\r?\n/)) {
+    const match = line.trim().match(/^runtime\s+node@([^\s]+)(?:\s+\((default|current\s+@\s+.+)\))?$/i);
+    if (!match) continue;
+    const state = !match[2] ? "installed" : match[2] === "default" ? "default" : "current-project";
+    runtimes.push({ version: match[1].replace(/^v/, ""), state });
+  }
+  return runtimes.filter((item, index) => runtimes.findIndex((other) => other.version === item.version && other.state === item.state) === index);
+}
+
+export function attachVoltaManagerEvidence(nodeInstallations = [], volta = {}) {
+  return nodeInstallations.map((node) => {
+    const listed = volta.collection === "collected" && (volta.runtimes || []).find((item) => item.version === node.version);
+    const exactRoot = listed && volta.managedRoot && pathContains(volta.managedRoot, node.reportedExecutable);
+    const inferred = node.source === "volta" || (volta.managedRoot && (pathContains(volta.managedRoot, node.path) || pathContains(volta.managedRoot, node.reportedExecutable)));
+    return {
+      ...node,
+      managerEvidence: exactRoot ? {
+        manager: "volta",
+        managerVersion: volta.version,
+        relationship: "inventory-and-image-path-match",
+        confidence: "strong",
+        ownershipProven: true,
+        proofScope: "volta-managed-runtime",
+        matchedKey: listed.version,
+        removalAuthorized: false
+      } : listed && inferred ? {
+        manager: "volta",
+        managerVersion: volta.version,
+        relationship: "inventory-version-match",
+        confidence: "medium",
+        ownershipProven: false,
+        proofScope: "version-and-routing-only",
+        matchedKey: listed.version,
+        removalAuthorized: false
+      } : inferred ? {
+        manager: "volta",
+        managerVersion: volta.version || "",
+        relationship: "managed-root-inference",
+        confidence: "medium",
+        ownershipProven: false,
+        proofScope: "path-only",
+        matchedKey: "",
+        removalAuthorized: false
+      } : {
+        manager: "unknown",
+        managerVersion: "",
+        relationship: "unconfirmed",
+        confidence: "none",
+        ownershipProven: false,
+        proofScope: "none",
+        matchedKey: "",
+        removalAuthorized: false
+      }
+    };
+  });
 }
 
 export async function inspectPyenvPythonManager(options = {}) {
@@ -413,11 +509,15 @@ export async function findNodeCandidates(options = {}) {
 
 async function inspectNodeCandidates(candidates, options) {
   const inspected = await Promise.all(candidates.map(async (candidate) => {
-    const version = await commandVersion(candidate.path);
+    const [version, reportedExecutable] = await Promise.all([
+      commandVersion(candidate.path),
+      commandOutput(candidate.path, ["-p", "process.execPath"], { timeout: 3500 })
+    ]);
     return version ? {
       runtime: "node",
       version,
       path: displayPath(candidate.path, options),
+      reportedExecutable: displayPath(reportedExecutable, options),
       source: candidate.source,
       scope: candidate.scope,
       discovery: candidate.discovery
