@@ -16,7 +16,10 @@ const marketDimensions = [
 ];
 
 const adjacentAlternatives = [
+  alternative("Microsoft APM", "agent context dependency management", "APM declares and reproduces instructions, skills, prompts, plugins, and MCP servers; aienvmap supplies observed host runtime and coordination evidence", "https://github.com/microsoft/apm"),
   alternative("mise", "runtime and tool version management", "aienvmap observes and coordinates; it does not replace a version manager", "https://mise.jdx.dev/"),
+  alternative("Devbox", "isolated reproducible development environments", "Devbox creates a declared portable environment; aienvmap observes mixed existing installations without replacing the shell", "https://github.com/jetify-com/devbox"),
+  alternative("Flox", "declared reusable development environments", "Flox aligns humans and AI on an activated reproducible environment; aienvmap maps and coordinates the non-clean host state already present", "https://github.com/flox/flox"),
   alternative("Renovate", "automated dependency updates", "aienvmap coordinates AI intent and environment evidence before and after changes", "https://docs.renovatebot.com/"),
   alternative("Syft", "full software inventory and SBOM generation", "aienvmap provides a light manifest view and imports external evidence", "https://github.com/anchore/syft"),
   alternative("CycloneDX", "SBOM standard and ecosystem", "aienvmap emits a lite projection and interoperates with richer artifacts", "https://cyclonedx.org/capabilities/sbom/")
@@ -38,12 +41,13 @@ export function productScorecard() {
       report: "MARKET.md",
       observedAt: "2026-07-12",
       publicSignals: { githubStars: 0, githubForks: 0, independentOutcomeVerifiedCases: 0, npmDownloadsWindow: { requests: 108, start: "2026-06-11", end: "2026-07-10" } },
+      adjacentSignals: { observedAt: "2026-07-12", microsoftApmStars: 3181, devboxStars: 12162, floxStars: 4044 },
       interpretation: "npm downloads are requests, not unique users, retention, successful setups, or recommendation evidence.",
       scoreImpact: "none until independent outcome-verified evidence exists"
     },
     adjacentAlternatives,
     strengths: ["zero-runtime-dependency local operation", "AI-readable environment and decision contracts", "read-only multi-install discovery", "light SBOM interoperability", "explicit approval boundaries"],
-    weaknesses: ["limited independent adoption evidence", "few external case studies", "information-only depth for several toolchains", "pre-0.2.0 contract stability"],
+    weaknesses: ["limited independent adoption evidence", "few external case studies", "adjacent tools increasingly combine AI context with reproducible environments", "information-only depth for several toolchains", "pre-0.2.0 contract stability"],
     nextPriorities: [
       { priority: 1, outcome: "external problem evidence", proof: "at least three reproducible user environments and before/after reports" },
       { priority: 2, outcome: "AI-host integration evidence", proof: "verified examples for major coding-agent hosts" },
