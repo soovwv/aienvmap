@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Preferred sanitized CycloneDX and SPDX Package URLs for cross-ecosystem component identity, with explicit identity confidence, fallback signaling, and no retained PURL qualifiers or subpaths.
 - Added bounded CycloneDX/SPDX component identities and explicit re-import baseline comparison for added, removed, and version-changed packages, with partial-result signaling and no automatic remediation.
 - Added explicit workspace-local CycloneDX/SPDX JSON evidence import with realpath confinement, 32 MB bound, SHA-256 identity/freshness checks, bounded tool/count summaries, preview/persist/clear flows, and original-first AI guidance without running scanners.
 - Added one bounded mise installed-JSON inventory for Node and Python, exact reported-path ownership evidence, custom install-root discovery, runtime-scoped drift, and AI/schema integration without retaining config paths or authorizing removal.

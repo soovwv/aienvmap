@@ -48,6 +48,8 @@ test("schemaContract describes stable AI output contracts", () => {
   assert.ok(schema.outputs.sbom.rootFields.includes("externalEvidence"));
   assert.ok(schema.outputs.sbom.externalEvidenceFields.includes("verification"));
   assert.ok(schema.outputs.sbom.externalEvidenceFields.includes("componentInventory"));
+  assert.ok(schema.outputs.sbom.componentInventoryFields.includes("identityConfidence"));
+  assert.ok(schema.outputs.sbom.componentIdentityFields.includes("identitySource"));
   assert.ok(schema.outputs.sbom.externalEvidenceDecisionFields.includes("baselineDrift"));
   assert.ok(schema.outputs.sbom.externalEvidenceDecisionFields.includes("nextCommand"));
   assert.match(schema.outputs.sbom.importCommand, /--import/);
