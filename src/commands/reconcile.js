@@ -10,6 +10,16 @@ export async function reconcileWorkspace(args = {}) {
   if (args.check && args.write) throw new Error("use either --check or --write, not both; checking must not replace its baseline");
   if (args.portable && (args.write || args.check || args.show_paths || args.full_packages || args.baseline)) throw new Error("--portable is quick, read-only, and cannot be combined with --write, --check, --baseline, --show-paths, or --full-packages");
   const dir = workspaceDir(args);
+  if (args.portable_from) {
+    if (args.portable || args.write || args.check || args.quick || args.full_packages || args.show_paths || args.baseline) throw new Error("--portable-from cannot be combined with scanning, writing, checking, baseline, or path options");
+    if (args.portable_from === true) throw new Error("--portable-from requires a reconciliation JSON file");
+    const source = await readJson(path.resolve(dir, String(args.portable_from)), null);
+    if (source?.schemaName !== "aienvmap.reconcile" || source?.schemaVersion !== 1) throw new Error("--portable-from requires an aienvmap.reconcile v1 JSON artifact");
+    const portable = buildPortableReconciliation(source, { sourceMode: "artifact" });
+    if (args.json) console.log(JSON.stringify(portable, null, 2));
+    else if (!args.quiet) printPortable(portable);
+    return portable;
+  }
   const baselinePath = args.baseline ? path.resolve(dir, String(args.baseline)) : reconcileJsonPath(dir);
   const baseline = args.check ? await readJson(baselinePath, null) : null;
   if (args.check && !baseline) throw new Error(`missing reconciliation baseline at ${baselinePath}; run \`aienvmap reconcile --write\` first`);
@@ -20,7 +30,7 @@ export async function reconcileWorkspace(args = {}) {
     quick: args.portable || args.quick || scanMode === "quick"
   });
   if (args.portable) {
-    const portable = buildPortableReconciliation(result);
+    const portable = buildPortableReconciliation(result, { sourceMode: "live-quick" });
     if (args.json) console.log(JSON.stringify(portable, null, 2));
     else if (!args.quiet) printPortable(portable);
     return portable;
@@ -127,7 +137,8 @@ export function buildPortableReconciliation(value = {}, runtime = {}) {
     },
     platform: runtime.platform || process.platform,
     architecture: runtime.arch || process.arch,
-    scanMode: "quick",
+    source: { mode: runtime.sourceMode || "in-memory", scanMode: value.scanMode || "unknown", artifactPathIncluded: false },
+    scanMode: value.scanMode || "unknown",
     projectSignals: {
       packageManager: value.project?.packageManager ? { name: value.project.packageManager.name, version: value.project.packageManager.version } : null,
       lockManagers: value.project?.lockManagers || [],
@@ -151,7 +162,7 @@ export function buildPortableReconciliation(value = {}, runtime = {}) {
       environmentChangesAuthorized: false,
       removalAuthorized: false
     },
-    nextSafeCommand: "aienvmap reconcile --json --full-packages",
+    nextSafeCommand: value.scanMode === "quick" ? "aienvmap reconcile --json --full-packages" : "aienvmap status --json",
     rule: "Portable evidence is diagnostic context only; it omits local identifiers and never authorizes environment changes or removal."
   };
 }

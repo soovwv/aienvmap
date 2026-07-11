@@ -133,7 +133,7 @@ Usage:
   aienvmap schema [--json]
   aienvmap start [--dir .] [--json]
   aienvmap discover [--dir .] [--json]
-  aienvmap reconcile [--dir .] [--json] [--write|--check|--portable] [--baseline file] [--quick|--full-packages] [--show-paths]
+  aienvmap reconcile [--dir .] [--json] [--write|--check|--portable] [--portable-from reconcile.json] [--baseline file] [--quick|--full-packages] [--show-paths]
   aienvmap scorecard [--json]
   aienvmap onboard [codex claude gemini] [--agents codex,claude,gemini,cursor,copilot] [--dry-run|--uninstall] [--no-sync]
   aienvmap demo [conflict] [--json]

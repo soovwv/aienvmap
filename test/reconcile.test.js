@@ -663,6 +663,33 @@ test("reconcile --portable emits a quick redacted shareable report", async () =>
   assert.equal(serialized.includes(dir), false);
   assert.equal(serialized.includes("private-project"), false);
   assert.equal(json.consolidation.environmentChangesAuthorized, false);
+  assert.deepEqual(json.source, { mode: "live-quick", scanMode: "quick", artifactPathIncluded: false });
+});
+
+test("reconcile --portable-from redacts a reviewed full artifact without rescanning", async () => {
+  const dir = await fs.mkdtemp(path.join(os.tmpdir(), "aienvmap-portable-from-"));
+  const artifact = path.join(dir, "private-reconcile.json");
+  await fs.writeFile(artifact, JSON.stringify({
+    schemaName: "aienvmap.reconcile",
+    schemaVersion: 1,
+    generatedAt: "private-time",
+    scanMode: "full-packages",
+    project: { name: "private-project", path: dir, packageManager: null, lockManagers: [] },
+    node: { distinctVersions: [], installations: [] },
+    npm: { distinctVersions: [], installations: [] },
+    python: { distinctVersions: ["3.12.13"], installations: [{ version: "3.12.13", active: true, path: `${dir}/python`, packages: [{ name: "private-package" }], managerEvidence: { manager: "uv", relationship: "managed-python-list-match", confidence: "strong", ownershipProven: true } }] },
+    otherRuntimes: {}, findings: [], decision: "clear",
+    aiDecision: { consolidationPlan: { status: "no-candidates", candidates: [], phases: [], requiresHumanApprovalBefore: ["removal"] } }
+  }), "utf8");
+  const { execFile } = await import("node:child_process");
+  const { promisify } = await import("node:util");
+  const result = await promisify(execFile)(process.execPath, [path.resolve("bin/aienvmap.js"), "reconcile", "--portable-from", artifact, "--json", "--dir", dir], { cwd: path.resolve(".") });
+  const json = JSON.parse(result.stdout);
+  const serialized = JSON.stringify(json);
+  assert.deepEqual(json.source, { mode: "artifact", scanMode: "full-packages", artifactPathIncluded: false });
+  assert.equal(json.inventory.python.installations[0].manager.ownershipProven, true);
+  assert.equal(json.nextSafeCommand, "aienvmap status --json");
+  for (const secret of [dir, "private-reconcile", "private-project", "private-package", "private-time"]) assert.equal(serialized.includes(secret), false);
 });
 
 test("reconcile --full-packages exposes package-level evidence on demand", async () => {

@@ -38,6 +38,7 @@ test("packaged aienvmap skill points AI agents to current startup contracts", as
   assert.match(skill, /global installs/);
   assert.match(skill, /--portable --json/);
   assert.match(skill, /review it before sharing/);
+  assert.match(skill, /--portable-from/);
   assert.match(skill, /reasonCodes/);
   assert.match(skill, /refresh-import-required/);
   assert.match(skill, /python\.managerInventories/);
