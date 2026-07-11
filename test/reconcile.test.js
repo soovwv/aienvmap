@@ -6,6 +6,7 @@ import path from "node:path";
 import { analyzeNodeInstallations, analyzeNodePackageManagers, analyzeNpmInstallations, analyzePythonCommandRouting, analyzePythonInstallations, analyzeRuntimeLinks, attachFnmManagerEvidence, attachMiseNodeEvidence, attachMisePythonEvidence, attachNvmManagerEvidence, attachPyenvManagerEvidence, attachUvManagerEvidence, attachVoltaManagerEvidence, buildAiDecision, buildConsolidationPlan, compareNpmGlobalPackages, comparePythonPackages, findNodeCandidates, findNodePackageManagerCandidates, findPythonCandidates, inspectFnmNodeManager, inspectMiseRuntimeManager, inspectNodePackageManagerCandidates, inspectNvmNodeManager, inspectPyenvPythonManager, inspectVoltaNodeManager, linkNodeNpmRuntimes, linkPythonPipRuntimes, miseInventoryForRuntime, parseFnmNodeList, parseMiseRuntimeInventory, parsePackageManager, parsePipList, parsePipVersion, parsePyenvVersions, parseVoltaNodeList, summarizePipInspect, summarizePythonPackages } from "../src/package-managers.js";
 import { buildPortableReconciliation, comparePortableReconciliations, portableEvidenceFingerprint } from "../src/commands/reconcile.js";
 import { analyzePythonToolEntryPoints, findPythonToolCandidates, inspectPythonToolCandidates } from "../src/package-managers.js";
+import { analyzeCondaRouting, inspectCondaCandidates, parseCondaEnvironmentInfo } from "../src/package-managers.js";
 import * as portableReconcile from "../src/portable-reconcile.js";
 
 test("reconcile command preserves the portable helper compatibility exports", async () => {
@@ -95,6 +96,32 @@ test("Python tool discovery and inspection stay bounded and advisory", async () 
     assert.equal(inspected.uv.active.version, "0.8.1");
     assert.equal(inspected.uv.active.ownershipProven, false);
   }
+});
+
+test("Conda environment JSON keeps bounded path-only evidence", () => {
+  const base = path.join(os.homedir(), "miniconda");
+  const result = parseCondaEnvironmentInfo(JSON.stringify({ active_prefix: path.join(base, "envs", "a"), envs: [base, path.join(base, "envs", "a")], channels: ["https://token@example.invalid"] }));
+  assert.equal(result.collection, "collected");
+  assert.equal(result.count, 2);
+  assert.ok(result.prefixes.every((item) => item.startsWith("$HOME")));
+  assert.equal(JSON.stringify(result).includes("token@example.invalid"), false);
+  assert.match(result.semantics, /packages, channels, credentials, and tokens are not collected/);
+});
+
+test("Conda version-only inspection stays lightweight by default", async () => {
+  const dir = await fs.mkdtemp(path.join(os.tmpdir(), "aienvmap-conda-"));
+  const file = path.join(dir, process.platform === "win32" ? "conda.bat" : "conda");
+  await fs.writeFile(file, process.platform === "win32" ? "@echo conda 25.5.1\r\n" : "#!/bin/sh\necho conda 25.5.1\n", "utf8");
+  if (process.platform !== "win32") await fs.chmod(file, 0o755);
+  const result = await inspectCondaCandidates([{ path: file, source: "PATH", scope: "user", discovery: "PATH" }], { showPaths: true });
+  assert.equal(result.active.version, "25.5.1");
+  assert.equal(result.active.environmentEvidence.collection, "not-requested");
+  assert.equal(result.active.removalAuthorized, false);
+});
+
+test("Conda routing warns when an active prefix does not own active Python", () => {
+  const findings = analyzeCondaRouting({ installations: [], distinctVersions: [] }, [{ active: true, path: "/usr/bin/python", prefix: "/usr" }], { CONDA_PREFIX: "/home/user/conda/envs/a" });
+  assert.equal(findings[0].code, "conda-active-python-routing-mismatch");
 });
 
 test("analyzeNpmInstallations keeps same-version duplicates informational", () => {
