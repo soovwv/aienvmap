@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Added a fail-closed 0.2.0 root-field contract freeze candidate across 13 AI JSON surfaces, with an intentional-review baseline and release-check integration.
 - Isolated portable report construction, validation, fingerprinting, artifact loading, and comparison from the reconcile CLI while preserving command-module exports and JSON contracts.
 - Hardened the manual npm provenance workflow to require current main, a matching version tag, an unpublished version, explicit confirmation, OIDC provenance, and post-publish registry version/integrity verification.
 - Restored the canonical Apache-2.0 license text, added a dated market/traction snapshot with adjacent-tool boundaries, exposed its caveats in the scorecard, and aligned GitHub description/topics with the product position.
