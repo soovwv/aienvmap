@@ -102,6 +102,9 @@ test("contextWorkspace JSON includes compact step summary", async () => {
 
   const json = JSON.parse(output);
   assert.equal(json.status, "review-required");
+  assert.equal(json.aiDecisionEnvelope.decision, "review");
+  assert.equal(json.aiDecisionEnvelope.nextSafeCommand, json.nextSafeCommand);
+  assert.equal(json.aiDecisionEnvelope.requiresHumanApproval, true);
   assert.equal(json.nextSafeCommand, "aienvmap sync");
   assert.equal(json.startHere, ".aienvmap/README.md");
   assert.equal(json.readOrder[0], ".aienvmap/discovery.json");

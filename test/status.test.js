@@ -32,6 +32,9 @@ test("buildStatus returns a compact clear state", () => {
   }, [], []);
 
   assert.equal(status.state, "clear");
+  assert.equal(status.aiDecisionEnvelope.decision, "clear");
+  assert.equal(status.aiDecisionEnvelope.nextSafeCommand, status.nextSafeCommand);
+  assert.equal(status.aiDecisionEnvelope.removalAuthorized, false);
   assert.equal(status.contract.name, "aienvmap-preflight");
   assert.equal(status.contract.stability, "additive");
   assert.ok(status.contract.aiEntryFields.includes("nextAgent"));
@@ -562,6 +565,9 @@ test("statusWorkspace promotes external component drift into AI review", async (
 
   const result = await statusWorkspace({ dir, quiet: true });
   assert.equal(result.state, "review-required");
+  assert.equal(result.aiDecisionEnvelope.decision, "review");
+  assert.ok(result.aiDecisionEnvelope.reasonCodes.includes("external-sbom-component-drift"));
+  assert.ok(result.aiDecisionEnvelope.evidenceRefs.includes(".aienvmap/sbom.json"));
   assert.equal(result.externalSbom.decision, "component-drift-review");
   assert.equal(result.counts.warnings, 1);
   assert.ok(result.intentTargets[0].sources.includes("external-sbom-component-drift"));

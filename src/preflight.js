@@ -4,6 +4,7 @@ import { aiDecision } from "./decision.js";
 import { enforcementAdvice, enforcementGate } from "./enforcement.js";
 import { operationalSafetyContract, preflightContract, qualitySignalsContract } from "./contract.js";
 import { pendingFollowUps } from "./timeline.js";
+import { buildAiDecisionEnvelope } from "./ai-decision-envelope.js";
 
 export function buildPreflight(manifest = {}, warnings = [], intents = [], timeline = []) {
   const decision = aiDecision(warnings, intents);
@@ -36,6 +37,19 @@ export function buildPreflight(manifest = {}, warnings = [], intents = [], timel
     collaboration
   });
   const nextCommand = maintenanceLoop.nextCommand || topAction?.command || decision.nextCommand;
+  const aiDecisionEnvelope = buildAiDecisionEnvelope({
+    decision: state,
+    reviewRequired: decision.reviewRequired,
+    reasonCodes: [...warnings.map((item) => item.code), ...(intents.length ? ["open-intents"] : [])],
+    evidenceRefs: [
+      ".aienvmap/status.json",
+      ...(warnings.some((item) => String(item.code || "").includes("external-sbom")) ? [".aienvmap/sbom.json"] : []),
+      ...(intents.length ? [".aienvmap/intents.jsonl"] : []),
+      ...(warnings.length ? ["aienvmap context --json"] : [])
+    ],
+    nextSafeCommand: nextCommand,
+    projectLocalWork: decision.canContinueProjectLocalWork ? "allowed" : "review-first"
+  });
   const aiBootstrap = aiBootstrapSummary({ state, decision, nextCommand, maintenanceLoop, topAction });
   const artifactFreshness = artifactFreshnessSummary(manifest, warnings);
   const aiSession = aiSessionSummary({
@@ -62,6 +76,7 @@ export function buildPreflight(manifest = {}, warnings = [], intents = [], timel
     strictRecommendation,
     operationalSafety,
     qualitySignals,
+    aiDecisionEnvelope,
     enforcementProfile: {
       defaultMode: "advisory",
       localOperation: "non-blocking",

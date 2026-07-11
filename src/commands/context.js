@@ -37,6 +37,7 @@ export async function contextWorkspace(args) {
       strictRecommendation: preflight.strictRecommendation,
       operationalSafety: preflight.operationalSafety,
       qualitySignals: preflight.qualitySignals,
+      aiDecisionEnvelope: preflight.aiDecisionEnvelope,
       preflight,
       aiReadiness: preflight.aiReadiness,
       collaboration: preflight.collaboration,

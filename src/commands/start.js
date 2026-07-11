@@ -30,6 +30,7 @@ export async function startWorkspace(args = {}) {
     readOrder: withReconcile(after.readOrder),
     decision: status.state,
     summary: status.summary,
+    aiDecisionEnvelope: status.aiDecisionEnvelope,
     nextCommand: status.nextCommand,
     nextSetupCommand: after.aiDiscovery?.nextSetupCommand || "npx aienvmap onboard",
     agentPointers: status.agentPointers,
