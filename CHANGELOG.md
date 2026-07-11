@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Added a privacy-reviewed portable environment case issue template, external evidence maturity rubric, AI judgment evaluation fields, and scorecard gates that exclude unverified or repository-owned examples from market credit.
 - Added offline `reconcile --portable-compare <before> --against <after> --json` with fingerprint validation, bounded redacted diffs, embedded platform evidence, and no environment-change authority.
 - Added canonical `aerp1` portable evidence fingerprints for identifier-independent case comparison and deduplication, with explicit pseudonymous-linkability and no-machine-ID semantics.
 - Added `reconcile --portable-from <artifact> --json` to redact a validated reconciliation v1 artifact offline, preserving full-scan ownership evidence without rescanning or exposing the source path.
