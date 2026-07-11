@@ -48,6 +48,7 @@ test("CycloneDX PURL separates same-name ecosystems and strips qualifiers", () =
   ] });
   const identities = before.componentInventory.identities;
   assert.equal(before.componentInventory.identitySources.purl, 2);
+  assert.equal(before.componentInventory.identityConfidence, "purl");
   assert.deepEqual(identities.map((item) => item.purl), ["pkg:npm/requests@1", "pkg:pypi/requests@1"]);
   assert.doesNotMatch(JSON.stringify(before), /private\.example|token|#src/);
   const after = parseExternalSbom({ bomFormat: "CycloneDX", components: [
@@ -97,8 +98,10 @@ test("SPDX Package URL external reference is preferred over name fallback", () =
 test("invalid PURL safely falls back to type and name identity", () => {
   const result = parseExternalSbom({ bomFormat: "CycloneDX", components: [{ name: "alpha", version: "1", purl: "https://example.test/alpha" }] });
   assert.equal(result.componentInventory.identitySources.fallback, 1);
+  assert.equal(result.componentInventory.identityConfidence, "fallback-only");
   assert.equal(result.componentInventory.identities[0].identitySource, "type-name-fallback");
   assert.equal(Object.hasOwn(result.componentInventory.identities[0], "purl"), false);
+  assert.match(compareSbomEvidence(result, result).rule, /may conflate ecosystems/);
 });
 
 test("external evidence import stores relative path and digest only", async () => {

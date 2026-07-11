@@ -579,6 +579,8 @@ export function schemaContract() {
         importCommand: "aienvmap sbom --import <workspace-sbom.json> --write",
         clearImportCommand: "aienvmap sbom --clear-import --write",
         externalEvidenceFields: ["status", "mode", "verification", "artifact", "digest", "currentDigest", "baselineDigest", "baselineDrift", "bytes", "format", "specVersion", "sourceTimestamp", "generatorTools", "summary", "componentInventory", "securityEvidence", "limitations", "removalAuthorized", "rule"],
+        componentInventoryFields: ["total", "retained", "truncated", "identitySources", "identityConfidence", "rule", "identities"],
+        componentIdentityFields: ["name", "version", "type", "identitySource", "purl"],
         externalEvidenceDecisionFields: ["decision", "artifact", "digest", "format", "securityEvidence", "baselineDrift", "nextCommand", "rule"],
         scannerGuidanceFields: ["mode", "decision", "reason", "defaultCommand", "scannerCommand", "securityConfidence", "useLightSbomFor", "requireScannerFor", "externalTools", "evidenceWorkflow", "interoperabilityRule", "whenToRun", "rule"],
         aiReviewPlanFields: ["status", "risk", "securityConfidence", "packageManagerPolicy", "packages", "vulnerabilities", "reviewTargets", "beforeChange", "afterChange", "rule"],

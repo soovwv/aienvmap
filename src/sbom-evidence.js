@@ -151,10 +151,13 @@ export function compareSbomEvidence(previous = {}, current = {}) {
   }
   for (const [key, item] of beforeByName) if (!afterByName.has(key)) removed.push(item);
   const incomplete = Boolean(before.truncated || after.truncated);
+  const identityConfidence = { before: before.identityConfidence || "unknown", after: after.identityConfidence || "unknown" };
+  const fallbackUsed = (before.identitySources?.fallback || 0) > 0 || (after.identitySources?.fallback || 0) > 0;
   return {
     status: added.length || removed.length || versionChanged.length ? "changed" : (incomplete ? "no-change-in-retained-sample" : "unchanged"),
     comparable: true,
     incomplete,
+    identityConfidence,
     counts: { added: added.length, removed: removed.length, versionChanged: versionChanged.length },
     sample: {
       added: added.slice(0, MAX_DRIFT_SAMPLE),
@@ -163,6 +166,8 @@ export function compareSbomEvidence(previous = {}, current = {}) {
     },
     rule: incomplete
       ? "The bounded inventory was truncated; treat this comparison as partial and read both original SBOMs before claims."
+      : fallbackUsed
+        ? "Some components lacked PURL identity; name/type fallback may conflate ecosystems, so read both original SBOMs before claims."
       : "This comparison is coordination evidence only; read the original SBOMs before security, compliance, install, or removal decisions."
   };
 }
@@ -180,6 +185,8 @@ function boundedInventory(items) {
       purl: retained.filter((item) => item.identitySource === "purl").length,
       fallback: retained.filter((item) => item.identitySource === "type-name-fallback").length
     },
+    identityConfidence: retained.length === 0 ? "no-components" : retained.every((item) => item.identitySource === "purl") ? "purl" : retained.some((item) => item.identitySource === "purl") ? "mixed" : "fallback-only",
+    rule: "PURL is preferred; type and name are a lower-confidence fallback. Qualifiers and subpaths are not retained.",
     identities: retained
   };
 }
