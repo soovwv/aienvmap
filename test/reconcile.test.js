@@ -4,6 +4,7 @@ import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { analyzeNodeInstallations, analyzeNpmInstallations, analyzePythonCommandRouting, analyzePythonInstallations, analyzeRuntimeLinks, attachFnmManagerEvidence, attachMiseNodeEvidence, attachMisePythonEvidence, attachNvmManagerEvidence, attachPyenvManagerEvidence, attachUvManagerEvidence, attachVoltaManagerEvidence, buildAiDecision, buildConsolidationPlan, compareNpmGlobalPackages, comparePythonPackages, findNodeCandidates, findPythonCandidates, inspectFnmNodeManager, inspectMiseRuntimeManager, inspectNvmNodeManager, inspectPyenvPythonManager, inspectVoltaNodeManager, linkNodeNpmRuntimes, linkPythonPipRuntimes, miseInventoryForRuntime, parseFnmNodeList, parseMiseRuntimeInventory, parsePackageManager, parsePipList, parsePipVersion, parsePyenvVersions, parseVoltaNodeList, summarizePipInspect, summarizePythonPackages } from "../src/package-managers.js";
+import { buildPortableReconciliation } from "../src/commands/reconcile.js";
 
 test("parsePackageManager separates package manager and pinned version", () => {
   assert.deepEqual(parsePackageManager("npm@10.8.2"), { name: "npm", version: "10.8.2" });
@@ -539,6 +540,29 @@ test("consolidation plan stays clear when no inactive installation exists", () =
   assert.equal(result.nextSafeCommand, "aienvmap status --json");
 });
 
+test("portable reconciliation keeps diagnostic facts and strips local identifiers", () => {
+  const result = buildPortableReconciliation({
+    generatedAt: "2026-07-12T01:02:03Z",
+    project: { name: "secret-project", path: "C:/Users/alice/secret", packageManager: { name: "npm", version: "10" }, lockManagers: ["npm"], node: { versionFile: "22" }, python: { versionFile: "3.12" } },
+    node: { distinctVersions: ["22.1.0", "20.9.0"], installations: [{ version: "22.1.0", active: true, path: "C:/Users/alice/node.exe", source: "path", scope: "user", managerEvidence: { manager: "fnm", relationship: "inventory-version-match", confidence: "medium" } }] },
+    npm: { distinctVersions: ["10"], installations: [{ version: "10", active: true, path: "C:/secret/npm.cmd", globalPackages: [{ name: "private-tool", version: "1" }] }] },
+    python: { distinctVersions: ["3.12"], installations: [{ version: "3.12", path: "C:/Users/alice/python.exe", virtualEnvironment: true, packages: [{ name: "private-package" }], packageDigest: "secret-digest" }] },
+    otherRuntimes: { java: { installations: [{ version: "21", path: "C:/Users/alice/jdk/bin/java.exe", vendor: "Temurin", architecture: "x64", runtimeKind: "jdk", hasCompiler: true }] } },
+    findings: [{ code: "multiple-node-installations", severity: "review", message: "secret path" }],
+    decision: "review",
+    aiDecision: { consolidationPlan: { status: "review", candidates: [{ kind: "node-installation", target: "C:/Users/alice/node.exe" }], phases: [{ id: "confirm-ownership", effect: "read-only", result: "secret" }], requiresHumanApprovalBefore: ["removal"] } }
+  }, { platform: "win32", arch: "x64" });
+  const serialized = JSON.stringify(result);
+  assert.equal(result.schemaName, "aienvmap.reconcile-portable");
+  assert.deepEqual(result.inventory.node.distinctVersions, ["22.1.0", "20.9.0"]);
+  assert.equal(result.inventory.node.installations[0].manager.name, "fnm");
+  assert.equal(result.inventory.otherRuntimes.java.installations[0].vendor, "Temurin");
+  assert.deepEqual(result.findings, [{ code: "multiple-node-installations", severity: "review" }]);
+  assert.equal(result.consolidation.candidateCount, 1);
+  for (const secret of ["alice", "secret-project", "private-tool", "private-package", "secret-digest", "node.exe", "java.exe", "2026-07-12"]) assert.equal(serialized.includes(secret), false);
+  assert.equal(result.consolidation.removalAuthorized, false);
+});
+
 test("AI decision summarizes strong, inferred, and unresolved runtime links", () => {
   const result = buildAiDecision({
     node: [
@@ -623,6 +647,22 @@ test("reconcile CLI is read-only and returns machine-readable package-manager st
   assert.ok(json.python.installations.every((item) => typeof item.packageDigest === "string"));
   assert.ok(["clear", "review"].includes(json.decision));
   assert.equal((await fs.readdir(dir)).sort().join(","), "package.json");
+});
+
+test("reconcile --portable emits a quick redacted shareable report", async () => {
+  const dir = await fs.mkdtemp(path.join(os.tmpdir(), "aienvmap-portable-"));
+  await fs.writeFile(path.join(dir, "package.json"), JSON.stringify({ name: "private-project", packageManager: "npm@10.0.0" }), "utf8");
+  const { execFile } = await import("node:child_process");
+  const { promisify } = await import("node:util");
+  const result = await promisify(execFile)(process.execPath, [path.resolve("bin/aienvmap.js"), "reconcile", "--portable", "--json", "--dir", dir], { cwd: path.resolve(".") });
+  const json = JSON.parse(result.stdout);
+  const serialized = JSON.stringify(json);
+  assert.equal(json.schemaName, "aienvmap.reconcile-portable");
+  assert.equal(json.scanMode, "quick");
+  assert.equal(json.privacy.mode, "portable-redacted");
+  assert.equal(serialized.includes(dir), false);
+  assert.equal(serialized.includes("private-project"), false);
+  assert.equal(json.consolidation.environmentChangesAuthorized, false);
 });
 
 test("reconcile --full-packages exposes package-level evidence on demand", async () => {
