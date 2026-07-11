@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
-import { analyzeNodeInstallations, analyzeNpmInstallations, analyzePythonCommandRouting, analyzePythonInstallations, analyzeRuntimeLinks, attachFnmManagerEvidence, attachMiseNodeEvidence, attachMisePythonEvidence, attachPyenvManagerEvidence, attachUvManagerEvidence, attachVoltaManagerEvidence, buildAiDecision, compareNpmGlobalPackages, comparePythonPackages, findNodeCandidates, findPythonCandidates, inspectFnmNodeManager, inspectMiseRuntimeManager, inspectPyenvPythonManager, inspectVoltaNodeManager, linkNodeNpmRuntimes, linkPythonPipRuntimes, miseInventoryForRuntime, parseFnmNodeList, parseMiseRuntimeInventory, parsePackageManager, parsePipList, parsePipVersion, parsePyenvVersions, parseVoltaNodeList, summarizePipInspect, summarizePythonPackages } from "../src/package-managers.js";
+import { analyzeNodeInstallations, analyzeNpmInstallations, analyzePythonCommandRouting, analyzePythonInstallations, analyzeRuntimeLinks, attachFnmManagerEvidence, attachMiseNodeEvidence, attachMisePythonEvidence, attachNvmManagerEvidence, attachPyenvManagerEvidence, attachUvManagerEvidence, attachVoltaManagerEvidence, buildAiDecision, compareNpmGlobalPackages, comparePythonPackages, findNodeCandidates, findPythonCandidates, inspectFnmNodeManager, inspectMiseRuntimeManager, inspectNvmNodeManager, inspectPyenvPythonManager, inspectVoltaNodeManager, linkNodeNpmRuntimes, linkPythonPipRuntimes, miseInventoryForRuntime, parseFnmNodeList, parseMiseRuntimeInventory, parsePackageManager, parsePipList, parsePipVersion, parsePyenvVersions, parseVoltaNodeList, summarizePipInspect, summarizePythonPackages } from "../src/package-managers.js";
 
 test("parsePackageManager separates package manager and pinned version", () => {
   assert.deepEqual(parsePackageManager("npm@10.8.2"), { name: "npm", version: "10.8.2" });
@@ -123,6 +123,68 @@ test("Node discovery includes inactive fnm installation paths", async () => {
     const candidates = await findNodeCandidates({ env: { FNM_DIR: dir }, home: dir, pathValue: "" });
     assert.equal(candidates.some((item) => item.path === path.resolve(binary) && item.source === "fnm" && item.discovery === "known-root"), true);
   } finally { await fs.rm(dir, { recursive: true, force: true }); }
+});
+
+test("nvm filesystem inventory finds bounded canonical installations", async () => {
+  const dir = await fs.mkdtemp(path.join(os.tmpdir(), "aienvmap-nvm-root-"));
+  const executable = path.join(dir, "versions", "node", "v20.18.1", "bin", "node");
+  await fs.mkdir(path.dirname(executable), { recursive: true });
+  await fs.writeFile(executable, "");
+  try {
+    const result = await inspectNvmNodeManager({ fullPackages: true, platform: "linux", env: { NVM_DIR: dir }, home: dir, showPaths: true });
+    assert.equal(result.collection, "collected");
+    assert.equal(result.manager, "nvm");
+    assert.equal(result.installationCount, 1);
+    assert.deepEqual(result.installations[0], { version: "20.18.1", installPath: path.dirname(path.dirname(executable)), canonicalInsideRoot: true });
+  } finally { await fs.rm(dir, { recursive: true, force: true }); }
+});
+
+test("nvm-windows filesystem inventory reads NVM_HOME without switching symlinks", async () => {
+  const dir = await fs.mkdtemp(path.join(os.tmpdir(), "aienvmap-nvm-win-"));
+  const executable = path.join(dir, "v22.14.0", "node.exe");
+  await fs.mkdir(path.dirname(executable), { recursive: true });
+  await fs.writeFile(executable, "");
+  try {
+    const result = await inspectNvmNodeManager({ fullPackages: true, platform: "win32", env: { NVM_HOME: dir }, home: dir, showPaths: true });
+    assert.equal(result.manager, "nvm-windows");
+    assert.equal(result.installations[0].version, "22.14.0");
+    assert.equal(result.installations[0].canonicalInsideRoot, true);
+    assert.match(result.semantics, /never activation or removal/);
+  } finally { await fs.rm(dir, { recursive: true, force: true }); }
+});
+
+test("nvm ownership requires canonical configured-root and version path", () => {
+  const root = path.join("home", ".nvm", "versions", "node");
+  const installPath = path.join(root, "v20.18.1");
+  const inventory = { collection: "collected", manager: "nvm", managedRoot: root, installations: [{ version: "20.18.1", installPath, canonicalInsideRoot: true }] };
+  const [managed, inferred] = attachNvmManagerEvidence([
+    { version: "20.18.1", path: path.join(installPath, "bin", "node"), reportedExecutable: path.join(installPath, "bin", "node"), managerEvidence: { confidence: "none", ownershipProven: false } },
+    { version: "20.18.1", path: "/usr/bin/node", reportedExecutable: "/usr/bin/node", source: "nvm", managerEvidence: { confidence: "none", ownershipProven: false } }
+  ], inventory);
+  assert.equal(managed.managerEvidence.relationship, "configured-root-version-path-match");
+  assert.equal(managed.managerEvidence.ownershipProven, true);
+  assert.equal(managed.managerEvidence.removalAuthorized, false);
+  assert.equal(inferred.managerEvidence.ownershipProven, false);
+});
+
+test("nvm external version symlink never proves ownership", { skip: process.platform === "win32" }, async () => {
+  const dir = await fs.mkdtemp(path.join(os.tmpdir(), "aienvmap-nvm-link-"));
+  const external = await fs.mkdtemp(path.join(os.tmpdir(), "aienvmap-nvm-external-"));
+  const versions = path.join(dir, "versions", "node");
+  const executable = path.join(external, "bin", "node");
+  await fs.mkdir(versions, { recursive: true });
+  await fs.mkdir(path.dirname(executable), { recursive: true });
+  await fs.writeFile(executable, "");
+  await fs.symlink(external, path.join(versions, "v20.18.1"), "dir");
+  try {
+    const inventory = await inspectNvmNodeManager({ fullPackages: true, platform: "linux", env: { NVM_DIR: dir }, home: dir, showPaths: true });
+    assert.equal(inventory.installations[0].canonicalInsideRoot, false);
+    const [node] = attachNvmManagerEvidence([{ version: "20.18.1", path: executable, reportedExecutable: executable, source: "nvm", managerEvidence: { confidence: "none", ownershipProven: false } }], inventory);
+    assert.equal(node.managerEvidence.ownershipProven, false);
+  } finally {
+    await fs.rm(dir, { recursive: true, force: true });
+    await fs.rm(external, { recursive: true, force: true });
+  }
 });
 
 test("Windows Volta plain inventory is collected read-only", { skip: process.platform !== "win32" }, async () => {
