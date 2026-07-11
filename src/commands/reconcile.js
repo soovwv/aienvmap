@@ -96,6 +96,7 @@ export async function reconcileWorkspace(args = {}) {
     if (item.packageLocations.length) console.log(`  package locations: ${item.packageLocations.join(", ")}`);
   }
   for (const item of result.python.pipCommands) console.log(`pip: ${item.version} -> Python ${item.pythonVersion} ${item.active ? "[active]" : "[inactive]"} ${item.path}`);
+  for (const [tool, inventory] of Object.entries(result.python.toolEntryPoints || {})) for (const item of inventory.installations || []) console.log(`${tool}: ${item.version} ${item.active ? "[active]" : "[inactive]"} ${item.source}/${item.scope} ${item.path} (${item.routingEvidence}; ownership not proven)`);
   for (const link of result.python.runtimeLinks || []) console.log(`pip runtime: ${link.managerPath} -> ${link.runtimePath || "unresolved"} (${link.relationship}/${link.confidence}; ownership not proven)`);
   for (const runtime of Object.values(result.otherRuntimes)) {
     for (const item of runtime.installations) {
@@ -164,7 +165,9 @@ export function summarizeReconciliation(value = {}) {
       yarn: value.npm?.alternativeManagers?.yarn?.installations?.length || 0,
       corepack: value.npm?.alternativeManagers?.corepack?.installations?.length || 0,
       python: value.python?.installations?.length || 0,
-      pip: value.python?.pipCommands?.length || 0
+      pip: value.python?.pipCommands?.length || 0,
+      uv: value.python?.toolEntryPoints?.uv?.installations?.length || 0,
+      pipx: value.python?.toolEntryPoints?.pipx?.installations?.length || 0
     },
     informationOnlyRuntimes: Object.fromEntries(Object.entries(value.otherRuntimes || {}).map(([name, item]) => [name, item.installations?.length || 0])),
     osNativeEvidence: Object.fromEntries(Object.entries(value.otherRuntimes || {}).map(([name, item]) => [name, item.discoveryEvidence?.osNativeCount || 0])),
