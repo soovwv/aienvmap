@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Added `reconcile --portable --json` for quick, read-only case evidence that excludes paths, project/package names, digests, timestamps, and raw manager inventories while retaining version, manager, finding, and approval signals.
 - Added cross-platform performance budgets for AI startup, quick reconciliation, scorecard output, and generated workspace artifacts, and wired them into CI and release checks.
 - Added proposal-only reconcile consolidation plans with evidence phases, stop conditions, rollback requirements, and explicit human gates; no apply or removal command is generated.
 - Added an evidence-bounded `scorecard --json` that separates technical readiness from market validation and records adjacent-tool boundaries, limitations, and improvement priorities.
