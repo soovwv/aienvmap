@@ -338,6 +338,7 @@ test("schemaContract describes stable AI output contracts", () => {
   assert.ok(schema.outputs.start.rootFields.includes("fallbackPrompt"));
   assert.ok(schema.outputs.start.rootFields.includes("copyPastePrompt"));
   assert.ok(schema.outputs.start.rootFields.includes("promptUse"));
+  assert.ok(schema.outputs.start.rootFields.includes("aiDecisionEnvelope"));
   assert.match(schema.outputs.start.rule, /before assuming instruction-file automatic discovery worked/);
   assert.equal(schema.outputs.discovery.file, ".aienvmap/discovery.json");
   assert.equal(schema.outputs.discovery.format, "json");
@@ -370,6 +371,10 @@ test("schemaContract describes stable AI output contracts", () => {
   assert.ok(schema.outputs.status.contract.aiEntryFields.includes("agentPointers"));
   assert.ok(schema.outputs.status.contract.aiEntryFields.includes("dependencyQuickCheck"));
   assert.ok(schema.outputs.status.contract.aiEntryFields.includes("externalSbom"));
+  assert.ok(schema.outputs.status.contract.aiEntryFields.includes("aiDecisionEnvelope"));
+  assert.ok(schema.outputs.status.rootFields.includes("aiDecisionEnvelope"));
+  assert.ok(schema.outputs.status.aiDecisionEnvelopeFields.includes("reasonCodes"));
+  assert.ok(schema.outputs.context.rootFields.includes("aiDecisionEnvelope"));
   assert.ok(schema.outputs.status.rootFields.includes("externalSbom"));
   assert.ok(schema.outputs.status.externalSbomFields.includes("identityConfidence"));
   assert.ok(schema.outputs.context.rootFields.includes("externalSbom"));
