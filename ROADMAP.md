@@ -37,6 +37,7 @@ The default remains advisory and lightweight: observe existing state, explain co
 - Next shared-server safety: add explicit actor/session ownership and lease expiry before claiming complete concurrent multi-user coordination.
 - Current lifecycle integration: startup/status surface a compact reconciliation decision, and `reconcile --check` provides an opt-in exit-code drift gate for stable or self-hosted PR environments; no cleanup or installation runs automatically.
 - External case evidence: `reconcile --portable --json` emits quick redacted runtime facts and approval gates while excluding paths, project/package names, digests, timestamps, and raw manager inventories; users must still review before sharing.
+- Reviewed evidence conversion: `reconcile --portable-from <artifact> --json` preserves manager-native ownership confidence from a saved full report without rescanning or exposing the source artifact path.
 - Current AI decision simplification: startup, reconciliation, and SBOM surfaces expose one bounded additive envelope while legacy detailed contracts remain compatible.
 - SBOM boundary: keep manifest-derived light SBOM as coordination context; explicitly import workspace-local CycloneDX/SPDX JSON as digest-verified summaries, never auto-run generators, and never build a competing vulnerability database.
 
