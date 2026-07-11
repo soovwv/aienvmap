@@ -161,6 +161,8 @@ test("contextWorkspace JSON includes compact step summary", async () => {
   assert.equal(json.dependencyQuickCheck.status, "review");
   assert.equal(json.dependencyQuickCheck.nextCommand, "aienvmap sync --security");
   assert.equal(json.preflight.dependencyQuickCheck.scannerEvidence, "scanner-off");
+  assert.equal(json.externalSbom.decision, "no-external-evidence");
+  assert.equal(json.preflight.externalSbom.removalAuthorized, false);
   assert.equal(json.coordination.openIntentCount, 0);
   assert.deepEqual(json.coordination.conflictTargets, []);
   assert.deepEqual(json.agentPointers.missing, ["codex"]);

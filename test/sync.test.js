@@ -111,6 +111,8 @@ test("sync creates the AI-facing env map outputs with simple defaults", async ()
   assert.equal(discovery.maintenance.nextCommand, "aienvmap intent --actor agent:id --action planned-change --target environment");
   assert.equal(discovery.maintenance.followUp, "clear");
   assert.equal(discovery.maintenance.dependencyQuickCheck, "ready");
+  assert.equal(discovery.maintenance.externalSbom, "no-external-evidence");
+  assert.equal(discovery.externalSbom.removalAuthorized, false);
   assert.match(discovery.maintenance.rule, /recurring AI environment maintenance decision/);
   assert.match(discovery.startupChecklist.join(" "), /dependencyQuickCheck/);
   assert.equal(discovery.sessionUse.decision, discovery.decision);
