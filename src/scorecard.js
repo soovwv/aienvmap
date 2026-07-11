@@ -1,7 +1,7 @@
 const technicalDimensions = [
   dimension("lightweight-runtime", 15, 15, ["package.json#dependencies", "npm pack --dry-run"], "Keep zero runtime dependencies and a bounded package."),
   dimension("ai-readable-contract", 14, 15, ["aienvmap schema --json", "src/ai-decision-envelope.js"], "Stabilize the additive contract at 0.2.0."),
-  dimension("environment-inventory", 17, 20, ["aienvmap reconcile --json --full-packages", "test/reconcile.test.js"], "Add information-only coverage for the next high-value toolchain."),
+  dimension("environment-inventory", 18, 20, ["aienvmap reconcile --json --full-packages", "test/reconcile.test.js"], "Validate consolidation plans against external, mixed-manager environments."),
   dimension("multi-ai-coordination", 13, 15, ["aienvmap demo --json", "test/multi-agent-demo.test.js"], "Validate the workflow in an external multi-user case study."),
   dimension("sbom-interoperability", 12, 15, ["aienvmap sbom --json", "test/sbom.test.js"], "Validate imported CycloneDX and SPDX evidence against more generators."),
   dimension("safety-and-quality", 16, 20, ["npm test", ".github/workflows/ci.yml"], "Add explicit performance budgets and signed release provenance.")
@@ -40,7 +40,7 @@ export function productScorecard() {
     nextPriorities: [
       { priority: 1, outcome: "external problem evidence", proof: "at least three reproducible user environments and before/after reports" },
       { priority: 2, outcome: "AI-host integration evidence", proof: "verified examples for major coding-agent hosts" },
-      { priority: 3, outcome: "safe consolidation planning", proof: "reconcile emits reversible, approval-gated action plans without executing them" }
+      { priority: 3, outcome: "measured performance budget", proof: "cross-platform startup and reconcile latency plus artifact-size budgets run in CI" }
     ],
     limitations: ["Market scores are not inferred from feature count.", "Repository-owned examples are not independent adoption evidence.", "Scores change only with cited evidence; unknown evidence receives no credit."],
     rule: "AI consumers should compare category scores and evidence, not use overall score alone as permission to recommend, install, publish, or modify an environment."

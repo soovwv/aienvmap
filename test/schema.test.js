@@ -28,6 +28,8 @@ test("schemaContract describes stable AI output contracts", () => {
   assert.match(schema.outputs.reconcile.pythonManagerInventories, /uv, pyenv, and Python-only mise/);
   assert.match(schema.outputs.reconcile.nodeManagerInventories, /Volta, fnm, nvm\/nvm-windows, and Node-only mise/);
   assert.ok(schema.outputs.reconcile.aiDecisionFields.includes("nodeManagerEvidence"));
+  assert.ok(schema.outputs.reconcile.aiDecisionFields.includes("consolidationPlan"));
+  assert.ok(schema.outputs.reconcile.consolidationPlanFields.includes("rollbackRequirements"));
   assert.ok(schema.outputs.reconcile.voltaNodeInventoryFields.includes("runtimeCount"));
   assert.deepEqual(schema.outputs.reconcile.voltaNodeRelationships, ["inventory-and-image-path-match", "inventory-version-match", "managed-root-inference", "unconfirmed"]);
   assert.ok(schema.outputs.reconcile.fnmNodeInventoryFields.includes("managedRoot"));

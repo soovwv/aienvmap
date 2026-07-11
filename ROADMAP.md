@@ -6,6 +6,8 @@ Primary positioning: AI workspace coordination first, lightweight SBOM context s
 
 Product scoring is evidence-bounded in `SCORECARD.md` and `aienvmap scorecard --json`; technical readiness must remain separate from independent market validation.
 
+Reconciliation may propose consolidation evidence and approval gates, but never executes uninstall, deletion, PATH edits, runtime switching, or package migration.
+
 ## Competitive Boundary
 
 - mise, Flox, and Devbox declare, install, lock, or reproduce environments; aienvmap observes the runtime state that already exists on a host and gives AI agents review-first coordination evidence.

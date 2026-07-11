@@ -916,16 +916,18 @@ export function buildAiDecision({ node = [], npm = [], python = [], java = {}, p
     destructive: false,
     requiresHumanApprovalBeforeRemoval: true
   });
+  const canonicalCandidates = {
+    node: chooseCanonical(node, project.node?.versionFile || ""),
+    npm: chooseCanonical(npm, project.packageManager?.name === "npm" ? project.packageManager.version : ""),
+    python: chooseCanonical(python, project.python?.versionFile || "")
+  };
   return {
     consumer: "AI agent",
     decision: findings.some((item) => item.severity === "review") ? "review" : "clear",
     readFirst: ["project", "node.active", "node.managerInventories", "npm.active", "npm.runtimeLinks", "python.active", "python.managerInventories", "python.runtimeLinks", "findings", "aiDecision.actionCandidates"],
-    canonicalCandidates: {
-      node: chooseCanonical(node, project.node?.versionFile || ""),
-      npm: chooseCanonical(npm, project.packageManager?.name === "npm" ? project.packageManager.version : ""),
-      python: chooseCanonical(python, project.python?.versionFile || "")
-    },
+    canonicalCandidates,
     actionCandidates,
+    consolidationPlan: buildConsolidationPlan({ actionCandidates, canonicalCandidates }),
     runtimeLinkSummary: {
       npm: summarizeRuntimeLinkConfidence(runtimeLinks.npm),
       pip: summarizeRuntimeLinkConfidence(runtimeLinks.pip),
@@ -954,6 +956,46 @@ export function buildAiDecision({ node = [], npm = [], python = [], java = {}, p
       "A removal candidate requires project ownership checks, package comparison, a rollback plan, and explicit human approval.",
       "If package digests differ and package-level evidence is needed, rerun `aienvmap reconcile --json --full-packages` before deciding."
     ]
+  };
+}
+
+export function buildConsolidationPlan({ actionCandidates = [], canonicalCandidates = {} } = {}) {
+  const candidates = actionCandidates.map((item, index) => ({
+    id: `${item.kind || "installation"}:${index + 1}`,
+    target: item.target,
+    kind: item.kind,
+    recommendation: item.recommendation,
+    confidence: item.confidence,
+    evidenceRequired: [
+      "runtime-manager ownership or explicit unmanaged status",
+      "project references and active-process usage",
+      item.kind === "npm-installation" ? "global package inventory" : item.kind === "python-installation" ? "installed package inventory and virtual-environment owner" : "paired package-manager and global-tool inventory"
+    ],
+    stopWhen: ["ownership is unconfirmed", "an owning project is found", "rollback evidence is incomplete", "a human has not approved the exact target"],
+    proposedChange: "none; prepare a target-specific reviewed change outside aienvmap",
+    requiresHumanApproval: true,
+    removalAuthorized: false
+  }));
+  return {
+    schemaName: "aienvmap.consolidation-plan",
+    schemaVersion: 1,
+    mode: "proposal-only",
+    status: candidates.length ? "review" : "no-candidates",
+    canonicalCandidates,
+    phases: [
+      { id: "confirm-ownership", effect: "read-only", result: "manager ownership or unmanaged status for every target" },
+      { id: "confirm-consumers", effect: "read-only", result: "projects, services, shells, and CI jobs that reference each target" },
+      { id: "capture-rollback", effect: "read-only", result: "path, version, package inventory, manager metadata, and restoration procedure" },
+      { id: "request-approval", effect: "human-gate", result: "approval names the exact target and proposed environment change" }
+    ],
+    candidates,
+    applyCommand: null,
+    rollbackRequirements: ["exact original path and version", "owning manager and reinstall source", "package/global-tool inventory", "affected project and service references", "post-change verification commands"],
+    requiresHumanApprovalBefore: ["removal", "PATH-edit", "runtime-switch", "global-package-migration"],
+    environmentChangesAuthorized: false,
+    removalAuthorized: false,
+    nextSafeCommand: candidates.length ? "aienvmap reconcile --json --full-packages" : "aienvmap status --json",
+    rule: "This plan collects evidence and defines gates only; it never authorizes or executes uninstall, deletion, PATH edits, runtime switching, or global package migration."
   };
 }
 
