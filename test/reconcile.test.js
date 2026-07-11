@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
-import { analyzeNodeInstallations, analyzeNpmInstallations, analyzePythonCommandRouting, analyzePythonInstallations, analyzeRuntimeLinks, attachPyenvManagerEvidence, attachUvManagerEvidence, attachVoltaManagerEvidence, buildAiDecision, compareNpmGlobalPackages, comparePythonPackages, findPythonCandidates, inspectPyenvPythonManager, inspectVoltaNodeManager, linkNodeNpmRuntimes, linkPythonPipRuntimes, parsePackageManager, parsePipList, parsePipVersion, parsePyenvVersions, parseVoltaNodeList, summarizePipInspect, summarizePythonPackages } from "../src/package-managers.js";
+import { analyzeNodeInstallations, analyzeNpmInstallations, analyzePythonCommandRouting, analyzePythonInstallations, analyzeRuntimeLinks, attachMiseNodeEvidence, attachMisePythonEvidence, attachPyenvManagerEvidence, attachUvManagerEvidence, attachVoltaManagerEvidence, buildAiDecision, compareNpmGlobalPackages, comparePythonPackages, findPythonCandidates, inspectMiseRuntimeManager, inspectPyenvPythonManager, inspectVoltaNodeManager, linkNodeNpmRuntimes, linkPythonPipRuntimes, miseInventoryForRuntime, parseMiseRuntimeInventory, parsePackageManager, parsePipList, parsePipVersion, parsePyenvVersions, parseVoltaNodeList, summarizePipInspect, summarizePythonPackages } from "../src/package-managers.js";
 
 test("parsePackageManager separates package manager and pinned version", () => {
   assert.deepEqual(parsePackageManager("npm@10.8.2"), { name: "npm", version: "10.8.2" });
@@ -92,6 +92,77 @@ test("Windows Volta plain inventory is collected read-only", { skip: process.pla
     assert.equal(result.version, "2.0.2");
     assert.deepEqual(result.runtimes, [{ version: "22.12.0", state: "default" }]);
     assert.equal(result.runtimeCount, 1);
+  } finally {
+    await fs.rm(dir, { recursive: true, force: true });
+  }
+});
+
+test("mise JSON parser keeps Node and Python install facts without source paths", () => {
+  const raw = JSON.stringify({
+    node: [{ version: "22.12.0", install_path: "/home/test/.local/share/mise/installs/node/22.12.0", source: { type: "mise.toml", path: "/private/project/mise.toml" } }],
+    python: [{ version: "3.12.4", install_path: "/home/test/.local/share/mise/installs/python/3.12.4" }],
+    java: [{ version: "21", install_path: "/ignored/java" }]
+  });
+  assert.deepEqual(parseMiseRuntimeInventory(raw, { showPaths: true }), {
+    runtimes: [
+      { runtime: "node", version: "22.12.0", installPath: path.normalize("/home/test/.local/share/mise/installs/node/22.12.0"), configured: true, sourceType: "mise.toml" },
+      { runtime: "python", version: "3.12.4", installPath: path.normalize("/home/test/.local/share/mise/installs/python/3.12.4"), configured: false, sourceType: "" }
+    ],
+    truncated: false
+  });
+  assert.equal(JSON.stringify(parseMiseRuntimeInventory(raw, { showPaths: true })).includes("/private/project"), false);
+});
+
+test("mise exact install paths prove Node and Python control", () => {
+  const nodeRoot = path.join("home", "mise", "node", "22.12.0");
+  const pythonRoot = path.join("home", "mise", "python", "3.12.4");
+  const inventory = { collection: "collected", version: "2026.7.1", runtimes: [
+    { runtime: "node", version: "22.12.0", installPath: nodeRoot },
+    { runtime: "python", version: "3.12.4", installPath: pythonRoot }
+  ] };
+  const [node] = attachMiseNodeEvidence([{ version: "22.12.0", reportedExecutable: path.join(nodeRoot, "bin", "node"), source: "mise", managerEvidence: { ownershipProven: false } }], inventory);
+  const [python] = attachMisePythonEvidence([{ version: "3.12.4", prefix: pythonRoot, basePrefix: pythonRoot, source: "mise", managerEvidence: { ownershipProven: false } }], inventory);
+  assert.equal(node.managerEvidence.relationship, "installed-json-path-match");
+  assert.equal(node.managerEvidence.ownershipProven, true);
+  assert.equal(node.managerEvidence.matchedKey, "node@22.12.0");
+  assert.equal(python.managerEvidence.relationship, "installed-json-path-match");
+  assert.equal(python.managerEvidence.ownershipProven, true);
+  assert.equal(python.managerEvidence.removalAuthorized, false);
+});
+
+test("mise inventory projection keeps runtime sections independent", () => {
+  const inventory = { collection: "collected", runtimes: [
+    { runtime: "node", version: "22" },
+    { runtime: "python", version: "3.12" }
+  ], runtimeCount: 2 };
+  assert.deepEqual(miseInventoryForRuntime(inventory, "node").runtimes, [{ runtime: "node", version: "22" }]);
+  assert.equal(miseInventoryForRuntime(inventory, "node").runtimeCount, 1);
+  assert.deepEqual(miseInventoryForRuntime(inventory, "python").runtimes, [{ runtime: "python", version: "3.12" }]);
+});
+
+test("mise does not replace existing strong manager evidence", () => {
+  const node = { managerEvidence: { manager: "volta", ownershipProven: true } };
+  const python = { managerEvidence: { manager: "uv", ownershipProven: true } };
+  assert.equal(attachMiseNodeEvidence([node], { collection: "collected", runtimes: [] })[0].managerEvidence.manager, "volta");
+  assert.equal(attachMisePythonEvidence([python], { collection: "collected", runtimes: [] })[0].managerEvidence.manager, "uv");
+});
+
+test("Windows mise JSON inventory is collected read-only", { skip: process.platform !== "win32" }, async () => {
+  const dir = await fs.mkdtemp(path.join(os.tmpdir(), "aienvmap mise "));
+  try {
+    const command = path.join(dir, "mise.cmd");
+    const installPath = path.join(dir, "installs", "node", "22.12.0");
+    const json = JSON.stringify({ node: [{ version: "22.12.0", install_path: installPath }], python: [] });
+    await fs.writeFile(command, [
+      "@echo off",
+      "if \"%1\"==\"--version\" echo mise 2026.7.1",
+      `if \"%1\"==\"ls\" echo ${json}`
+    ].join("\r\n"));
+    const result = await inspectMiseRuntimeManager({ fullPackages: true, miseCommand: command, platform: "win32", showPaths: true, projectDir: dir });
+    assert.equal(result.collection, "collected");
+    assert.equal(result.version, "2026.7.1");
+    assert.equal(result.runtimeCount, 1);
+    assert.equal(result.runtimes[0].installPath, installPath);
   } finally {
     await fs.rm(dir, { recursive: true, force: true });
   }
@@ -356,6 +427,7 @@ test("AI decision summarizes strong, inferred, and unresolved runtime links", ()
   assert.match(result.runtimeLinkSummary.rule, /not proof/);
   assert.ok(result.readFirst.includes("npm.runtimeLinks"));
   assert.ok(result.readFirst.includes("node.managerInventories"));
+  assert.ok(result.readFirst.includes("python.managerInventories"));
   assert.deepEqual(result.pythonInstallerEvidence.installerCounts, { pip: 4, uv: 2 });
   assert.equal(result.pythonInstallerEvidence.collectedRuntimes, 1);
   assert.equal(result.pythonInstallerEvidence.failedRuntimes, 1);
@@ -394,12 +466,14 @@ test("reconcile CLI is read-only and returns machine-readable package-manager st
   assert.ok(Array.isArray(json.python.installations));
   assert.ok(Array.isArray(json.node.installations));
   assert.equal(json.node.managerInventories.volta.collection, "not-requested");
+  assert.equal(json.node.managerInventories.mise.collection, "not-requested");
   assert.ok(json.node.installations.every((item) => item.managerEvidence));
   assert.ok(Array.isArray(json.npm.runtimeLinks));
   assert.ok(Array.isArray(json.python.runtimeLinks));
   assert.equal(json.python.managerEvidence.collection, "not-requested");
   assert.equal(json.python.managerInventories.uv.collection, "not-requested");
   assert.equal(json.python.managerInventories.pyenv.collection, "not-requested");
+  assert.equal(json.python.managerInventories.mise.collection, "not-requested");
   assert.ok(json.python.installations.every((item) => item.managerEvidence));
   assert.ok(json.otherRuntimes.java);
   assert.ok(json.otherRuntimes.dotnet);
@@ -422,6 +496,7 @@ test("reconcile --full-packages exposes package-level evidence on demand", async
   assert.equal(json.python.packageDetail, "full");
   assert.ok(["collected", "unavailable", "unsupported-or-failed"].includes(json.python.managerEvidence.collection));
   assert.ok(["collected", "unavailable", "unsupported-or-failed"].includes(json.node.managerInventories.volta.collection));
+  assert.ok(["collected", "unavailable", "unsupported-or-failed"].includes(json.node.managerInventories.mise.collection));
   assert.ok(["collected", "unavailable", "unsupported-or-failed"].includes(json.python.managerInventories.pyenv.collection));
   assert.ok(json.python.installations.every((item) => Array.isArray(item.packages)));
   assert.ok(json.python.installations.every((item) => ["collected", "unsupported-or-failed"].includes(item.installerEvidence.collection)));

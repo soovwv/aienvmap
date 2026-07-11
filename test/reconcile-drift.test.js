@@ -104,6 +104,17 @@ test("compareReconciliation detects pyenv inventory drift", () => {
   assert.match(result.drift.changes.map((item) => item.field).join(" "), /python\.managerInventories\.pyenv/);
 });
 
+test("compareReconciliation scopes mise inventory drift to its runtime", () => {
+  const baseline = report();
+  baseline.node.managerInventories = { mise: { collection: "collected", runtimes: [{ runtime: "node", version: "22" }] } };
+  baseline.python.managerInventories = { mise: { collection: "collected", runtimes: [{ runtime: "python", version: "3.11" }] } };
+  const current = structuredClone(baseline);
+  current.python.managerInventories.mise.runtimes[0].version = "3.12";
+  const result = compareReconciliation(baseline, current);
+  assert.deepEqual(result.drift.changedSections, ["python"]);
+  assert.match(result.drift.changes.map((item) => item.field).join(" "), /python\.managerInventories\.mise/);
+});
+
 test("compareReconciliation detects OS-native Java discovery evidence drift", () => {
   const baseline = report();
   baseline.otherRuntimes.java = { installations: [], distinctVersions: [], discoveryEvidence: { sources: [], osNativeCount: 0 } };
