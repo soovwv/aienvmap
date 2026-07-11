@@ -16,6 +16,8 @@ test("schemaContract describes stable AI output contracts", () => {
   assert.equal(schema.outputs.reconcile.mode, "read-only environment; writes only the report when --write is explicit");
   assert.ok(schema.outputs.reconcile.rootFields.includes("aiDecision"));
   assert.ok(schema.outputs.reconcile.rootFields.includes("aiDecisionEnvelope"));
+  assert.ok(schema.outputs.reconcile.rootFields.includes("platform"));
+  assert.ok(schema.outputs.reconcile.rootFields.includes("architecture"));
   assert.ok(schema.outputs.reconcile.aiDecisionFields.includes("runtimeLinkSummary"));
   assert.ok(schema.outputs.reconcile.aiDecisionFields.includes("pythonInstallerEvidence"));
   assert.ok(schema.outputs.reconcile.aiDecisionFields.includes("pythonManagerEvidence"));
@@ -46,6 +48,8 @@ test("schemaContract describes stable AI output contracts", () => {
   assert.ok(schema.outputs.reconcilePortable.excluded.includes("package names"));
   assert.match(schema.outputs.reconcilePortable.fingerprintRule, /not machine/);
   assert.match(schema.outputs.reconcilePortable.fingerprintRule, /pseudonymous/);
+  assert.match(schema.outputs.reconcilePortableCompare.command, /--portable-compare/);
+  assert.ok(schema.outputs.reconcilePortableCompare.rootFields.includes("changes"));
   assert.deepEqual(schema.outputs.reconcile.detailedToolchains, ["node/npm", "python/pip"]);
   assert.ok(schema.outputs.reconcile.discoveryEvidenceFields.includes("osNativeCount"));
   assert.deepEqual(schema.outputs.reconcile.javaNativeSources, ["windows-registry", "macos-java-home", "linux-alternatives"]);

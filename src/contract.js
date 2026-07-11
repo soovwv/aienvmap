@@ -543,7 +543,7 @@ export function schemaContract() {
         file: ".aienvmap/reconcile.json",
         command: "aienvmap reconcile --json --write",
         mode: "read-only environment; writes only the report when --write is explicit",
-        rootFields: ["schemaName", "schemaVersion", "generatedAt", "mode", "scanMode", "scope", "limitations", "project", "node", "npm", "python", "otherRuntimes", "findings", "decision", "aiDecision", "aiDecisionEnvelope", "written"],
+        rootFields: ["schemaName", "schemaVersion", "generatedAt", "platform", "architecture", "mode", "scanMode", "scope", "limitations", "project", "node", "npm", "python", "otherRuntimes", "findings", "decision", "aiDecision", "aiDecisionEnvelope", "written"],
         aiDecisionFields: ["consumer", "decision", "readFirst", "canonicalCandidates", "actionCandidates", "consolidationPlan", "runtimeLinkSummary", "pythonInstallerEvidence", "pythonManagerEvidence", "nodeManagerEvidence", "javaManagerEvidence", "safeCommands", "rules"],
         consolidationPlanFields: ["schemaName", "schemaVersion", "mode", "status", "canonicalCandidates", "phases", "candidates", "applyCommand", "rollbackRequirements", "requiresHumanApprovalBefore", "environmentChangesAuthorized", "removalAuthorized", "nextSafeCommand", "rule"],
         runtimeLinkFields: ["managerPath", "managerVersion", "runtimePath", "runtimeVersion", "relationship", "confidence", "evidence", "ownershipProven"],
@@ -581,6 +581,11 @@ export function schemaContract() {
         fingerprintRule: "aerp1 fingerprints canonical portable facts for comparison and deduplication; they are pseudonymous linkable tokens, not machine, user, or installation identifiers.",
         excluded: ["paths", "workspace and project names", "package names", "package digests", "timestamps", "raw manager inventories"],
         rule: "Review before sharing because runtime versions, platform, architecture, sources, and finding codes remain visible."
+      },
+      reconcilePortableCompare: {
+        command: "aienvmap reconcile --portable-compare before.json --against after.json --json",
+        mode: "offline comparison of validated redacted evidence; raw inputs are converted before diffing",
+        rootFields: ["schemaName", "schemaVersion", "mode", "before", "after", "same", "decision", "changeCount", "changedSections", "changes", "truncated", "environmentChangesAuthorized", "removalAuthorized", "rule"]
       },
       reconcileCheck: {
         command: "aienvmap reconcile --check --json",

@@ -4,7 +4,7 @@ import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { analyzeNodeInstallations, analyzeNpmInstallations, analyzePythonCommandRouting, analyzePythonInstallations, analyzeRuntimeLinks, attachFnmManagerEvidence, attachMiseNodeEvidence, attachMisePythonEvidence, attachNvmManagerEvidence, attachPyenvManagerEvidence, attachUvManagerEvidence, attachVoltaManagerEvidence, buildAiDecision, buildConsolidationPlan, compareNpmGlobalPackages, comparePythonPackages, findNodeCandidates, findPythonCandidates, inspectFnmNodeManager, inspectMiseRuntimeManager, inspectNvmNodeManager, inspectPyenvPythonManager, inspectVoltaNodeManager, linkNodeNpmRuntimes, linkPythonPipRuntimes, miseInventoryForRuntime, parseFnmNodeList, parseMiseRuntimeInventory, parsePackageManager, parsePipList, parsePipVersion, parsePyenvVersions, parseVoltaNodeList, summarizePipInspect, summarizePythonPackages } from "../src/package-managers.js";
-import { buildPortableReconciliation, portableEvidenceFingerprint } from "../src/commands/reconcile.js";
+import { buildPortableReconciliation, comparePortableReconciliations, portableEvidenceFingerprint } from "../src/commands/reconcile.js";
 
 test("parsePackageManager separates package manager and pinned version", () => {
   assert.deepEqual(parsePackageManager("npm@10.8.2"), { name: "npm", version: "10.8.2" });
@@ -583,6 +583,27 @@ test("portable evidence fingerprint ignores identifiers and ordering but changes
   assert.equal(portableEvidenceFingerprint(first), first.evidenceFingerprint);
 });
 
+test("portable comparison reports only redacted fact changes", () => {
+  const base = { scanMode: "quick", project: { packageManager: null, lockManagers: [] }, node: { distinctVersions: ["20"], installations: [{ version: "20", active: true, path: "/secret/node" }] }, npm: { distinctVersions: [], installations: [] }, python: { distinctVersions: [], installations: [] }, otherRuntimes: {}, findings: [], decision: "clear", aiDecision: { consolidationPlan: { status: "no-candidates", candidates: [], phases: [], requiresHumanApprovalBefore: [] } } };
+  const before = buildPortableReconciliation(base, { platform: "linux", arch: "x64" });
+  const after = buildPortableReconciliation({ ...base, node: { distinctVersions: ["22"], installations: [{ version: "22", active: true, path: "/other-secret/node" }] }, findings: [{ code: "node-version-mismatch", severity: "review" }], decision: "review" }, { platform: "linux", arch: "x64" });
+  const result = comparePortableReconciliations(before, after);
+  const serialized = JSON.stringify(result);
+  assert.equal(result.same, false);
+  assert.equal(result.decision, "review");
+  assert.ok(result.changedSections.includes("inventory"));
+  assert.ok(result.changedSections.includes("findings"));
+  assert.equal(serialized.includes("secret"), false);
+  assert.equal(result.environmentChangesAuthorized, false);
+  assert.equal(result.removalAuthorized, false);
+  assert.deepEqual(comparePortableReconciliations(before, before).changes, []);
+});
+
+test("portable comparison rejects a tampered fingerprint", () => {
+  const report = buildPortableReconciliation({}, { platform: "linux", arch: "x64" });
+  assert.throws(() => comparePortableReconciliations(report, { ...report, decision: "review" }), /fingerprint does not match/);
+});
+
 test("AI decision summarizes strong, inferred, and unresolved runtime links", () => {
   const result = buildAiDecision({
     node: [
@@ -683,7 +704,7 @@ test("reconcile --portable emits a quick redacted shareable report", async () =>
   assert.equal(serialized.includes(dir), false);
   assert.equal(serialized.includes("private-project"), false);
   assert.equal(json.consolidation.environmentChangesAuthorized, false);
-  assert.deepEqual(json.source, { mode: "live-quick", scanMode: "quick", artifactPathIncluded: false });
+  assert.deepEqual(json.source, { mode: "live-quick", scanMode: "quick", platformEvidence: "embedded", artifactPathIncluded: false });
 });
 
 test("reconcile --portable-from redacts a reviewed full artifact without rescanning", async () => {
@@ -706,10 +727,31 @@ test("reconcile --portable-from redacts a reviewed full artifact without rescann
   const result = await promisify(execFile)(process.execPath, [path.resolve("bin/aienvmap.js"), "reconcile", "--portable-from", artifact, "--json", "--dir", dir], { cwd: path.resolve(".") });
   const json = JSON.parse(result.stdout);
   const serialized = JSON.stringify(json);
-  assert.deepEqual(json.source, { mode: "artifact", scanMode: "full-packages", artifactPathIncluded: false });
+  assert.equal(json.source.mode, "artifact");
+  assert.equal(json.source.scanMode, "full-packages");
+  assert.equal(json.source.artifactPathIncluded, false);
   assert.equal(json.inventory.python.installations[0].manager.ownershipProven, true);
   assert.equal(json.nextSafeCommand, "aienvmap status --json");
   for (const secret of [dir, "private-reconcile", "private-project", "private-package", "private-time"]) assert.equal(serialized.includes(secret), false);
+});
+
+test("reconcile --portable-compare accepts raw artifacts and omits input paths", async () => {
+  const dir = await fs.mkdtemp(path.join(os.tmpdir(), "aienvmap-portable-compare-"));
+  const make = (version) => ({ schemaName: "aienvmap.reconcile", schemaVersion: 1, platform: process.platform, architecture: process.arch, scanMode: "quick", project: { packageManager: null, lockManagers: [] }, node: { distinctVersions: [version], installations: [{ version, active: true, path: `${dir}/${version}/node` }] }, npm: { distinctVersions: [], installations: [] }, python: { distinctVersions: [], installations: [] }, otherRuntimes: {}, findings: [], decision: "clear", aiDecision: { consolidationPlan: { status: "no-candidates", candidates: [], phases: [], requiresHumanApprovalBefore: [] } } });
+  const before = path.join(dir, "private-before.json");
+  const after = path.join(dir, "private-after.json");
+  await fs.writeFile(before, JSON.stringify(make("20")), "utf8");
+  await fs.writeFile(after, JSON.stringify(make("22")), "utf8");
+  const { execFile } = await import("node:child_process");
+  const { promisify } = await import("node:util");
+  const result = await promisify(execFile)(process.execPath, [path.resolve("bin/aienvmap.js"), "reconcile", "--portable-compare", before, "--against", after, "--json", "--dir", dir], { cwd: path.resolve(".") });
+  const json = JSON.parse(result.stdout);
+  const serialized = JSON.stringify(json);
+  assert.equal(json.schemaName, "aienvmap.reconcile-portable-compare");
+  assert.equal(json.decision, "review");
+  assert.equal(serialized.includes(dir), false);
+  assert.equal(serialized.includes("private-before"), false);
+  assert.ok(json.changeCount > 0);
 });
 
 test("reconcile --full-packages exposes package-level evidence on demand", async () => {

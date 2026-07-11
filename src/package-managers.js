@@ -80,6 +80,8 @@ export async function inspectPackageManagers(dir, options = {}) {
     schemaName: "aienvmap.reconcile",
     schemaVersion: 1,
     generatedAt: new Date().toISOString(),
+    platform: process.platform,
+    architecture: process.arch,
     mode: "read-only",
     scanMode: options.quick ? "quick" : options.fullPackages ? "full-packages" : "standard",
     scope: "project+current-user+visible-host",
