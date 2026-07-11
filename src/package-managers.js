@@ -687,6 +687,7 @@ export function buildAiDecision({ node = [], npm = [], python = [], java = {}, p
     },
     pythonInstallerEvidence: summarizeInstallerEvidence(python),
     pythonManagerEvidence: summarizePythonManagerEvidence(python),
+    nodeManagerEvidence: summarizeNodeManagerEvidence(node),
     javaManagerEvidence: {
       managers: java.runtimeMetadata?.managers || [],
       managedInstalls: java.runtimeMetadata?.managedInstallCount || 0,
@@ -735,6 +736,19 @@ function summarizePythonManagerEvidence(installations = []) {
     managers: [...new Set(evidence.map((item) => item.manager).filter((item) => item && item !== "unknown"))].sort(),
     removalAuthorized: false,
     rule: "Manager-native ownership evidence may identify an interpreter owner, but aienvmap never turns it into removal authorization."
+  };
+}
+
+function summarizeNodeManagerEvidence(installations = []) {
+  const evidence = installations.map((item) => item.managerEvidence || {});
+  return {
+    total: evidence.length,
+    proven: evidence.filter((item) => item.ownershipProven === true).length,
+    inferred: evidence.filter((item) => item.confidence === "medium").length,
+    unconfirmed: evidence.filter((item) => item.confidence === "none" || !item.confidence).length,
+    managers: [...new Set(evidence.map((item) => item.manager).filter((item) => item && item !== "unknown"))].sort(),
+    removalAuthorized: false,
+    rule: "Volta inventory plus image-path evidence may prove Node manager control, but never removal authorization."
   };
 }
 

@@ -57,6 +57,16 @@ test("compareReconciliation detects a package-manager runtime routing change", (
   assert.match(result.drift.changes.map((item) => item.field).join(" "), /npm\.runtimeLinks/);
 });
 
+test("compareReconciliation detects Volta Node inventory drift", () => {
+  const baseline = report();
+  baseline.node.managerInventories = { volta: { collection: "collected", runtimes: [{ version: "20.18.1", state: "default" }] } };
+  const current = report();
+  current.node.managerInventories = { volta: { collection: "collected", runtimes: [{ version: "22.12.0", state: "default" }] } };
+  const result = compareReconciliation(baseline, current);
+  assert.equal(result.drift.detected, true);
+  assert.match(result.drift.changes.map((item) => item.field).join(" "), /node\.managerInventories\.volta/);
+});
+
 test("compareReconciliation detects Python installer evidence drift", () => {
   const baseline = report();
   baseline.python.installations = [{ path: "$HOME/python", version: "3.12", installerEvidence: { collection: "collected", installerCounts: { pip: 2 }, digest: "one" } }];

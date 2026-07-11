@@ -337,6 +337,10 @@ test("AI decisions keep inactive virtual environments and require approval", () 
 
 test("AI decision summarizes strong, inferred, and unresolved runtime links", () => {
   const result = buildAiDecision({
+    node: [
+      { managerEvidence: { manager: "volta", confidence: "strong", ownershipProven: true } },
+      { managerEvidence: { manager: "volta", confidence: "medium", ownershipProven: false } }
+    ],
     java: { runtimeMetadata: { managers: ["jenv", "mise"], managedInstallCount: 1, routingManagedCount: 2 } },
     python: [
       { installerEvidence: { collection: "collected", installerCounts: { pip: 4, uv: 2 }, requestedCount: 2, editableCount: 1 }, managerEvidence: { manager: "uv", confidence: "strong", ownershipProven: true } },
@@ -362,6 +366,11 @@ test("AI decision summarizes strong, inferred, and unresolved runtime links", ()
   assert.deepEqual(result.pythonManagerEvidence.managers, ["uv"]);
   assert.equal(result.pythonManagerEvidence.removalAuthorized, false);
   assert.match(result.pythonManagerEvidence.rule, /never turns it into removal authorization/);
+  assert.equal(result.nodeManagerEvidence.proven, 1);
+  assert.equal(result.nodeManagerEvidence.inferred, 1);
+  assert.deepEqual(result.nodeManagerEvidence.managers, ["volta"]);
+  assert.equal(result.nodeManagerEvidence.removalAuthorized, false);
+  assert.match(result.nodeManagerEvidence.rule, /never removal authorization/);
   assert.deepEqual(result.javaManagerEvidence.managers, ["jenv", "mise"]);
   assert.equal(result.javaManagerEvidence.managedInstalls, 1);
   assert.equal(result.javaManagerEvidence.routingManaged, 2);
@@ -383,6 +392,8 @@ test("reconcile CLI is read-only and returns machine-readable package-manager st
   assert.equal(json.project.packageManager.version, "10.8.2");
   assert.ok(Array.isArray(json.python.installations));
   assert.ok(Array.isArray(json.node.installations));
+  assert.equal(json.node.managerInventories.volta.collection, "not-requested");
+  assert.ok(json.node.installations.every((item) => item.managerEvidence));
   assert.ok(Array.isArray(json.npm.runtimeLinks));
   assert.ok(Array.isArray(json.python.runtimeLinks));
   assert.equal(json.python.managerEvidence.collection, "not-requested");
@@ -409,6 +420,7 @@ test("reconcile --full-packages exposes package-level evidence on demand", async
   const json = JSON.parse(result.stdout);
   assert.equal(json.python.packageDetail, "full");
   assert.ok(["collected", "unavailable", "unsupported-or-failed"].includes(json.python.managerEvidence.collection));
+  assert.ok(["collected", "unavailable", "unsupported-or-failed"].includes(json.node.managerInventories.volta.collection));
   assert.ok(["collected", "unavailable", "unsupported-or-failed"].includes(json.python.managerInventories.pyenv.collection));
   assert.ok(json.python.installations.every((item) => Array.isArray(item.packages)));
   assert.ok(json.python.installations.every((item) => ["collected", "unsupported-or-failed"].includes(item.installerEvidence.collection)));

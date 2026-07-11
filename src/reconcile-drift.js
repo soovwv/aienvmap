@@ -55,6 +55,7 @@ function runtimeSection(section = {}) {
   return {
     installations: normalizeInstallations(section.installations),
     distinctVersions: sorted(section.distinctVersions || []),
+    managerInventories: normalize(section.managerInventories || {}),
     discoveryEvidence: normalize(section.discoveryEvidence || {}),
     runtimeMetadata: normalize(section.runtimeMetadata || {}),
     buildTools: normalize(section.buildTools || {})
