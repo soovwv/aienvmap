@@ -80,6 +80,19 @@ test("CLI schema prints the AI-readable output contract without a workspace", as
   assert.equal(json.outputs.status.contract.name, "aienvmap-preflight");
 });
 
+test("CLI scorecard keeps technical and market evidence separate", async () => {
+  const { stdout } = await execFileAsync(process.execPath, [
+    path.resolve("bin/aienvmap.js"),
+    "scorecard",
+    "--json"
+  ], { cwd: path.resolve(".") });
+
+  const json = JSON.parse(stdout);
+  assert.equal(json.schemaName, "aienvmap-product-scorecard");
+  assert.ok(json.technicalReadiness.score > json.marketValidation.score);
+  assert.match(json.rule, /not use overall score alone/);
+});
+
 test("package, README, and CLI help share the AI workspace coordination positioning", async () => {
   const pkg = JSON.parse(await fs.readFile(path.resolve("package.json"), "utf8"));
   const readme = await fs.readFile(path.resolve("README.md"), "utf8");
@@ -153,6 +166,7 @@ test("package publish allowlist stays small and intentional", async () => {
     "SECURITY.md",
     "TROUBLESHOOTING.md",
     "ROADMAP.md",
+    "SCORECARD.md",
     "action.yml",
     "examples",
     ".agents"
