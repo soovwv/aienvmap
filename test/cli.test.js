@@ -168,6 +168,7 @@ test("package publish allowlist stays small and intentional", async () => {
     "TROUBLESHOOTING.md",
     "ROADMAP.md",
     "SCORECARD.md",
+    "MARKET.md",
     "action.yml",
     "examples",
     ".agents"
