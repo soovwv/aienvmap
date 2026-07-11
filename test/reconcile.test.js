@@ -135,7 +135,7 @@ test("nvm filesystem inventory finds bounded canonical installations", async () 
     assert.equal(result.collection, "collected");
     assert.equal(result.manager, "nvm");
     assert.equal(result.installationCount, 1);
-    assert.deepEqual(result.installations[0], { version: "20.18.1", installPath: path.dirname(path.dirname(executable)), canonicalInsideRoot: true });
+    assert.deepEqual(result.installations[0], { version: "20.18.1", installPath: await fs.realpath(path.dirname(path.dirname(executable))), canonicalInsideRoot: true });
   } finally { await fs.rm(dir, { recursive: true, force: true }); }
 });
 
