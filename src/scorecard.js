@@ -42,6 +42,15 @@ export function productScorecard() {
       { priority: 2, outcome: "AI-host integration evidence", proof: "verified examples for major coding-agent hosts" },
       { priority: 3, outcome: "release provenance", proof: "signed npm provenance and reproducible release evidence for a meaningful batched version" }
     ],
+    externalEvidenceRequirements: {
+      guide: "examples/portable-environment-case-guide.md",
+      intake: ".github/ISSUE_TEMPLATE/environment_case.md",
+      levels: ["submitted", "reproducible", "outcome-verified", "longitudinal"],
+      marketCreditStartsAt: "outcome-verified",
+      mustBeIndependent: true,
+      disallowedAsMarketProof: ["repository fixtures", "maintainer-only examples", "copied reports", "unreviewed portable evidence", "feature count"],
+      privacyRule: "Submission is manual; review portable output and prose, and never submit raw reconciliation artifacts, paths, identities, secrets, or proprietary details."
+    },
     limitations: ["Market scores are not inferred from feature count.", "Repository-owned examples are not independent adoption evidence.", "Scores change only with cited evidence; unknown evidence receives no credit."],
     rule: "AI consumers should compare category scores and evidence, not use overall score alone as permission to recommend, install, publish, or modify an environment."
   };

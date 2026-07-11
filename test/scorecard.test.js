@@ -18,4 +18,7 @@ test("product scorecard gives AI consumers evidence and bounded competitor categ
   assert.ok(result.marketValidation.dimensions.every((item) => item.evidence.length > 0 && item.next));
   assert.deepEqual(result.adjacentAlternatives.map((item) => item.name), ["mise", "Renovate", "Syft", "CycloneDX"]);
   assert.match(result.rule, /not use overall score alone/);
+  assert.equal(result.externalEvidenceRequirements.marketCreditStartsAt, "outcome-verified");
+  assert.equal(result.externalEvidenceRequirements.mustBeIndependent, true);
+  assert.ok(result.externalEvidenceRequirements.disallowedAsMarketProof.includes("repository fixtures"));
 });
