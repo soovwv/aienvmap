@@ -575,8 +575,9 @@ export function schemaContract() {
       },
       reconcilePortable: {
         command: "aienvmap reconcile --portable --json",
+        artifactCommand: "aienvmap reconcile --portable-from .aienvmap/reconcile.json --json",
         mode: "quick, read-only, path/package/timestamp-redacted diagnostic evidence",
-        rootFields: ["schemaName", "schemaVersion", "privacy", "platform", "architecture", "scanMode", "projectSignals", "inventory", "findings", "decision", "consolidation", "nextSafeCommand", "rule"],
+        rootFields: ["schemaName", "schemaVersion", "privacy", "platform", "architecture", "source", "scanMode", "projectSignals", "inventory", "findings", "decision", "consolidation", "nextSafeCommand", "rule"],
         excluded: ["paths", "workspace and project names", "package names", "package digests", "timestamps", "raw manager inventories"],
         rule: "Review before sharing because runtime versions, platform, architecture, sources, and finding codes remain visible."
       },
