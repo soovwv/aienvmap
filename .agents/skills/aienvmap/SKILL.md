@@ -54,6 +54,8 @@ npx aienvmap start --json
 
 Use `aiEntry` and `aiSession` from start/status/context JSON as the shortest startup routine: read order, stale refresh, intent, checkpoint, and handoff.
 
+Read `aiDecisionEnvelope` first in start/status/context JSON. Use `decision`, `reasonCodes`, `evidenceRefs`, and `nextSafeCommand` for the short path; `clear` never grants environment-change or removal authority, and unknown future fields are additive.
+
 Read `externalSbom` during startup. `refresh-import-required` and `component-drift-review` require opening `.aienvmap/sbom.json` and the original artifact before dependency or release changes. `identity-confidence-review` is non-blocking coordination evidence, not proof or remediation authority.
 
 If instruction-file pointers are missing or uncertain but `.aienvmap` exists, start at `.aienvmap/discovery.json`, check `maintenance.nextCommand`, then read `.aienvmap/status.json`, `.aienvmap/summary.md`, and `npx aienvmap context --json`.

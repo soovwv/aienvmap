@@ -86,7 +86,7 @@ AIENV.md                 # Markdown env map for AI agents
 ## AI Contract
 
 - `schema --json` prints the machine-readable contract without scanning.
-- `status`, `context`, `plan`, and `handoff` share one additive preflight contract.
+- `start`, `status`, and `context` share an additive `aiDecisionEnvelope`; read its decision, reasons, evidence, and next safe command before deeper fields.
 - `schemaVersion`, `contractVersion`, `stableFrom`, and compatibility rules are explicit.
 - `aiAdoptionDecision`, `recommendation.recommendWhen`, `doNotRecommendWhen`, and `evidenceDocs` tell AI when to use, suggest, or skip this tool.
 - `agentPointers.discovery`, `aiDiscovery.decision`, `sessionUse`, `startupChecklist`, `aiEntry`, and `copyPastePrompt` tell AI whether discovery is `auto-ready` or `fallback-required`.
