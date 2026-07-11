@@ -578,6 +578,9 @@ test("reconcile CLI is read-only and returns machine-readable package-manager st
   assert.equal(json.node.managerInventories.fnm.collection, "not-requested");
   assert.equal(json.node.managerInventories.nvm.collection, "not-requested");
   assert.equal(json.node.managerInventories.mise.collection, "not-requested");
+  assert.equal(json.aiDecisionEnvelope.decision, json.decision);
+  assert.equal(json.aiDecisionEnvelope.removalAuthorized, false);
+  assert.ok(json.aiDecisionEnvelope.evidenceRefs.includes(".aienvmap/reconcile.json"));
   assert.ok(json.node.installations.every((item) => item.managerEvidence));
   assert.ok(Array.isArray(json.npm.runtimeLinks));
   assert.ok(Array.isArray(json.python.runtimeLinks));
