@@ -474,7 +474,7 @@ export function schemaContract() {
         file: ".aienvmap/status.json",
         command: "aienvmap status --json",
         rootFields: ["state", "readOrder", "aiSession", "aiBootstrap", "aiDecisionEnvelope", "nextCommand", "nextSafeCommand", "artifactFreshness", "strictRecommendation", "operationalSafety", "qualitySignals", "decision", "counts", "aiReadiness", "collaboration", "coordinationRevision", "coordinationResolution", "maintenanceLoop", "coordination", "agentPointers", "sbomRisk", "externalSbom", "followUpPlan", "environmentChangeProtocol", "dependencyQuickCheck", "reconciliation"],
-        aiDecisionEnvelopeFields: ["schemaName", "schemaVersion", "decision", "reasonCodes", "evidenceRefs", "nextSafeCommand", "requiresHumanApproval", "projectLocalWork", "environmentChanges", "removalAuthorized", "rule"],
+        aiDecisionEnvelopeFields: ["schemaName", "schemaVersion", "decision", "reasonCodes", "evidenceRefs", "nextSafeCommand", "requiresHumanApproval", "requiresHumanApprovalBefore", "projectLocalWork", "environmentChanges", "removalAuthorized", "rule"],
         externalSbomFields: ["status", "decision", "requiresReview", "verification", "artifact", "digest", "baselineDrift", "identityConfidence", "truncated", "nextCommand", "removalAuthorized", "rule"],
         compareAndSwap: "Use coordinationRevision with intent/resolve --if-revision to reject stale multi-AI coordination writes.",
         agentPointerFields: ["installedCount", "missingCount", "installed", "missing", "discovery", "discoveryDecision", "nextSetupCommand", "startupChecklist", "onboardCommand", "fallbackCommand", "fallbackRead", "next", "targets", "rule"],
@@ -541,7 +541,7 @@ export function schemaContract() {
         file: ".aienvmap/reconcile.json",
         command: "aienvmap reconcile --json --write",
         mode: "read-only environment; writes only the report when --write is explicit",
-        rootFields: ["schemaName", "schemaVersion", "generatedAt", "mode", "scanMode", "scope", "limitations", "project", "node", "npm", "python", "otherRuntimes", "findings", "decision", "aiDecision", "written"],
+        rootFields: ["schemaName", "schemaVersion", "generatedAt", "mode", "scanMode", "scope", "limitations", "project", "node", "npm", "python", "otherRuntimes", "findings", "decision", "aiDecision", "aiDecisionEnvelope", "written"],
         aiDecisionFields: ["consumer", "decision", "readFirst", "canonicalCandidates", "actionCandidates", "runtimeLinkSummary", "pythonInstallerEvidence", "pythonManagerEvidence", "nodeManagerEvidence", "javaManagerEvidence", "safeCommands", "rules"],
         runtimeLinkFields: ["managerPath", "managerVersion", "runtimePath", "runtimeVersion", "relationship", "confidence", "evidence", "ownershipProven"],
         installerEvidenceFields: ["collection", "formatVersion", "pipVersion", "packageCount", "installerCounts", "requestedCount", "editableCount", "digest", "metadataSample", "semantics"],
@@ -581,7 +581,7 @@ export function schemaContract() {
       sbom: {
         file: ".aienvmap/sbom.json",
         command: "aienvmap sbom --json",
-        rootFields: ["schemaVersion", "schemaName", "workspace", "startHere", "readOrder", "aiBootstrap", "nextSafeCommand", "scannerGuidance", "aiReviewPlan", "dependencyCoordination", "dependencyQuickCheck", "summary", "riskSummary", "topRisk", "packageManagerPolicy", "dependencyChangeHints", "externalEvidence", "externalEvidenceDecision", "aiDependencyReview", "aiUse"],
+        rootFields: ["schemaVersion", "schemaName", "workspace", "startHere", "readOrder", "aiBootstrap", "nextSafeCommand", "scannerGuidance", "aiReviewPlan", "dependencyCoordination", "dependencyQuickCheck", "summary", "riskSummary", "topRisk", "packageManagerPolicy", "dependencyChangeHints", "externalEvidence", "externalEvidenceDecision", "aiDependencyReview", "aiUse", "aiDecisionEnvelope"],
         importCommand: "aienvmap sbom --import <workspace-sbom.json> --write",
         clearImportCommand: "aienvmap sbom --clear-import --write",
         externalEvidenceFields: ["status", "mode", "verification", "artifact", "digest", "currentDigest", "baselineDigest", "baselineDrift", "bytes", "format", "specVersion", "sourceTimestamp", "generatorTools", "summary", "componentInventory", "securityEvidence", "limitations", "removalAuthorized", "rule"],
@@ -598,7 +598,8 @@ export function schemaContract() {
       cyclonedxLite: {
         file: ".aienvmap/sbom.cdx.json",
         command: "aienvmap sbom --format cyclonedx-lite --json",
-        rootFields: ["bomFormat", "specVersion", "metadata", "components", "vulnerabilities", "properties"]
+        rootFields: ["bomFormat", "specVersion", "metadata", "components", "vulnerabilities", "properties"],
+        aiDecisionEnvelopeProperties: ["decision", "reasonCodes", "nextSafeCommand", "requiresHumanApprovalBefore"]
       },
       demo: {
         command: "aienvmap demo --json",

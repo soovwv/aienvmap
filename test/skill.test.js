@@ -34,6 +34,8 @@ test("packaged aienvmap skill points AI agents to current startup contracts", as
   assert.match(skill, /external symlink/);
   assert.match(skill, /Read `externalSbom` during startup/);
   assert.match(skill, /Read `aiDecisionEnvelope` first/);
+  assert.match(skill, /requiresHumanApprovalBefore/);
+  assert.match(skill, /global installs/);
   assert.match(skill, /reasonCodes/);
   assert.match(skill, /refresh-import-required/);
   assert.match(skill, /python\.managerInventories/);

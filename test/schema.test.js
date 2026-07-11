@@ -13,6 +13,7 @@ test("schemaContract describes stable AI output contracts", () => {
   assert.equal(schema.outputs.reconcile.file, ".aienvmap/reconcile.json");
   assert.equal(schema.outputs.reconcile.mode, "read-only environment; writes only the report when --write is explicit");
   assert.ok(schema.outputs.reconcile.rootFields.includes("aiDecision"));
+  assert.ok(schema.outputs.reconcile.rootFields.includes("aiDecisionEnvelope"));
   assert.ok(schema.outputs.reconcile.aiDecisionFields.includes("runtimeLinkSummary"));
   assert.ok(schema.outputs.reconcile.aiDecisionFields.includes("pythonInstallerEvidence"));
   assert.ok(schema.outputs.reconcile.aiDecisionFields.includes("pythonManagerEvidence"));
@@ -50,6 +51,7 @@ test("schemaContract describes stable AI output contracts", () => {
   assert.ok(schema.outputs.reconcileCheck.rootFields.includes("drift"));
   assert.match(schema.outputs.reconcileCheck.rule, /self-hosted/);
   assert.ok(schema.outputs.sbom.rootFields.includes("externalEvidence"));
+  assert.ok(schema.outputs.sbom.rootFields.includes("aiDecisionEnvelope"));
   assert.ok(schema.outputs.sbom.externalEvidenceFields.includes("verification"));
   assert.ok(schema.outputs.sbom.externalEvidenceFields.includes("componentInventory"));
   assert.ok(schema.outputs.sbom.componentInventoryFields.includes("identityConfidence"));
@@ -374,6 +376,7 @@ test("schemaContract describes stable AI output contracts", () => {
   assert.ok(schema.outputs.status.contract.aiEntryFields.includes("aiDecisionEnvelope"));
   assert.ok(schema.outputs.status.rootFields.includes("aiDecisionEnvelope"));
   assert.ok(schema.outputs.status.aiDecisionEnvelopeFields.includes("reasonCodes"));
+  assert.ok(schema.outputs.status.aiDecisionEnvelopeFields.includes("requiresHumanApprovalBefore"));
   assert.ok(schema.outputs.context.rootFields.includes("aiDecisionEnvelope"));
   assert.ok(schema.outputs.status.rootFields.includes("externalSbom"));
   assert.ok(schema.outputs.status.externalSbomFields.includes("identityConfidence"));
@@ -472,6 +475,7 @@ test("schemaContract describes stable AI output contracts", () => {
   assert.ok(schema.outputs.sbom.aiUseFields.includes("afterChange"));
   assert.ok(schema.outputs.sbom.aiUseFields.includes("mustNotDo"));
   assert.equal(schema.outputs.cyclonedxLite.command, "aienvmap sbom --format cyclonedx-lite --json");
+  assert.ok(schema.outputs.cyclonedxLite.aiDecisionEnvelopeProperties.includes("reasonCodes"));
   assert.equal(schema.outputs.demo.command, "aienvmap demo --json");
   assert.ok(schema.outputs.demo.rootFields.includes("recommendationDecision"));
   assert.ok(schema.outputs.demo.rootFields.includes("dependencyQuickCheck"));
