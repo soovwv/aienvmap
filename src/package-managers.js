@@ -84,7 +84,7 @@ export async function inspectPackageManagers(dir, options = {}) {
       installations: nodeInstallations,
       active: nodeInstallations.find((item) => item.active) || null,
       distinctVersions: [...new Set(nodeInstallations.map((item) => item.version))],
-      managerInventories: { volta: voltaNodeManager, mise: miseRuntimeManager }
+      managerInventories: { volta: voltaNodeManager, mise: miseInventoryForRuntime(miseRuntimeManager, "node") }
     },
     npm: {
       installations,
@@ -104,7 +104,7 @@ export async function inspectPackageManagers(dir, options = {}) {
       runtimeLinks: pipRuntimeLinks,
       packageComparisons: comparePythonPackages(pythonInstallations),
       managerEvidence: uvPythonManager,
-      managerInventories: { uv: uvPythonManager, pyenv: pyenvPythonManager, mise: miseRuntimeManager }
+      managerInventories: { uv: uvPythonManager, pyenv: pyenvPythonManager, mise: miseInventoryForRuntime(miseRuntimeManager, "python") }
     },
     otherRuntimes: commonRuntimes,
     findings,
@@ -165,6 +165,12 @@ export function parseMiseRuntimeInventory(raw, options = {}) {
     }
   }
   return { runtimes: all.slice(0, 100), truncated: all.length > 100 };
+}
+
+export function miseInventoryForRuntime(mise = {}, runtime) {
+  if (mise.collection !== "collected") return { ...mise };
+  const runtimes = (mise.runtimes || []).filter((item) => item.runtime === runtime);
+  return { ...mise, runtimes, runtimeCount: runtimes.length };
 }
 
 export function attachMiseNodeEvidence(nodeInstallations = [], mise = {}) {
@@ -784,7 +790,7 @@ export function buildAiDecision({ node = [], npm = [], python = [], java = {}, p
   return {
     consumer: "AI agent",
     decision: findings.some((item) => item.severity === "review") ? "review" : "clear",
-    readFirst: ["project", "node.active", "node.managerInventories", "npm.active", "npm.runtimeLinks", "python.active", "python.runtimeLinks", "findings", "aiDecision.actionCandidates"],
+    readFirst: ["project", "node.active", "node.managerInventories", "npm.active", "npm.runtimeLinks", "python.active", "python.managerInventories", "python.runtimeLinks", "findings", "aiDecision.actionCandidates"],
     canonicalCandidates: {
       node: chooseCanonical(node, project.node?.versionFile || ""),
       npm: chooseCanonical(npm, project.packageManager?.name === "npm" ? project.packageManager.version : ""),
