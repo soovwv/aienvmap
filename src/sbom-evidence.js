@@ -87,7 +87,8 @@ function parseCycloneDx(value) {
     componentInventory: boundedInventory(components.map((item) => ({
       name: item?.name,
       version: item?.version,
-      type: item?.type
+      type: item?.type,
+      purl: item?.purl
     }))),
     securityEvidence: vulnerabilityDeclared ? "vulnerability-section-declared" : "inventory-only"
   };
@@ -115,7 +116,8 @@ function parseSpdx(value) {
     componentInventory: boundedInventory(packages.map((item) => ({
       name: item?.name,
       version: item?.versionInfo,
-      type: "package"
+      type: "package",
+      purl: spdxPurl(item)
     }))),
     securityEvidence: "inventory-only"
   };
@@ -137,7 +139,14 @@ export function compareSbomEvidence(previous = {}, current = {}) {
   for (const [key, item] of afterByName) {
     if (!beforeByName.has(key)) added.push(item);
     else if (beforeByName.get(key).versions.join("\0") !== item.versions.join("\0")) {
-      versionChanged.push({ name: item.name, type: item.type, before: beforeByName.get(key).versions, after: item.versions });
+      versionChanged.push({
+        name: item.name,
+        type: item.type,
+        identitySource: item.identitySource,
+        ...(item.purl ? { purl: item.purl } : {}),
+        before: beforeByName.get(key).versions,
+        after: item.versions
+      });
     }
   }
   for (const [key, item] of beforeByName) if (!afterByName.has(key)) removed.push(item);
@@ -160,30 +169,74 @@ export function compareSbomEvidence(previous = {}, current = {}) {
 
 function boundedInventory(items) {
   const identities = items.map(normalizeIdentity).filter(Boolean)
-    .sort((a, b) => `${a.type}\0${a.name}\0${a.version}`.localeCompare(`${b.type}\0${b.name}\0${b.version}`))
+    .sort((a, b) => compareText(identityKey(a), identityKey(b)))
     .filter((item, index, all) => index === 0 || identityKey(item) !== identityKey(all[index - 1]));
-  return { total: identities.length, retained: Math.min(identities.length, MAX_COMPONENT_IDENTITIES), truncated: identities.length > MAX_COMPONENT_IDENTITIES, identities: identities.slice(0, MAX_COMPONENT_IDENTITIES) };
+  const retained = identities.slice(0, MAX_COMPONENT_IDENTITIES);
+  return {
+    total: identities.length,
+    retained: retained.length,
+    truncated: identities.length > MAX_COMPONENT_IDENTITIES,
+    identitySources: {
+      purl: retained.filter((item) => item.identitySource === "purl").length,
+      fallback: retained.filter((item) => item.identitySource === "type-name-fallback").length
+    },
+    identities: retained
+  };
 }
 
 function normalizeIdentity(item) {
   const name = String(item?.name || "").trim().slice(0, 200);
   if (!name) return null;
-  return { name, version: String(item?.version || "unknown").trim().slice(0, 100) || "unknown", type: String(item?.type || "package").trim().slice(0, 50) || "package" };
+  const purl = normalizePurl(item?.purl);
+  return {
+    name,
+    version: String(item?.version || purlVersion(purl) || "unknown").trim().slice(0, 100) || "unknown",
+    type: String(item?.type || "package").trim().slice(0, 50) || "package",
+    identitySource: purl ? "purl" : "type-name-fallback",
+    ...(purl ? { purl } : {})
+  };
 }
 
-function identityKey(item) { return `${item.type}\0${item.name}\0${item.version}`; }
+function identityKey(item) { return item.purl || `${item.type}\0${item.name}\0${item.version}`; }
 
 function groupVersions(items) {
   const groups = new Map();
   for (const item of items) {
-    const key = `${item.type}\0${item.name}`;
-    const current = groups.get(key) || { name: item.name, type: item.type, versions: [] };
+    const key = item.purl ? purlWithoutVersion(item.purl) : `${item.type}\0${item.name}`;
+    const current = groups.get(key) || { name: item.name, type: item.type, identitySource: item.identitySource || "type-name-fallback", ...(item.purl ? { purl: purlWithoutVersion(item.purl) } : {}), versions: [] };
     if (!current.versions.includes(item.version)) current.versions.push(item.version);
     current.versions.sort();
     groups.set(key, current);
   }
   return groups;
 }
+
+function spdxPurl(item = {}) {
+  const refs = Array.isArray(item.externalRefs) ? item.externalRefs : [];
+  const match = refs.find((ref) => /(?:^|[-_])(?:purl|package-url)$/i.test(String(ref?.referenceType || "")) || /^pkg:/i.test(String(ref?.referenceLocator || "")));
+  return match?.referenceLocator || "";
+}
+
+function normalizePurl(value) {
+  const raw = String(value || "").trim();
+  if (!/^pkg:[a-z0-9.+-]+\/.+/i.test(raw) || raw.length > 1000 || /[\s\u0000-\u001f\u007f]/.test(raw)) return "";
+  const core = raw.split(/[?#]/, 1)[0].slice(0, 500);
+  const slash = core.indexOf("/");
+  return `pkg:${core.slice(4, slash).toLowerCase()}${core.slice(slash)}`;
+}
+
+function purlWithoutVersion(purl = "") {
+  const slash = purl.indexOf("/");
+  const at = purl.lastIndexOf("@");
+  return at > slash ? purl.slice(0, at) : purl;
+}
+
+function purlVersion(purl = "") {
+  const base = purlWithoutVersion(purl);
+  return base.length < purl.length ? purl.slice(base.length + 1) : "";
+}
+
+function compareText(a, b) { return a < b ? -1 : a > b ? 1 : 0; }
 
 function summarizeTools(items) {
   return items.slice(0, 10).map((item) => ({

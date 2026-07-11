@@ -41,6 +41,24 @@ test("external SBOM comparison reports bounded component and version drift", () 
   assert.deepEqual(drift.sample.versionChanged[0].after, ["2.0.0"]);
 });
 
+test("CycloneDX PURL separates same-name ecosystems and strips qualifiers", () => {
+  const before = parseExternalSbom({ bomFormat: "CycloneDX", components: [
+    { type: "library", name: "requests", version: "1", purl: "pkg:pypi/requests@1?repository_url=https://private.example/token#src" },
+    { type: "library", name: "requests", version: "1", purl: "pkg:npm/requests@1" }
+  ] });
+  const identities = before.componentInventory.identities;
+  assert.equal(before.componentInventory.identitySources.purl, 2);
+  assert.deepEqual(identities.map((item) => item.purl), ["pkg:npm/requests@1", "pkg:pypi/requests@1"]);
+  assert.doesNotMatch(JSON.stringify(before), /private\.example|token|#src/);
+  const after = parseExternalSbom({ bomFormat: "CycloneDX", components: [
+    { type: "library", name: "requests", version: "2", purl: "pkg:pypi/requests@2" },
+    { type: "library", name: "requests", version: "1", purl: "pkg:npm/requests@1" }
+  ] });
+  const drift = compareSbomEvidence(before, after);
+  assert.deepEqual(drift.counts, { added: 0, removed: 0, versionChanged: 1 });
+  assert.equal(drift.sample.versionChanged[0].purl, "pkg:pypi/requests");
+});
+
 test("external SBOM inventory is bounded and marks partial comparisons", () => {
   const components = Array.from({ length: MAX_COMPONENT_IDENTITIES + 1 }, (_, index) => ({ name: `pkg-${index}`, version: "1" }));
   const parsed = parseExternalSbom({ bomFormat: "CycloneDX", components });
@@ -61,6 +79,26 @@ test("SPDX evidence parser summarizes inventory and generator", () => {
   assert.deepEqual(result.generatorTools, [{ name: "syft", version: "1.44.0" }]);
   assert.deepEqual(result.summary, { packages: 1, files: 2, relationships: 1, vulnerabilities: null });
   assert.equal(result.securityEvidence, "inventory-only");
+});
+
+test("SPDX Package URL external reference is preferred over name fallback", () => {
+  const result = parseExternalSbom({
+    spdxVersion: "SPDX-2.3",
+    packages: [{
+      name: "left-pad",
+      versionInfo: "1.3.0",
+      externalRefs: [{ referenceType: "purl", referenceLocator: "pkg:npm/left-pad@1.3.0?download_url=private" }]
+    }]
+  });
+  assert.equal(result.componentInventory.identities[0].purl, "pkg:npm/left-pad@1.3.0");
+  assert.equal(result.componentInventory.identities[0].identitySource, "purl");
+});
+
+test("invalid PURL safely falls back to type and name identity", () => {
+  const result = parseExternalSbom({ bomFormat: "CycloneDX", components: [{ name: "alpha", version: "1", purl: "https://example.test/alpha" }] });
+  assert.equal(result.componentInventory.identitySources.fallback, 1);
+  assert.equal(result.componentInventory.identities[0].identitySource, "type-name-fallback");
+  assert.equal(Object.hasOwn(result.componentInventory.identities[0], "purl"), false);
 });
 
 test("external evidence import stores relative path and digest only", async () => {
