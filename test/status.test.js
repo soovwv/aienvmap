@@ -5,6 +5,7 @@ import os from "node:os";
 import path from "node:path";
 import { buildStatus, renderStatusText, statusWorkspace } from "../src/commands/status.js";
 import { writeJson } from "../src/fsutil.js";
+import { importSbomEvidence } from "../src/sbom-evidence.js";
 
 test("buildStatus returns a compact clear state", () => {
   const status = buildStatus({
@@ -480,7 +481,7 @@ test("renderStatusText stays compact for default human and AI scan", () => {
   assert.deepEqual(text.split("\n"), [
     "review-required: Review warnings before environment changes.",
     "ready: review | collaboration: review-before-env-change",
-    "sbom: medium (42) | warnings: 2 | intents: 1",
+    "sbom: medium (42) | external: no-external-evidence | warnings: 2 | intents: 1",
     "next: aienvmap plan --write",
     "session: aienvmap status --json -> aienvmap context --json | start: .aienvmap/README.md | summary: .aienvmap/summary.md | discovery: auto-ready / ready: codex"
   ]);
@@ -540,4 +541,29 @@ test("statusWorkspace can write the compact AI status artifact", async () => {
   assert.equal(written.commands.refresh, "aienvmap sync");
   assert.equal(written.nextSafeCommand, written.nextCommand);
   assert.equal(written.aiBootstrap.readFirst, ".aienvmap/status.json");
+  assert.equal(written.externalSbom.decision, "no-external-evidence");
+});
+
+test("statusWorkspace promotes external component drift into AI review", async () => {
+  const dir = await fs.mkdtemp(path.join(os.tmpdir(), "aienvmap-status-sbom-"));
+  await fs.mkdir(path.join(dir, ".aienvmap"), { recursive: true });
+  await writeJson(path.join(dir, ".aienvmap", "manifest.json"), {
+    schemaVersion: 1,
+    generatedAt: new Date().toISOString(),
+    runtimes: {},
+    dependencySnapshot: { summary: { packages: 0 } },
+    security: { enabled: false, summary: { total: 0 } }
+  });
+  const source = path.join(dir, "scanner.cdx.json");
+  await writeJson(source, { bomFormat: "CycloneDX", components: [{ name: "alpha", version: "2", purl: "pkg:npm/alpha@2" }] });
+  const evidence = await importSbomEvidence(dir, source);
+  evidence.baselineDrift = { status: "changed", counts: { added: 0, removed: 0, versionChanged: 1 } };
+  await writeJson(path.join(dir, ".aienvmap", "external-sbom-evidence.json"), evidence);
+
+  const result = await statusWorkspace({ dir, quiet: true });
+  assert.equal(result.state, "review-required");
+  assert.equal(result.externalSbom.decision, "component-drift-review");
+  assert.equal(result.counts.warnings, 1);
+  assert.ok(result.intentTargets[0].sources.includes("external-sbom-component-drift"));
+  assert.match(renderStatusText(result), /external: component-drift-review/);
 });

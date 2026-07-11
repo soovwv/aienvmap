@@ -91,6 +91,7 @@ async function writeDiscoveryArtifact(dir, status = {}) {
     nextCommand: status.nextCommand || "aienvmap status --json",
     nextSetupCommand,
     readOrder,
+    externalSbom: status.externalSbom || null,
     maintenance: {
       status: followUp.status === "pending" ? "follow-up-pending" : maintenance.state || status.state || "unknown",
       nextCommand: followUp.status === "pending"
@@ -100,6 +101,7 @@ async function writeDiscoveryArtifact(dir, status = {}) {
       freshness: artifactFreshness.state || "unknown",
       followUp: followUp.status || "clear",
       dependencyQuickCheck: dependencyQuickCheck.status || "unknown",
+      externalSbom: status.externalSbom?.decision || "no-external-evidence",
       beforeEnvironmentChange: status.aiSession?.beforeEnvironmentChange || "aienvmap intent --actor agent:id --action planned-change --target environment",
       afterEnvironmentChange: status.aiSession?.afterEnvironmentChange || "aienvmap checkpoint --actor agent:id --summary what-changed --target environment",
       rule: "Use this compact block as the recurring AI environment maintenance decision before another shared environment change."

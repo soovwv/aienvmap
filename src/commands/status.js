@@ -5,6 +5,7 @@ import { intentsPath, manifestPath, reconcileJsonPath, statusJsonPath, timelineP
 import { openIntents, readJsonl, readTimeline } from "../timeline.js";
 import { buildPreflight } from "../preflight.js";
 import { summarizeReconciliation } from "./reconcile.js";
+import { externalSbomWarnings, loadExternalSbomStartupSignal } from "../external-sbom-status.js";
 
 export async function statusWorkspace(args) {
   const dir = workspaceDir(args);
@@ -14,8 +15,9 @@ export async function statusWorkspace(args) {
   const timeline = await readTimeline(timelinePath(dir));
   const intents = openIntents(await readJsonl(intentsPath(dir)));
   const coordinationRevision = await jsonlRevision(intentsPath(dir));
-  const warnings = [...diagnose(manifest, { timeline, intents }), ...policyWarnings(manifest, policy)];
-  const built = buildStatus(manifest, warnings, intents, timeline);
+  const externalSbom = await loadExternalSbomStartupSignal(dir);
+  const warnings = [...diagnose(manifest, { timeline, intents }), ...policyWarnings(manifest, policy), ...externalSbomWarnings(externalSbom)];
+  const built = { ...buildStatus(manifest, warnings, intents, timeline), externalSbom };
   const baseStatus = {
     ...built,
     coordinationRevision,
@@ -56,6 +58,7 @@ export function renderStatusText(output = {}, options = {}) {
   const collaboration = output.collaboration?.status || "unknown";
   const sbomRisk = output.sbomRisk?.level || "unknown";
   const sbomScore = valueOrZero(output.sbomRisk?.score);
+  const externalSbom = output.externalSbom || {};
   const detail = output.quickstart?.detailCommand || "aienvmap context --json";
   const sessionStart = Array.isArray(output.aiSession?.start) && output.aiSession.start.length
     ? output.aiSession.start.join(" -> ")
@@ -67,7 +70,7 @@ export function renderStatusText(output = {}, options = {}) {
   const lines = [
     `${output.state || "unknown"}: ${output.summary || "Run aienvmap context --json for details."}`,
     `ready: ${readiness} | collaboration: ${collaboration}`,
-    `sbom: ${sbomRisk} (${sbomScore}) | warnings: ${valueOrZero(counts.warnings)} | intents: ${valueOrZero(counts.openIntents)}`,
+    `sbom: ${sbomRisk} (${sbomScore}) | external: ${externalSbom.decision || "no-external-evidence"} | warnings: ${valueOrZero(counts.warnings)} | intents: ${valueOrZero(counts.openIntents)}`,
     `next: ${output.nextCommand || "aienvmap status --json"}`,
     `session: ${sessionStart} | start: ${startHere} | summary: ${summary} | discovery: ${discovery}`
   ];

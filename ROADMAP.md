@@ -52,6 +52,7 @@ Acceptance gates: cross-platform fixtures for every manager, no writes in defaul
 - Keep external SBOM/security tools optional; do not require Syft, Trivy, Grype, or similar tools for the default flow
 - Keep external SBOM baseline comparison bounded and original-first; truncated inventories must never imply a complete no-change result
 - Prefer sanitized PURL identity across ecosystems; missing PURLs remain explicit lower-confidence fallback evidence
+- Keep startup external-SBOM signals sample-free; only stale or actual component drift raises advisory preflight review
 - Stabilize `.aienvmap/manifest.json` and JSON command schemas
 - Keep `sync`, `context`, and `handoff` as the simple core flow
 - Simplify the dashboard around the essential 10-second review cards: AI Session, Environment Health, Collaboration, Light SBOM, Agent Pointers, Timeline/Intents, and Release/Strict Gate

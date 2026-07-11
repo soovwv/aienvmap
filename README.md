@@ -93,7 +93,7 @@ AIENV.md                 # Markdown env map for AI agents
 - `.aienvmap/discovery.json`, `discovery.json.maintenance`, `agentDiscovery.sessionStart`, and `readOrder` give the fallback start path for schema-only or Markdown-first agents.
 - `environmentChangeProtocol`, `operationalSafety`, `followUpPlan`, `collaboration`, `coordination`, and `agentActivity` keep shared changes advisory; `followUpPlan` points to sync, status, or handoff when needed.
 - `coordinationRevision` enables optional compare-and-swap protection for intent and resolution writes without a daemon, database, or runtime dependency.
-- `aiUse`, `dependencyQuickCheck`, and `externalEvidenceDecision` detect digest and bounded PURL-first component drift; `identityConfidence` exposes lower-confidence name fallback before AI claims.
+- `start`, `status`, and `context` expose a sample-free `externalSbom` signal; stale or component drift raises advisory review, while absent evidence and identity fallback stay non-blocking.
 - `qualitySignals`, `releaseGate`, and `releaseReadiness` expose the AI-friendly, lightweight, batched stable-contract gate.
 - After `0.2.0`, documented JSON fields stay backward-compatible; new fields are additive.
 

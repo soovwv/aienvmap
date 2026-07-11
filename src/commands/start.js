@@ -43,6 +43,7 @@ export async function startWorkspace(args = {}) {
     copyPastePrompt: after.aiDiscovery?.copyPastePrompt || after.aiDiscovery?.fallbackPrompt || "",
     promptUse: after.aiDiscovery?.promptUse || null,
     reconciliation: { ...summarizeReconciliation(reconciliation), freshness: reconciliationFresh(reconciliation) ? "fresh" : "unknown-or-stale" },
+    externalSbom: status.externalSbom,
     statusText: renderStatusText(status),
     rule: "Use this as the first AI entry command when instruction-file automatic discovery is uncertain. It only writes aienvmap artifacts and keeps local decisions advisory."
   };

@@ -9,6 +9,7 @@ import { buildPlan, compactStepSummary } from "./plan.js";
 import { aiDecision } from "../decision.js";
 import { enforcementAdvice } from "../enforcement.js";
 import { buildPreflight } from "../preflight.js";
+import { externalSbomWarnings, loadExternalSbomStartupSignal } from "../external-sbom-status.js";
 
 export async function contextWorkspace(args) {
   const dir = workspaceDir(args);
@@ -17,11 +18,12 @@ export async function contextWorkspace(args) {
   const timeline = await readTimeline(timelinePath(dir));
   const intents = openIntents(await readJsonl(intentsPath(dir)));
   const policy = await loadPolicy(dir);
-  const warnings = [...diagnose(manifest, { timeline, intents }), ...policyWarnings(manifest, policy)];
+  const externalSbom = await loadExternalSbomStartupSignal(dir);
+  const warnings = [...diagnose(manifest, { timeline, intents }), ...policyWarnings(manifest, policy), ...externalSbomWarnings(externalSbom)];
   const decision = aiDecision(warnings, intents);
   const actions = recommendedActions(manifest, { warnings, intents });
   const stepSummary = compactStepSummary(buildPlan(manifest, warnings, intents, policy));
-  const preflight = buildPreflight(manifest, warnings, intents, timeline);
+  const preflight = { ...buildPreflight(manifest, warnings, intents, timeline), externalSbom };
   const nextSafeCommand = contextNextSafeCommand(actions, warnings, preflight);
   if (args.json) {
     console.log(JSON.stringify({
@@ -47,6 +49,7 @@ export async function contextWorkspace(args) {
       followUpPlan: preflight.followUpPlan,
       environmentChangeProtocol: preflight.environmentChangeProtocol,
       dependencyQuickCheck: preflight.dependencyQuickCheck,
+      externalSbom,
       decision,
       enforcement: enforcementAdvice(warnings),
       recommendedActions: actions,
