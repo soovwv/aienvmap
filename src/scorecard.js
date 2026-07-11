@@ -34,6 +34,13 @@ export function productScorecard() {
     technicalReadiness: technical,
     marketValidation: market,
     positioning: "AI workspace coordination and environment evidence layer; not a package manager, vulnerability scanner, or full SBOM generator.",
+    marketResearch: {
+      report: "MARKET.md",
+      observedAt: "2026-07-12",
+      publicSignals: { githubStars: 0, githubForks: 0, independentOutcomeVerifiedCases: 0, npmDownloadsWindow: { requests: 108, start: "2026-06-11", end: "2026-07-10" } },
+      interpretation: "npm downloads are requests, not unique users, retention, successful setups, or recommendation evidence.",
+      scoreImpact: "none until independent outcome-verified evidence exists"
+    },
     adjacentAlternatives,
     strengths: ["zero-runtime-dependency local operation", "AI-readable environment and decision contracts", "read-only multi-install discovery", "light SBOM interoperability", "explicit approval boundaries"],
     weaknesses: ["limited independent adoption evidence", "few external case studies", "information-only depth for several toolchains", "pre-0.2.0 contract stability"],

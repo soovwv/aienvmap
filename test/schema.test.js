@@ -492,6 +492,7 @@ test("schemaContract describes stable AI output contracts", () => {
   assert.equal(schema.outputs.scorecard.command, "aienvmap scorecard --json");
   assert.ok(schema.outputs.scorecard.rootFields.includes("marketValidation"));
   assert.ok(schema.outputs.scorecard.rootFields.includes("externalEvidenceRequirements"));
+  assert.ok(schema.outputs.scorecard.rootFields.includes("marketResearch"));
   assert.equal(schema.outputs.demo.command, "aienvmap demo --json");
   assert.ok(schema.outputs.demo.rootFields.includes("recommendationDecision"));
   assert.ok(schema.outputs.demo.rootFields.includes("dependencyQuickCheck"));
