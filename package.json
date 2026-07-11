@@ -18,6 +18,8 @@
     "bin",
     "src",
     "scripts/performance-check.mjs",
+    "scripts/contract-check.mjs",
+    "contracts",
     "README.md",
     "LICENSE",
     "CHANGELOG.md",
@@ -37,8 +39,9 @@
     "pack:dry": "npm pack --dry-run",
     "smoke": "node bin/aienvmap.js --version && node bin/aienvmap.js --help",
     "perf:check": "node scripts/performance-check.mjs",
+    "contract:check": "node scripts/contract-check.mjs",
     "demo:conflict": "node examples/multi-agent-conflict-demo.mjs",
-    "release:check": "npm test && npm run smoke && npm run perf:check && npm run demo:conflict && npm run pack:dry"
+    "release:check": "npm test && npm run smoke && npm run contract:check && npm run perf:check && npm run demo:conflict && npm run pack:dry"
   },
   "keywords": [
     "ai",

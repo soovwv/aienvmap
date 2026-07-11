@@ -1,0 +1,23 @@
+{
+  "schemaName": "aienvmap-ai-json-root-field-freeze",
+  "schemaVersion": 1,
+  "targetRelease": "0.2.0",
+  "algorithm": "sha256(JSON.stringify(ordered surface-to-rootFields map))",
+  "digest": "e329ccc68444d378f8c1f84bf38a35fa05c30bff0476100211e94dd5c944f1a5",
+  "surfaceFieldCounts": {
+    "discover": 10,
+    "start": 24,
+    "discovery": 19,
+    "status": 26,
+    "context": 29,
+    "handoff": 15,
+    "plan": 12,
+    "manifest": 8,
+    "reconcile": 19,
+    "reconcileCheck": 10,
+    "sbom": 21,
+    "cyclonedxLite": 6,
+    "demo": 20
+  },
+  "reviewRule": "Any documented root-field change requires an intentional baseline review; never update this file merely to make CI pass."
+}
