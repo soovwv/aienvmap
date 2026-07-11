@@ -91,6 +91,9 @@ test("buildSbomArtifact creates standalone AI-readable light SBOM", () => {
   assert.match(sbom.aiUse.afterChange, /checkpoint/);
   assert.match(sbom.aiUse.mustNotDo.join(" "), /security claims/);
   assert.equal(sbom.aiUse.rule, sbom.scannerGuidance.rule);
+  assert.equal(sbom.externalEvidence.status, "not-imported");
+  assert.equal(sbom.externalEvidenceDecision.decision, "no-external-evidence");
+  assert.equal(sbom.aiUse.externalEvidence.decision, "no-external-evidence");
 });
 
 test("buildCycloneDxLite exports project manifest packages with limitations", () => {
@@ -140,6 +143,7 @@ test("buildCycloneDxLite exports project manifest packages with limitations", ()
   assert.equal(propertyValue(cdx.metadata.properties, "aienvmap:aiBootstrap:localMode"), "advisory");
   assert.equal(propertyValue(cdx.metadata.properties, "aienvmap:aiBootstrap:environmentChanges"), "review-first");
   assert.match(propertyValue(cdx.properties, "aienvmap:aiBootstrap:rule"), /Review SBOM risk/);
+  assert.equal(propertyValue(cdx.properties, "aienvmap:externalEvidence:status"), "not-imported");
   assert.equal(propertyValue(cdx.properties, "aienvmap:scannerGuidance:mode"), "optional-read-only");
   assert.equal(propertyValue(cdx.properties, "aienvmap:scannerGuidance:command"), "aienvmap sync --security");
   assert.equal(propertyValue(cdx.properties, "aienvmap:scannerGuidance:externalTools"), "syft,trivy,grype,dependency-track");
@@ -246,6 +250,62 @@ test("sbomWorkspace can write CycloneDX-lite artifact", async () => {
   assert.equal(written.bomFormat, "CycloneDX");
   assert.equal(written.components[0].name, "express");
   assert.equal(propertyValue(written.metadata.properties, "aienvmap:aiBootstrap:nextSafeCommand"), "aienvmap intent --actor agent:id --action dependency-review --target dependency");
+});
+
+test("sbomWorkspace imports, persists, reuses, and clears external evidence", async () => {
+  const dir = await fs.mkdtemp(path.join(os.tmpdir(), "aienvmap-sbom-import-"));
+  await fs.mkdir(path.join(dir, ".aienvmap"), { recursive: true });
+  await writeJson(path.join(dir, ".aienvmap", "manifest.json"), {
+    generatedAt: "2026-07-12T00:00:00.000Z",
+    workspace: { path: dir, name: path.basename(dir) },
+    lightSbom: { summary: { packages: 0, vulnerabilities: 0 }, riskSummary: { level: "clear", score: 0 } }
+  });
+  await writeJson(path.join(dir, "syft.cdx.json"), {
+    bomFormat: "CycloneDX",
+    specVersion: "1.6",
+    metadata: { tools: { components: [{ name: "syft", version: "1.44.0" }] } },
+    components: [{ name: "demo" }]
+  });
+
+  const imported = await sbomWorkspace({ dir, import: "syft.cdx.json", write: true, quiet: true });
+  assert.equal(imported.externalEvidence.status, "imported");
+  assert.equal(imported.externalEvidence.artifact, "syft.cdx.json");
+  assert.equal(imported.externalEvidenceDecision.decision, "read-original-before-claims");
+  assert.equal(imported.externalEvidence.summary.components, 1);
+  assert.equal(await fs.stat(path.join(dir, ".aienvmap", "external-sbom-evidence.json")).then(() => true), true);
+
+  const reused = await sbomWorkspace({ dir, quiet: true });
+  assert.equal(reused.externalEvidence.digest, imported.externalEvidence.digest);
+  assert.equal(reused.externalEvidence.verification, "digest-match");
+
+  await writeJson(path.join(dir, "syft.cdx.json"), { bomFormat: "CycloneDX", specVersion: "1.6", components: [{}, {}] });
+  const stale = await sbomWorkspace({ dir, quiet: true });
+  assert.equal(stale.externalEvidence.status, "stale");
+  assert.equal(stale.externalEvidence.verification, "digest-mismatch");
+  assert.notEqual(stale.externalEvidence.currentDigest, stale.externalEvidence.digest);
+  assert.equal(stale.externalEvidenceDecision.decision, "refresh-import-required");
+
+  const refreshed = await sbomWorkspace({ dir, import: "syft.cdx.json", write: true, quiet: true });
+  assert.equal(refreshed.externalEvidence.status, "imported");
+  assert.equal(refreshed.externalEvidence.summary.components, 2);
+
+  const cdx = await sbomWorkspace({ dir, format: "cyclonedx-lite", quiet: true });
+  assert.equal(propertyValue(cdx.properties, "aienvmap:externalEvidence:artifact"), "syft.cdx.json");
+  assert.equal(propertyValue(cdx.properties, "aienvmap:externalEvidence:digest"), refreshed.externalEvidence.digest);
+
+  const cleared = await sbomWorkspace({ dir, clear_import: true, write: true, quiet: true });
+  assert.equal(cleared.externalEvidence.status, "not-imported");
+  await assert.rejects(() => fs.stat(path.join(dir, ".aienvmap", "external-sbom-evidence.json")), /ENOENT/);
+});
+
+test("sbomWorkspace import preview does not persist evidence", async () => {
+  const dir = await fs.mkdtemp(path.join(os.tmpdir(), "aienvmap-sbom-preview-"));
+  await fs.mkdir(path.join(dir, ".aienvmap"), { recursive: true });
+  await writeJson(path.join(dir, ".aienvmap", "manifest.json"), { lightSbom: {} });
+  await writeJson(path.join(dir, "sbom.spdx.json"), { spdxVersion: "SPDX-2.3", packages: [] });
+  const preview = await sbomWorkspace({ dir, import: "sbom.spdx.json", quiet: true });
+  assert.equal(preview.externalEvidence.format, "spdx-json");
+  await assert.rejects(() => fs.stat(path.join(dir, ".aienvmap", "external-sbom-evidence.json")), /ENOENT/);
 });
 
 function propertyValue(properties = [], name) {
