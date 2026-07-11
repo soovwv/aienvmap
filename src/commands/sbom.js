@@ -2,7 +2,7 @@ import { sbomReadOrder } from "../ai-contract.js";
 import { readJson, writeJson } from "../fsutil.js";
 import fs from "node:fs/promises";
 import { cyclonedxSbomPath, externalSbomEvidencePath, manifestPath, sbomJsonPath, workspaceDir } from "../paths.js";
-import { importSbomEvidence, verifySbomEvidence } from "../sbom-evidence.js";
+import { compareSbomEvidence, importSbomEvidence, verifySbomEvidence } from "../sbom-evidence.js";
 
 export async function sbomWorkspace(args = {}) {
   const dir = workspaceDir(args);
@@ -12,9 +12,15 @@ export async function sbomWorkspace(args = {}) {
   if (args.clear_import && !args.write) throw new Error("--clear-import requires --write");
   const evidenceFile = externalSbomEvidencePath(dir);
   if (args.clear_import) await fs.rm(evidenceFile, { force: true });
-  const importedEvidence = args.import ? await importSbomEvidence(dir, args.import) : null;
+  const previousEvidence = !args.clear_import ? await readJson(evidenceFile, null) : null;
+  const imported = args.import ? await importSbomEvidence(dir, args.import) : null;
+  const importedEvidence = imported ? {
+    ...imported,
+    baselineDigest: previousEvidence?.digest || "",
+    baselineDrift: compareSbomEvidence(previousEvidence || {}, imported)
+  } : null;
   if (importedEvidence && args.write) await writeJson(evidenceFile, importedEvidence);
-  const persistedEvidence = !args.clear_import ? await readJson(evidenceFile, null) : null;
+  const persistedEvidence = importedEvidence || previousEvidence;
   const externalEvidence = importedEvidence || (persistedEvidence ? await verifySbomEvidence(dir, persistedEvidence) : null) || noExternalEvidence();
   const format = normalizeFormat(args.format);
   const sbom = format === "cyclonedx-lite" ? buildCycloneDxLite(manifest, externalEvidence) : buildSbomArtifact(manifest, externalEvidence);

@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
-import { importSbomEvidence, parseExternalSbom } from "../src/sbom-evidence.js";
+import { compareSbomEvidence, importSbomEvidence, MAX_COMPONENT_IDENTITIES, parseExternalSbom } from "../src/sbom-evidence.js";
 
 test("CycloneDX evidence parser keeps bounded coordination facts", () => {
   const result = parseExternalSbom({
@@ -23,6 +23,30 @@ test("CycloneDX evidence parser keeps bounded coordination facts", () => {
   assert.deepEqual(result.generatorTools, [{ name: "syft", version: "1.44.0" }]);
   assert.deepEqual(result.summary, { components: 2, services: 1, dependencies: 1, vulnerabilities: 0 });
   assert.equal(result.securityEvidence, "vulnerability-section-declared");
+});
+
+test("external SBOM comparison reports bounded component and version drift", () => {
+  const before = parseExternalSbom({ bomFormat: "CycloneDX", components: [
+    { type: "library", name: "alpha", version: "1.0.0" },
+    { type: "library", name: "removed", version: "1.0.0" }
+  ] });
+  const after = parseExternalSbom({ bomFormat: "CycloneDX", components: [
+    { type: "library", name: "alpha", version: "2.0.0" },
+    { type: "library", name: "added", version: "1.0.0" }
+  ] });
+  const drift = compareSbomEvidence(before, after);
+  assert.equal(drift.status, "changed");
+  assert.deepEqual(drift.counts, { added: 1, removed: 1, versionChanged: 1 });
+  assert.deepEqual(drift.sample.versionChanged[0].before, ["1.0.0"]);
+  assert.deepEqual(drift.sample.versionChanged[0].after, ["2.0.0"]);
+});
+
+test("external SBOM inventory is bounded and marks partial comparisons", () => {
+  const components = Array.from({ length: MAX_COMPONENT_IDENTITIES + 1 }, (_, index) => ({ name: `pkg-${index}`, version: "1" }));
+  const parsed = parseExternalSbom({ bomFormat: "CycloneDX", components });
+  assert.equal(parsed.componentInventory.retained, MAX_COMPONENT_IDENTITIES);
+  assert.equal(parsed.componentInventory.truncated, true);
+  assert.equal(compareSbomEvidence(parsed, parsed).status, "no-change-in-retained-sample");
 });
 
 test("SPDX evidence parser summarizes inventory and generator", () => {
