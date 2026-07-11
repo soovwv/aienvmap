@@ -149,6 +149,6 @@ npm run release:check
 npm pack --dry-run
 ```
 
-[Roadmap](ROADMAP.md) / [Security](SECURITY.md) / [Troubleshooting](TROUBLESHOOTING.md) / [Bugfix Log](BUGFIXES.md) / [Contributing](CONTRIBUTING.md) / [Multi-agent conflict demo](examples/multi-agent-conflict.md)
+[Roadmap](ROADMAP.md) / [Scorecard](SCORECARD.md) / [Security](SECURITY.md) / [Troubleshooting](TROUBLESHOOTING.md) / [Bugfix Log](BUGFIXES.md) / [Contributing](CONTRIBUTING.md) / [Multi-agent conflict demo](examples/multi-agent-conflict.md)
 
 Apache-2.0
