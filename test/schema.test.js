@@ -25,10 +25,12 @@ test("schemaContract describes stable AI output contracts", () => {
   assert.ok(schema.outputs.reconcile.uvManagerEvidenceFields.includes("managedRoot"));
   assert.ok(schema.outputs.reconcile.pyenvManagerEvidenceFields.includes("truncated"));
   assert.match(schema.outputs.reconcile.pythonManagerInventories, /uv, pyenv, and Python-only mise/);
-  assert.match(schema.outputs.reconcile.nodeManagerInventories, /Volta and Node-only mise/);
+  assert.match(schema.outputs.reconcile.nodeManagerInventories, /Volta, fnm, and Node-only mise/);
   assert.ok(schema.outputs.reconcile.aiDecisionFields.includes("nodeManagerEvidence"));
   assert.ok(schema.outputs.reconcile.voltaNodeInventoryFields.includes("runtimeCount"));
   assert.deepEqual(schema.outputs.reconcile.voltaNodeRelationships, ["inventory-and-image-path-match", "inventory-version-match", "managed-root-inference", "unconfirmed"]);
+  assert.ok(schema.outputs.reconcile.fnmNodeInventoryFields.includes("managedRoot"));
+  assert.deepEqual(schema.outputs.reconcile.fnmNodeRelationships, ["list-and-version-path-match", "inventory-version-match", "managed-root-inference", "unconfirmed"]);
   assert.ok(schema.outputs.reconcile.miseRuntimeInventoryFields.includes("runtimeCount"));
   assert.deepEqual(schema.outputs.reconcile.miseRuntimeRelationships, ["installed-json-path-match", "managed-root-inference", "unconfirmed"]);
   assert.match(schema.outputs.reconcile.rule, /never authorize removal/);

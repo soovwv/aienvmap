@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Added opt-in fnm local Node inventory, inactive installation-path discovery, exact list/version/path ownership proof, drift detection, and AI/schema guidance without shell activation or removal authority.
 - Surfaced a digest-verified, sample-free external SBOM signal in start/status/context/discovery; stale or component drift now raises advisory review while missing evidence and identity fallback remain non-blocking.
 - Preferred sanitized CycloneDX and SPDX Package URLs for cross-ecosystem component identity, with explicit identity confidence, fallback signaling, and no retained PURL qualifiers or subpaths.
 - Added bounded CycloneDX/SPDX component identities and explicit re-import baseline comparison for added, removed, and version-changed packages, with partial-result signaling and no automatic remediation.

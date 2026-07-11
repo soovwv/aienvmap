@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
-import { analyzeNodeInstallations, analyzeNpmInstallations, analyzePythonCommandRouting, analyzePythonInstallations, analyzeRuntimeLinks, attachMiseNodeEvidence, attachMisePythonEvidence, attachPyenvManagerEvidence, attachUvManagerEvidence, attachVoltaManagerEvidence, buildAiDecision, compareNpmGlobalPackages, comparePythonPackages, findPythonCandidates, inspectMiseRuntimeManager, inspectPyenvPythonManager, inspectVoltaNodeManager, linkNodeNpmRuntimes, linkPythonPipRuntimes, miseInventoryForRuntime, parseMiseRuntimeInventory, parsePackageManager, parsePipList, parsePipVersion, parsePyenvVersions, parseVoltaNodeList, summarizePipInspect, summarizePythonPackages } from "../src/package-managers.js";
+import { analyzeNodeInstallations, analyzeNpmInstallations, analyzePythonCommandRouting, analyzePythonInstallations, analyzeRuntimeLinks, attachFnmManagerEvidence, attachMiseNodeEvidence, attachMisePythonEvidence, attachPyenvManagerEvidence, attachUvManagerEvidence, attachVoltaManagerEvidence, buildAiDecision, compareNpmGlobalPackages, comparePythonPackages, findNodeCandidates, findPythonCandidates, inspectFnmNodeManager, inspectMiseRuntimeManager, inspectPyenvPythonManager, inspectVoltaNodeManager, linkNodeNpmRuntimes, linkPythonPipRuntimes, miseInventoryForRuntime, parseFnmNodeList, parseMiseRuntimeInventory, parsePackageManager, parsePipList, parsePipVersion, parsePyenvVersions, parseVoltaNodeList, summarizePipInspect, summarizePythonPackages } from "../src/package-managers.js";
 
 test("parsePackageManager separates package manager and pinned version", () => {
   assert.deepEqual(parsePackageManager("npm@10.8.2"), { name: "npm", version: "10.8.2" });
@@ -76,6 +76,53 @@ test("Volta ownership requires inventory and reported image path", () => {
   assert.equal(routed.managerEvidence.ownershipProven, false);
   assert.equal(inferred.managerEvidence.relationship, "managed-root-inference");
   assert.equal(inferred.managerEvidence.ownershipProven, false);
+});
+
+test("fnm list parser keeps installed versions and bounded aliases", () => {
+  assert.deepEqual(parseFnmNodeList("* v22.14.0 default\n  v20.18.1 lts-iron\n* system\nnoise"), [
+    { version: "22.14.0", state: "default", aliases: [] },
+    { version: "20.18.1", state: "installed", aliases: ["lts-iron"] }
+  ]);
+});
+
+test("fnm ownership requires list and exact version installation path", () => {
+  const inventory = { collection: "collected", manager: "fnm", version: "1.38.1", managedRoot: "/home/me/.local/share/fnm/node-versions", runtimes: [{ version: "22.14.0" }] };
+  const [managed, routed, unrelated] = attachFnmManagerEvidence([
+    { version: "22.14.0", path: "/home/me/.local/share/fnm/node-versions/v22.14.0/installation/bin/node", reportedExecutable: "/home/me/.local/share/fnm/node-versions/v22.14.0/installation/bin/node", managerEvidence: { confidence: "none", ownershipProven: false } },
+    { version: "22.14.0", path: "/usr/bin/node", reportedExecutable: "/usr/bin/node", source: "fnm", managerEvidence: { confidence: "none", ownershipProven: false } },
+    { version: "20.18.1", path: "/usr/bin/node", reportedExecutable: "/usr/bin/node", managerEvidence: { confidence: "none", ownershipProven: false } }
+  ], inventory);
+  assert.equal(managed.managerEvidence.ownershipProven, true);
+  assert.equal(managed.managerEvidence.relationship, "list-and-version-path-match");
+  assert.equal(managed.managerEvidence.removalAuthorized, false);
+  assert.equal(routed.managerEvidence.ownershipProven, false);
+  assert.equal(routed.managerEvidence.confidence, "medium");
+  assert.equal(unrelated.managerEvidence.manager, undefined);
+});
+
+test("Windows fnm inventory is collected with read-only commands", { skip: process.platform !== "win32" }, async () => {
+  const dir = await fs.mkdtemp(path.join(os.tmpdir(), "aienvmap-fnm-"));
+  const command = path.join(dir, "fnm.cmd");
+  await fs.writeFile(command, "@echo off\r\nif \"%1\"==\"--version\" echo fnm 1.38.1\r\nif \"%1\"==\"list\" echo * v22.14.0 default\r\n", "utf8");
+  try {
+    const result = await inspectFnmNodeManager({ fullPackages: true, fnmCommand: command, platform: "win32", home: dir, env: {}, showPaths: true, projectDir: dir });
+    assert.equal(result.collection, "collected");
+    assert.equal(result.runtimeCount, 1);
+    assert.equal(result.runtimes[0].version, "22.14.0");
+    assert.match(result.managedRoot, /AppData[\\/]Roaming[\\/]fnm[\\/]node-versions$/);
+    assert.match(result.semantics, /no shell activation, install, use, or uninstall/);
+  } finally { await fs.rm(dir, { recursive: true, force: true }); }
+});
+
+test("Node discovery includes inactive fnm installation paths", async () => {
+  const dir = await fs.mkdtemp(path.join(os.tmpdir(), "aienvmap-fnm-root-"));
+  const binary = path.join(dir, "node-versions", "v22.14.0", "installation", process.platform === "win32" ? "node.exe" : "bin/node");
+  await fs.mkdir(path.dirname(binary), { recursive: true });
+  await fs.writeFile(binary, "");
+  try {
+    const candidates = await findNodeCandidates({ env: { FNM_DIR: dir }, home: dir, pathValue: "" });
+    assert.equal(candidates.some((item) => item.path === path.resolve(binary) && item.source === "fnm" && item.discovery === "known-root"), true);
+  } finally { await fs.rm(dir, { recursive: true, force: true }); }
 });
 
 test("Windows Volta plain inventory is collected read-only", { skip: process.platform !== "win32" }, async () => {
@@ -466,6 +513,7 @@ test("reconcile CLI is read-only and returns machine-readable package-manager st
   assert.ok(Array.isArray(json.python.installations));
   assert.ok(Array.isArray(json.node.installations));
   assert.equal(json.node.managerInventories.volta.collection, "not-requested");
+  assert.equal(json.node.managerInventories.fnm.collection, "not-requested");
   assert.equal(json.node.managerInventories.mise.collection, "not-requested");
   assert.ok(json.node.installations.every((item) => item.managerEvidence));
   assert.ok(Array.isArray(json.npm.runtimeLinks));

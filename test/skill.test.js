@@ -29,6 +29,7 @@ test("packaged aienvmap skill points AI agents to current startup contracts", as
   assert.match(skill, /componentInventory\.truncated/);
   assert.match(skill, /identityConfidence/);
   assert.match(skill, /fallback-only/);
+  assert.match(skill, /list-and-version-path-match/);
   assert.match(skill, /Read `externalSbom` during startup/);
   assert.match(skill, /refresh-import-required/);
   assert.match(skill, /python\.managerInventories/);
