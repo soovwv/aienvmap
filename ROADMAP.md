@@ -50,6 +50,7 @@ Acceptance gates: cross-platform fixtures for every manager, no writes in defaul
 - Keep one advisory decision engine with optional strict enforcement
 - Keep vulnerability checks opt-in and read-only
 - Keep external SBOM/security tools optional; do not require Syft, Trivy, Grype, or similar tools for the default flow
+- Keep external SBOM baseline comparison bounded and original-first; truncated inventories must never imply a complete no-change result
 - Stabilize `.aienvmap/manifest.json` and JSON command schemas
 - Keep `sync`, `context`, and `handoff` as the simple core flow
 - Simplify the dashboard around the essential 10-second review cards: AI Session, Environment Health, Collaboration, Light SBOM, Agent Pointers, Timeline/Intents, and Release/Strict Gate

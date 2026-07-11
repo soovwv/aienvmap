@@ -2,7 +2,7 @@ import { sbomReadOrder } from "../ai-contract.js";
 import { readJson, writeJson } from "../fsutil.js";
 import fs from "node:fs/promises";
 import { cyclonedxSbomPath, externalSbomEvidencePath, manifestPath, sbomJsonPath, workspaceDir } from "../paths.js";
-import { importSbomEvidence, verifySbomEvidence } from "../sbom-evidence.js";
+import { compareSbomEvidence, importSbomEvidence, verifySbomEvidence } from "../sbom-evidence.js";
 
 export async function sbomWorkspace(args = {}) {
   const dir = workspaceDir(args);
@@ -12,9 +12,15 @@ export async function sbomWorkspace(args = {}) {
   if (args.clear_import && !args.write) throw new Error("--clear-import requires --write");
   const evidenceFile = externalSbomEvidencePath(dir);
   if (args.clear_import) await fs.rm(evidenceFile, { force: true });
-  const importedEvidence = args.import ? await importSbomEvidence(dir, args.import) : null;
+  const previousEvidence = !args.clear_import ? await readJson(evidenceFile, null) : null;
+  const imported = args.import ? await importSbomEvidence(dir, args.import) : null;
+  const importedEvidence = imported ? {
+    ...imported,
+    baselineDigest: previousEvidence?.digest || "",
+    baselineDrift: compareSbomEvidence(previousEvidence || {}, imported)
+  } : null;
   if (importedEvidence && args.write) await writeJson(evidenceFile, importedEvidence);
-  const persistedEvidence = !args.clear_import ? await readJson(evidenceFile, null) : null;
+  const persistedEvidence = importedEvidence || previousEvidence;
   const externalEvidence = importedEvidence || (persistedEvidence ? await verifySbomEvidence(dir, persistedEvidence) : null) || noExternalEvidence();
   const format = normalizeFormat(args.format);
   const sbom = format === "cyclonedx-lite" ? buildCycloneDxLite(manifest, externalEvidence) : buildSbomArtifact(manifest, externalEvidence);
@@ -99,12 +105,14 @@ function noExternalEvidence() {
 function externalEvidenceDecision(evidence = {}) {
   const imported = evidence.status === "imported";
   const stale = evidence.status === "stale";
+  const drifted = imported && evidence.baselineDrift?.status === "changed";
   return {
-    decision: imported ? "read-original-before-claims" : stale ? "refresh-import-required" : "no-external-evidence",
+    decision: drifted ? "component-drift-review" : imported ? "read-original-before-claims" : stale ? "refresh-import-required" : "no-external-evidence",
     artifact: imported || stale ? evidence.artifact : "",
     digest: imported || stale ? evidence.digest : "",
     format: imported || stale ? evidence.format : "",
     securityEvidence: evidence.securityEvidence || "none",
+    baselineDrift: evidence.baselineDrift || { status: "baseline-unavailable", comparable: false },
     nextCommand: imported ? `review ${evidence.artifact}` : stale ? `aienvmap sbom --import ${evidence.artifact} --write` : "aienvmap sbom --import <workspace-sbom.json> --write",
     rule: imported
       ? "Use this summary for coordination only; read and validate the original external SBOM before security, compliance, remediation, or release claims."
@@ -386,6 +394,7 @@ export function buildCycloneDxLite(manifest = {}, externalEvidence = noExternalE
       { name: "aienvmap:externalEvidence:format", value: externalEvidence.format || "" },
       { name: "aienvmap:externalEvidence:specVersion", value: externalEvidence.specVersion || "" },
       { name: "aienvmap:externalEvidence:summary", value: JSON.stringify(externalEvidence.summary || {}) },
+      { name: "aienvmap:externalEvidence:baselineDrift", value: JSON.stringify(externalEvidence.baselineDrift || {}) },
       { name: "aienvmap:aiBootstrap:rule", value: aiBootstrap.rule }
     ]
   };
