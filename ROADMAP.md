@@ -8,6 +8,8 @@ Product scoring is evidence-bounded in `SCORECARD.md` and `aienvmap scorecard --
 
 Reconciliation may propose consolidation evidence and approval gates, but never executes uninstall, deletion, PATH edits, runtime switching, or package migration.
 
+`npm run perf:check` enforces cross-platform regression ceilings for AI startup, quick reconciliation, scorecard output, and generated artifact size; these are CI guards, not latency promises.
+
 ## Competitive Boundary
 
 - mise, Flox, and Devbox declare, install, lock, or reproduce environments; aienvmap observes the runtime state that already exists on a host and gives AI agents review-first coordination evidence.

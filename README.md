@@ -144,7 +144,7 @@ The GitHub Action writes discovery, status, summary, schema, doctor, plan, SBOM,
 
 ```bash
 node --test
-npm run smoke
+npm run smoke && npm run perf:check
 npm run demo:conflict
 npm run release:check
 npm pack --dry-run

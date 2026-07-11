@@ -158,6 +158,7 @@ test("package publish allowlist stays small and intentional", async () => {
   assert.deepEqual(pkg.files, [
     "bin",
     "src",
+    "scripts/performance-check.mjs",
     "README.md",
     "LICENSE",
     "CHANGELOG.md",

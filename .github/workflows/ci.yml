@@ -40,5 +40,8 @@ jobs:
       - name: Smoke
         run: npm run smoke
 
+      - name: Performance budgets
+        run: npm run perf:check
+
       - name: Pack dry-run
         run: npm run pack:dry
