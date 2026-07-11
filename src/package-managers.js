@@ -13,7 +13,7 @@ const pythonNames = process.platform === "win32" ? ["python.exe", "python3.exe"]
 const pipNames = process.platform === "win32" ? ["pip.exe", "pip3.exe"] : ["pip3", "pip"];
 
 export async function inspectPackageManagers(dir, options = {}) {
-  const [candidates, nodeCandidates, pythonCandidates, pipCandidates, commonRuntimes, project, uvPythonManager, pyenvPythonManager, voltaNodeManager, miseRuntimeManager] = await Promise.all([
+  const [candidates, nodeCandidates, pythonCandidates, pipCandidates, commonRuntimes, project, uvPythonManager, pyenvPythonManager, voltaNodeManager, fnmNodeManager, miseRuntimeManager] = await Promise.all([
     findNpmCandidates(options),
     findNodeCandidates(options),
     findPythonCandidates({ ...options, projectDir: dir }),
@@ -23,6 +23,7 @@ export async function inspectPackageManagers(dir, options = {}) {
     inspectUvPythonManager(options),
     inspectPyenvPythonManager(options),
     inspectVoltaNodeManager({ ...options, projectDir: dir }),
+    inspectFnmNodeManager({ ...options, projectDir: dir }),
     inspectMiseRuntimeManager({ ...options, projectDir: dir })
   ]);
   const inspected = await Promise.all(candidates.map(async (candidate, index) => {
@@ -53,7 +54,7 @@ export async function inspectPackageManagers(dir, options = {}) {
   const inspectedPythonInstallations = await inspectPythonCandidates(pythonCandidates, options);
   const pythonInstallations = attachMisePythonEvidence(attachPyenvManagerEvidence(attachUvManagerEvidence(inspectedPythonInstallations, uvPythonManager), pyenvPythonManager), miseRuntimeManager);
   const pipCommands = await inspectPipCandidates(pipCandidates, options);
-  const nodeInstallations = attachMiseNodeEvidence(attachVoltaManagerEvidence(await inspectNodeCandidates(nodeCandidates, options), voltaNodeManager), miseRuntimeManager);
+  const nodeInstallations = attachMiseNodeEvidence(attachFnmManagerEvidence(attachVoltaManagerEvidence(await inspectNodeCandidates(nodeCandidates, options), voltaNodeManager), fnmNodeManager), miseRuntimeManager);
   const npmRuntimeLinks = linkNodeNpmRuntimes(nodeInstallations, installations);
   const pipRuntimeLinks = linkPythonPipRuntimes(pythonInstallations, pipCommands);
   const findings = [
@@ -84,7 +85,7 @@ export async function inspectPackageManagers(dir, options = {}) {
       installations: nodeInstallations,
       active: nodeInstallations.find((item) => item.active) || null,
       distinctVersions: [...new Set(nodeInstallations.map((item) => item.version))],
-      managerInventories: { volta: voltaNodeManager, mise: miseInventoryForRuntime(miseRuntimeManager, "node") }
+      managerInventories: { volta: voltaNodeManager, fnm: fnmNodeManager, mise: miseInventoryForRuntime(miseRuntimeManager, "node") }
     },
     npm: {
       installations,
@@ -111,6 +112,71 @@ export async function inspectPackageManagers(dir, options = {}) {
     decision: findings.some((item) => item.severity === "review") ? "review" : "clear",
     aiDecision
   };
+}
+
+export async function inspectFnmNodeManager(options = {}) {
+  if (!options.fullPackages) return {
+    collection: "not-requested",
+    manager: "fnm",
+    reason: "Use --full-packages for fnm-managed Node evidence."
+  };
+  const platform = options.platform || process.platform;
+  const command = options.fnmCommand || (platform === "win32" ? "fnm.exe" : "fnm");
+  const versionResult = await portableCommandResult(command, ["--version"], { timeout: 3500, platform, cwd: options.projectDir });
+  const managerVersion = firstVersion(`${versionResult.stdout}\n${versionResult.stderr}`);
+  if (!versionResult.ok || !managerVersion) return { collection: "unavailable", manager: "fnm", reason: "fnm was not available." };
+  const listResult = await portableCommandResult(command, ["list"], { timeout: 5000, maxBuffer: 1024 * 1024, platform, cwd: options.projectDir });
+  if (!listResult.ok) return { collection: "unsupported-or-failed", manager: "fnm", version: managerVersion, reason: "fnm did not return its local Node inventory." };
+  const all = parseFnmNodeList(listResult.stdout);
+  const env = options.env || process.env;
+  const home = options.home || os.homedir();
+  const fnmDir = env.FNM_DIR || defaultFnmDir(platform, env, home);
+  return {
+    collection: "collected",
+    manager: "fnm",
+    version: managerVersion,
+    managedRoot: displayPath(path.join(fnmDir, "node-versions"), options),
+    runtimeCount: Math.min(all.length, 100),
+    runtimes: all.slice(0, 100),
+    truncated: all.length > 100,
+    semantics: "fnm local list plus exact version installation-path evidence; no shell activation, install, use, or uninstall command is run."
+  };
+}
+
+export function parseFnmNodeList(raw) {
+  const runtimes = [];
+  for (const line of String(raw || "").split(/\r?\n/)) {
+    const match = line.trim().match(/^\*?\s*v(\d+\.\d+\.\d+)(?:\s+(.+))?$/i);
+    if (!match) continue;
+    const labels = String(match[2] || "").trim().split(/\s+/).filter(Boolean).slice(0, 10);
+    runtimes.push({ version: match[1], state: labels.includes("default") ? "default" : "installed", aliases: labels.filter((item) => item !== "default") });
+  }
+  return runtimes.filter((item, index) => runtimes.findIndex((other) => other.version === item.version) === index);
+}
+
+export function attachFnmManagerEvidence(nodeInstallations = [], fnm = {}) {
+  return nodeInstallations.map((node) => {
+    if (node.managerEvidence?.ownershipProven === true) return node;
+    const listed = fnm.collection === "collected" && (fnm.runtimes || []).find((item) => item.version === node.version);
+    const versionRoot = listed && fnm.managedRoot ? path.join(fnm.managedRoot, `v${listed.version}`, "installation") : "";
+    const exact = Boolean(versionRoot && pathContains(versionRoot, node.reportedExecutable));
+    const inferred = node.source === "fnm" || Boolean(fnm.managedRoot && (pathContains(fnm.managedRoot, node.path) || pathContains(fnm.managedRoot, node.reportedExecutable)));
+    if (exact) return { ...node, managerEvidence: {
+      manager: "fnm", managerVersion: fnm.version, relationship: "list-and-version-path-match", confidence: "strong", ownershipProven: true,
+      proofScope: "fnm-managed-runtime", matchedKey: listed.version, removalAuthorized: false
+    } };
+    if (!listed && !inferred || node.managerEvidence?.confidence === "medium") return node;
+    return { ...node, managerEvidence: {
+      manager: "fnm", managerVersion: fnm.version || "", relationship: listed ? "inventory-version-match" : "managed-root-inference",
+      confidence: "medium", ownershipProven: false, proofScope: listed ? "version-and-routing-only" : "path-only", matchedKey: listed?.version || "", removalAuthorized: false
+    } };
+  });
+}
+
+function defaultFnmDir(platform, env, home) {
+  if (platform === "win32") return path.join(env.APPDATA || path.join(home, "AppData", "Roaming"), "fnm");
+  if (platform === "darwin") return path.join(home, "Library", "Application Support", "fnm");
+  return path.join(env.XDG_DATA_HOME || path.join(home, ".local", "share"), "fnm");
 }
 
 export async function inspectMiseRuntimeManager(options = {}) {
