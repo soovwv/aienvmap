@@ -204,8 +204,8 @@ test("renderSummary keeps the AI handoff compact and actionable", () => {
   assert.match(markdown, /default decision: hold/);
   assert.match(markdown, /publish gate: hold \/ Keep committing tested stabilization changes/);
   assert.match(markdown, /current batch: accumulating \/ stability-batch \/ AI discovery, dependency quick check, dashboard parity/);
-  assert.match(markdown, /next stabilization: freeze and review documented JSON root fields before 0\.2\.0/);
-  assert.match(markdown, /contract review: pending-0\.2\.0-review \/ node bin\/aienvmap\.js schema --json \/ discover, start, discovery, status, context/);
+  assert.match(markdown, /next stabilization: keep the reviewed JSON root-field freeze candidate unchanged/);
+  assert.match(markdown, /contract review: freeze-candidate-verified \/ npm run contract:check \/ discover, start, discovery, status, context/);
   assert.match(markdown, /batch reason: Several stability and AI-contract changes/);
   assert.match(markdown, /publish when: meaningful AI contract/);
   assert.match(markdown, /hold when: only one small documentation/);

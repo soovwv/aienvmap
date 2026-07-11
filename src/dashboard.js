@@ -54,8 +54,8 @@ export const dashboardReleaseDefaults = Object.freeze({
   focus: "AI contract stabilization",
   publishWhen: "meaningful changes are batched",
   holdWhen: "changes can be batched",
-  contractReviewStatus: "pending-0.2.0-review",
-  contractReviewCommand: "node bin/aienvmap.js schema --json",
+  contractReviewStatus: "freeze-candidate-verified",
+  contractReviewCommand: "npm run contract:check",
   batchRule: "Batch meaningful changes before one npm publish.",
   publishRule: "Treat publishGate.status as the single AI-readable npm publish decision; local commits may continue while npm publish remains held.",
   stableContractRule: "After 0.2.0, documented JSON fields stay additive and backward-compatible."

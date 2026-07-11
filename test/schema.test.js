@@ -280,14 +280,15 @@ test("schemaContract describes stable AI output contracts", () => {
   assert.ok(schema.releaseReadiness.requiredBeforeStable.includes("package metadata and CLI help match AI workspace coordination positioning"));
   assert.ok(schema.releaseReadiness.evidenceCommands.includes("npm run release:check"));
   assert.ok(schema.releaseReadiness.evidenceCommands.includes("node bin/aienvmap.js demo --json"));
-  assert.match(schema.releaseReadiness.nextStabilizationTasks.join(" "), /freeze and review documented JSON root fields/);
+  assert.match(schema.releaseReadiness.nextStabilizationTasks.join(" "), /root-field freeze candidate/);
   assert.match(schema.releaseReadiness.nextStabilizationTasks.join(" "), /aiAdoptionDecision/);
   assert.match(schema.releaseReadiness.nextStabilizationTasks.join(" "), /packaged skill/);
   assert.match(schema.releaseReadiness.nextStabilizationTasks.join(" "), /dashboard Quality Signals/);
   assert.match(schema.releaseReadiness.nextStabilizationTasks.join(" "), /Codex, Claude, Gemini, Cursor, and Copilot/);
   assert.match(schema.releaseReadiness.nextStabilizationTasks.join(" "), /CHANGELOG as one 0\.2\.0 release-note group/);
-  assert.equal(schema.releaseReadiness.contractReview.status, "pending-0.2.0-review");
-  assert.equal(schema.releaseReadiness.contractReview.command, "node bin/aienvmap.js schema --json");
+  assert.equal(schema.releaseReadiness.contractReview.status, "freeze-candidate-verified");
+  assert.equal(schema.releaseReadiness.contractReview.command, "npm run contract:check");
+  assert.equal(schema.releaseReadiness.contractReview.baseline, "contracts/ai-json-root-fields.v1.json");
   assert.ok(schema.releaseReadiness.contractReview.surfaces.includes("start"));
   assert.ok(schema.releaseReadiness.contractReview.surfaces.includes("sbom"));
   assert.ok(schema.releaseReadiness.contractReview.surfaces.includes("demo"));
@@ -585,7 +586,7 @@ test("schemaWorkspace prints JSON without requiring a workspace", async () => {
   assert.equal(schema.releaseReadiness.target, "0.2.0");
   assert.equal(schema.releaseReadiness.currentBatch.decision, "hold");
   assert.ok(schema.releaseReadiness.evidenceCommands.includes("npm pack --dry-run"));
-  assert.ok(schema.releaseReadiness.nextStabilizationTasks.includes("freeze and review documented JSON root fields before 0.2.0"));
+  assert.ok(schema.releaseReadiness.nextStabilizationTasks.some((item) => item.includes("root-field freeze candidate")));
   assert.ok(schema.releaseReadiness.contractReview.surfaces.includes("context"));
   assert.match(schema.compatibility.localBehavior, /read-only/);
 });

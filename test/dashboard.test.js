@@ -641,7 +641,7 @@ test("renderDashboard includes the audit summary surface", () => {
   assert.match(dashboardReleaseClientScripts(), /const operationalCards=/);
   assert.equal(dashboardReleaseDefaults.target, "0.2.0");
   assert.equal(dashboardReleaseDefaults.evidence, "npm run release:check");
-  assert.equal(dashboardReleaseDefaults.contractReviewStatus, "pending-0.2.0-review");
+  assert.equal(dashboardReleaseDefaults.contractReviewStatus, "freeze-candidate-verified");
   assert.match(dashboardQualitySignalsClientScript(), /const qualitySignals=manifest\.preflight\?\.qualitySignals/);
   assert.match(dashboardQualitySignalsClientScript(), /const aiAdoptionDecision=schemaAiAdoptionDecision\|\|\{\}/);
   assert.match(dashboardQualitySignalsClientScript(), /const dashboardQualityDefaults=/);
