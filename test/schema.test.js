@@ -50,7 +50,8 @@ test("schemaContract describes stable AI output contracts", () => {
   assert.match(schema.outputs.reconcilePortable.fingerprintRule, /pseudonymous/);
   assert.match(schema.outputs.reconcilePortableCompare.command, /--portable-compare/);
   assert.ok(schema.outputs.reconcilePortableCompare.rootFields.includes("changes"));
-  assert.deepEqual(schema.outputs.reconcile.detailedToolchains, ["node/npm/pnpm/yarn/corepack", "python/pip"]);
+  assert.deepEqual(schema.outputs.reconcile.detailedToolchains, ["node/npm/pnpm/yarn/corepack", "python/pip/uv/pipx"]);
+  assert.ok(schema.outputs.reconcile.pythonToolEntryPointFields.includes("routingEvidence"));
   assert.ok(schema.outputs.reconcile.discoveryEvidenceFields.includes("osNativeCount"));
   assert.deepEqual(schema.outputs.reconcile.javaNativeSources, ["windows-registry", "macos-java-home", "linux-alternatives"]);
   assert.ok(schema.outputs.reconcile.javaIdentityFields.includes("vendor"));

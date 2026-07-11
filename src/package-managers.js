@@ -12,17 +12,19 @@ const npmNames = process.platform === "win32" ? ["npm.cmd", "npm.exe"] : ["npm"]
 const nodeNames = process.platform === "win32" ? ["node.exe"] : ["node"];
 const pythonNames = process.platform === "win32" ? ["python.exe", "python3.exe"] : ["python3", "python"];
 const pipNames = process.platform === "win32" ? ["pip.exe", "pip3.exe"] : ["pip3", "pip"];
+const pythonToolNames = process.platform === "win32" ? { uv: ["uv.exe"], pipx: ["pipx.exe"] } : { uv: ["uv"], pipx: ["pipx"] };
 const nodePackageManagerNames = process.platform === "win32"
   ? { pnpm: ["pnpm.cmd", "pnpm.exe"], yarn: ["yarn.cmd", "yarn.exe"], corepack: ["corepack.cmd", "corepack.exe"] }
   : { pnpm: ["pnpm"], yarn: ["yarn"], corepack: ["corepack"] };
 
 export async function inspectPackageManagers(dir, options = {}) {
-  const [candidates, nodePackageManagerCandidates, nodeCandidates, pythonCandidates, pipCandidates, commonRuntimes, project, uvPythonManager, pyenvPythonManager, voltaNodeManager, fnmNodeManager, nvmNodeManager, miseRuntimeManager] = await Promise.all([
+  const [candidates, nodePackageManagerCandidates, nodeCandidates, pythonCandidates, pipCandidates, pythonToolCandidates, commonRuntimes, project, uvPythonManager, pyenvPythonManager, voltaNodeManager, fnmNodeManager, nvmNodeManager, miseRuntimeManager] = await Promise.all([
     findNpmCandidates(options),
     findNodePackageManagerCandidates(options),
     findNodeCandidates(options),
     findPythonCandidates({ ...options, projectDir: dir }),
     findPipCandidates({ ...options, projectDir: dir }),
+    findPythonToolCandidates(options),
     inspectCommonRuntimes({ ...options, projectDir: dir }),
     readProjectExpectation(dir),
     inspectUvPythonManager(options),
@@ -61,6 +63,7 @@ export async function inspectPackageManagers(dir, options = {}) {
   const inspectedPythonInstallations = await inspectPythonCandidates(pythonCandidates, options);
   const pythonInstallations = attachMisePythonEvidence(attachPyenvManagerEvidence(attachUvManagerEvidence(inspectedPythonInstallations, uvPythonManager), pyenvPythonManager), miseRuntimeManager);
   const pipCommands = await inspectPipCandidates(pipCandidates, options);
+  const toolEntryPoints = await inspectPythonToolCandidates(pythonToolCandidates, pipCommands, options);
   const nodeInstallations = attachMiseNodeEvidence(attachNvmManagerEvidence(attachFnmManagerEvidence(attachVoltaManagerEvidence(await inspectNodeCandidates(nodeCandidates, options), voltaNodeManager), fnmNodeManager), nvmNodeManager), miseRuntimeManager);
   const npmRuntimeLinks = linkNodeNpmRuntimes(nodeInstallations, installations);
   const pipRuntimeLinks = linkPythonPipRuntimes(pythonInstallations, pipCommands);
@@ -70,6 +73,7 @@ export async function inspectPackageManagers(dir, options = {}) {
     ...analyzeNodePackageManagers(alternativeManagers, project),
     ...analyzePythonInstallations(pythonInstallations, project),
     ...analyzePythonCommandRouting(pythonInstallations, pipCommands),
+    ...analyzePythonToolEntryPoints(pipCommands, toolEntryPoints),
     ...analyzeRuntimeLinks(npmRuntimeLinks, pipRuntimeLinks, nodeInstallations, pythonInstallations),
     ...analyzeCommonRuntimes(commonRuntimes),
     ...analyzeJavaBuildTools(commonRuntimes.java)
@@ -119,6 +123,7 @@ export async function inspectPackageManagers(dir, options = {}) {
       distinctVersions: [...new Set(pythonInstallations.map((item) => item.version))],
       packageLocations: [...new Set(pythonInstallations.flatMap((item) => item.packageLocations || []).filter(Boolean))],
       pipCommands,
+      toolEntryPoints,
       runtimeLinks: pipRuntimeLinks,
       packageComparisons: comparePythonPackages(pythonInstallations),
       managerEvidence: uvPythonManager,
@@ -704,6 +709,69 @@ export async function findPipCandidates(options = {}) {
   }
   for (const file of projectPipCandidates(options.projectDir)) await add(file, "project-venv", "project", "project-known-path");
   return found;
+}
+
+export async function findPythonToolCandidates(options = {}) {
+  const found = [];
+  const seen = new Set();
+  const add = async (tool, file, discovery = "PATH") => {
+    if (!(await exists(file))) return;
+    let key = `${tool}:${path.resolve(file).toLowerCase()}`;
+    try { key = `${tool}:${(await fs.realpath(file)).toLowerCase()}`; } catch {}
+    if (seen.has(key)) return;
+    seen.add(key);
+    const dir = path.dirname(file);
+    found.push({ tool, path: path.resolve(file), source: classifySource(dir), scope: classifyScope(dir), discovery });
+  };
+  for (const dir of pathEntries(options.pathValue ?? process.env.PATH)) {
+    for (const [tool, names] of Object.entries(pythonToolNames)) for (const name of names) await add(tool, path.join(dir, name));
+  }
+  const home = options.home || os.homedir();
+  const env = options.env || process.env;
+  const userBins = process.platform === "win32"
+    ? [path.join(env.USERPROFILE || home, ".local", "bin"), path.join(env.APPDATA || path.join(home, "AppData", "Roaming"), "Python", "Scripts")]
+    : [path.join(home, ".local", "bin")];
+  for (const dir of userBins) for (const [tool, names] of Object.entries(pythonToolNames)) for (const name of names) await add(tool, path.join(dir, name), "known-user-bin");
+  if (process.platform === "win32") {
+    const pythonUserRoot = path.join(env.APPDATA || path.join(home, "AppData", "Roaming"), "Python");
+    const allNames = Object.values(pythonToolNames).flat();
+    for (const file of await namedFilesBelow(pythonUserRoot, 3, allNames)) {
+      const tool = Object.entries(pythonToolNames).find(([, names]) => names.includes(path.basename(file).toLowerCase()))?.[0];
+      if (tool) await add(tool, file, "known-user-python-scripts");
+    }
+  }
+  return found;
+}
+
+export async function inspectPythonToolCandidates(candidates = [], pipCommands = [], options = {}) {
+  const inspected = await Promise.all(candidates.map(async (candidate) => {
+    const result = await portableCommandResult(candidate.path, ["--version"], { timeout: 3500, platform: options.platform || process.platform });
+    const version = result.ok ? firstVersion(`${result.stdout}\n${result.stderr}`) : null;
+    if (!version) return null;
+    const pipDirs = new Set(pipCommands.map((item) => path.dirname(item.path).toLowerCase()));
+    return { tool: candidate.tool, version, path: displayPath(candidate.path, options), source: candidate.source, scope: candidate.scope, discovery: candidate.discovery, routingEvidence: pipDirs.has(path.dirname(displayPath(candidate.path, options)).toLowerCase()) ? "co-located-with-pip" : "standalone-or-unknown", ownershipProven: false, removalAuthorized: false };
+  }));
+  return Object.fromEntries(["uv", "pipx"].map((tool) => {
+    const installations = inspected.filter((item) => item?.tool === tool).map((item, index) => ({ ...item, active: index === 0 }));
+    return [tool, { installations, active: installations[0] || null, distinctVersions: [...new Set(installations.map((item) => item.version))] }];
+  }));
+}
+
+export function analyzePythonToolEntryPoints(pipCommands = [], tools = {}) {
+  const findings = [];
+  const inventories = { pip: { installations: pipCommands, distinctVersions: [...new Set(pipCommands.map((item) => item.version))] }, ...tools };
+  for (const tool of ["pip", "uv", "pipx"]) {
+    const inventory = inventories[tool] || {};
+    const installations = inventory.installations || [];
+    if (installations.length < 2) continue;
+    const versions = inventory.distinctVersions || [];
+    findings.push({
+      code: `multiple-${tool}-entry-points`, severity: versions.length > 1 ? "review" : "info",
+      message: `${installations.length} ${tool} entry points were detected${versions.length > 1 ? ` with versions ${versions.join(", ")}` : ""}.`,
+      action: `Review Python/tool ownership and PATH ordering before using or removing a ${tool} entry point.`
+    });
+  }
+  return findings;
 }
 
 async function inspectPipCandidates(candidates, options) {

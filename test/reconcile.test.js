@@ -5,6 +5,7 @@ import os from "node:os";
 import path from "node:path";
 import { analyzeNodeInstallations, analyzeNodePackageManagers, analyzeNpmInstallations, analyzePythonCommandRouting, analyzePythonInstallations, analyzeRuntimeLinks, attachFnmManagerEvidence, attachMiseNodeEvidence, attachMisePythonEvidence, attachNvmManagerEvidence, attachPyenvManagerEvidence, attachUvManagerEvidence, attachVoltaManagerEvidence, buildAiDecision, buildConsolidationPlan, compareNpmGlobalPackages, comparePythonPackages, findNodeCandidates, findNodePackageManagerCandidates, findPythonCandidates, inspectFnmNodeManager, inspectMiseRuntimeManager, inspectNodePackageManagerCandidates, inspectNvmNodeManager, inspectPyenvPythonManager, inspectVoltaNodeManager, linkNodeNpmRuntimes, linkPythonPipRuntimes, miseInventoryForRuntime, parseFnmNodeList, parseMiseRuntimeInventory, parsePackageManager, parsePipList, parsePipVersion, parsePyenvVersions, parseVoltaNodeList, summarizePipInspect, summarizePythonPackages } from "../src/package-managers.js";
 import { buildPortableReconciliation, comparePortableReconciliations, portableEvidenceFingerprint } from "../src/commands/reconcile.js";
+import { analyzePythonToolEntryPoints, findPythonToolCandidates, inspectPythonToolCandidates } from "../src/package-managers.js";
 import * as portableReconcile from "../src/portable-reconcile.js";
 
 test("reconcile command preserves the portable helper compatibility exports", async () => {
@@ -65,6 +66,35 @@ test("node package-manager inspection reads versions without claiming shim owner
   assert.equal(result.pnpm.active.version, "10.2.1");
   assert.equal(result.pnpm.active.ownershipProven, false);
   assert.equal(result.pnpm.active.removalAuthorized, false);
+});
+
+test("Python tool analysis reports duplicate uv and pip entry points", () => {
+  const findings = analyzePythonToolEntryPoints(
+    [{ version: "24.0", path: "/one/pip" }, { version: "25.0", path: "/two/pip" }],
+    { uv: { installations: [{ version: "0.7" }, { version: "0.8" }], distinctVersions: ["0.7", "0.8"] }, pipx: { installations: [] } }
+  );
+  assert.deepEqual(findings.map((item) => item.code), ["multiple-pip-entry-points", "multiple-uv-entry-points"]);
+  assert.ok(findings.every((item) => item.severity === "review"));
+});
+
+test("Python tool discovery and inspection stay bounded and advisory", async () => {
+  const dir = await fs.mkdtemp(path.join(os.tmpdir(), "aienvmap-python-tool-"));
+  const name = process.platform === "win32" ? "uv.exe" : "uv";
+  const file = path.join(dir, name);
+  if (process.platform === "win32") {
+    const cmd = path.join(dir, "uv.cmd");
+    await fs.writeFile(cmd, "@echo uv 0.8.1\r\n", "utf8");
+    const inspected = await inspectPythonToolCandidates([{ tool: "uv", path: cmd, source: "PATH", scope: "user", discovery: "PATH" }], [], { showPaths: true });
+    assert.equal(inspected.uv.active.version, "0.8.1");
+    assert.equal(inspected.uv.active.removalAuthorized, false);
+  } else {
+    await fs.writeFile(file, "#!/bin/sh\necho uv 0.8.1\n", "utf8");
+    await fs.chmod(file, 0o755);
+    const candidates = await findPythonToolCandidates({ pathValue: dir, env: {}, home: dir });
+    const inspected = await inspectPythonToolCandidates(candidates, [], { showPaths: true });
+    assert.equal(inspected.uv.active.version, "0.8.1");
+    assert.equal(inspected.uv.active.ownershipProven, false);
+  }
 });
 
 test("analyzeNpmInstallations keeps same-version duplicates informational", () => {

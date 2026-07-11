@@ -67,6 +67,16 @@ test("compareReconciliation detects pnpm and Corepack routing drift", () => {
   assert.match(result.drift.changes.map((item) => item.field).join(" "), /npm\.alternativeManagers\.pnpm/);
 });
 
+test("compareReconciliation detects uv entry-point routing drift", () => {
+  const baseline = report();
+  baseline.python.toolEntryPoints = { uv: { installations: [{ tool: "uv", version: "0.7.0", path: "$HOME/bin/uv", routingEvidence: "standalone-or-unknown" }] } };
+  const current = report();
+  current.python.toolEntryPoints = { uv: { installations: [{ tool: "uv", version: "0.8.0", path: "$HOME/bin/uv", routingEvidence: "co-located-with-pip" }] } };
+  const result = compareReconciliation(baseline, current);
+  assert.equal(result.decision, "review");
+  assert.match(result.drift.changes.map((item) => item.field).join(" "), /python\.toolEntryPoints\.uv/);
+});
+
 test("compareReconciliation detects Volta Node inventory drift", () => {
   const baseline = report();
   baseline.node.managerInventories = { volta: { collection: "collected", runtimes: [{ version: "20.18.1", state: "default" }] } };
