@@ -73,6 +73,36 @@ test("intent and resolve support compare-and-swap for multiple AIs", async () =>
   assert.notEqual(result.coordinationRevision, first.coordinationRevision);
 });
 
+test("intent records bounded advisory session lease evidence", async () => {
+  const dir = await fs.mkdtemp(path.join(os.tmpdir(), "aienvmap-intent-lease-"));
+  const result = await recordIntentQuietly({
+    dir,
+    actor: "agent:codex",
+    session: "thread:abc123",
+    action: "update node",
+    target: "node",
+    lease_minutes: "30"
+  });
+  assert.equal(result.session, "thread:abc123");
+  assert.equal(result.leaseMinutes, 30);
+  assert.equal(new Date(result.leaseExpiresAt).getTime() - new Date(result.at).getTime(), 30 * 60_000);
+  const [open] = openIntents(await readJsonl(intentsPath(dir)), new Date(result.at));
+  assert.equal(open.lease.state, "active");
+  assert.equal(open.lease.removalAuthorized, false);
+});
+
+test("intent rejects unsafe session and lease values", async () => {
+  const dir = await fs.mkdtemp(path.join(os.tmpdir(), "aienvmap-intent-invalid-"));
+  await assert.rejects(
+    recordIntentQuietly({ dir, actor: "agent:codex", session: "bad\nsession", action: "update node" }),
+    /--session/
+  );
+  await assert.rejects(
+    recordIntentQuietly({ dir, actor: "agent:codex", action: "update node", lease_minutes: "2" }),
+    /--lease-minutes/
+  );
+});
+
 async function recordIntentQuietly(args) {
   const originalLog = console.log;
   console.log = () => {};

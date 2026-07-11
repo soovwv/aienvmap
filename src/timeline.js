@@ -13,7 +13,7 @@ export async function readJsonl(file) {
   }
 }
 
-export function openIntents(events = []) {
+export function openIntents(events = [], now = new Date()) {
   const byID = new Map();
   for (const event of events) {
     if (event.type === "intent-resolved") {
@@ -32,7 +32,24 @@ export function openIntents(events = []) {
       byID.set(id, { ...event, id, type: "intent", status: event.status || "open" });
     }
   }
-  return [...byID.values()].filter((intent) => intent.status === "open");
+  return [...byID.values()]
+    .filter((intent) => intent.status === "open")
+    .map((intent) => ({ ...intent, lease: intentLeaseState(intent, now) }));
+}
+
+export function intentLeaseState(intent = {}, now = new Date()) {
+  if (!intent.leaseExpiresAt) {
+    return { state: "unscoped", expiresAt: null, removalAuthorized: false, rule: "No lease was declared; age-based stale review still applies." };
+  }
+  const expiresAt = new Date(intent.leaseExpiresAt).getTime();
+  const current = new Date(now).getTime();
+  const valid = Number.isFinite(expiresAt) && Number.isFinite(current);
+  return {
+    state: !valid ? "invalid" : expiresAt <= current ? "expired" : "active",
+    expiresAt: intent.leaseExpiresAt,
+    removalAuthorized: false,
+    rule: "Lease state is advisory evidence; expiry never resolves, deletes, or transfers an intent automatically."
+  };
 }
 
 export function intentID(intent) {

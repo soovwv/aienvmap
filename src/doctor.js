@@ -73,8 +73,8 @@ export function coordinationWarnings(intents = []) {
     byTarget.set(target, list);
   }
   for (const [target, list] of byTarget) {
-    const actors = new Set(list.map((intent) => intent.actor).filter(Boolean));
-    if (list.length > 1 && actors.size > 1) {
+    const owners = new Set(list.map(intentOwner).filter(Boolean));
+    if (list.length > 1 && owners.size > 1) {
       warnings.push({
         code: "conflicting-open-intents",
         target,
@@ -88,6 +88,14 @@ export function coordinationWarnings(intents = []) {
 export function staleIntentWarnings(intents = [], now = new Date(), maxAgeHours = 4) {
   const warnings = [];
   for (const intent of intents) {
+    if (intent.lease?.state === "expired") {
+      warnings.push({
+        code: "expired-intent-lease",
+        target: intent.target || inferTarget(intent.action) || "",
+        message: `Open intent ${intent.id || ""} from ${intent.actor || "unknown"}${intent.session ? ` session ${intent.session}` : ""} passed its advisory lease expiry. Resolve or renew it before environment changes.`.replace(/\s+/g, " ").trim()
+      });
+      continue;
+    }
     if (!isStaleTimestamp(intent.at, now, maxAgeHours)) continue;
     warnings.push({
       code: "stale-open-intent",
@@ -96,6 +104,12 @@ export function staleIntentWarnings(intents = [], now = new Date(), maxAgeHours 
     });
   }
   return warnings;
+}
+
+function intentOwner(intent = {}) {
+  const actor = String(intent.actor || "").trim();
+  const session = String(intent.session || "").trim();
+  return actor ? `${actor}\0${session || "actor-only"}` : "";
 }
 
 export function handoffWarnings(timeline = []) {

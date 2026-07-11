@@ -161,7 +161,7 @@ Common:
 Advanced:
   aienvmap init [--dir .]
   aienvmap scan [--dir .] [--deep] [--security]
-  aienvmap intent [--dir .] --actor agent:codex --action "install pnpm" [--if-revision ir1:...]
+  aienvmap intent [--dir .] --actor agent:codex [--session thread:id] --action "install pnpm" [--lease-minutes 60] [--if-revision ir1:...]
   aienvmap resolve [--dir .] --actor human:you (--id <intent-id>|--target dependency|--all) [--status resolved|cancelled] [--if-revision ir1:...] [--json]
   aienvmap record [--dir .] --actor agent:codex --summary "updated .nvmrc" [--target node] [--before 20] [--after 24]
   aienvmap checkpoint [--dir .] --actor agent:codex --summary "updated dependency" [--target dependency]
