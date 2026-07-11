@@ -239,6 +239,16 @@ export function schemaContract() {
     dependencyQuickCheckFields: ["status", "purpose", "readFirst", "nextCommand", "reviewTargets", "scannerEvidence", "beforeChange", "afterChange", "mustNotDo", "rule"],
     coordinationResolutionFields: ["status", "mode", "targets", "readFirst", "nextCommand", "steps", "commands", "mustNotDo", "rule"],
     environmentChangeProtocolFields: ["mode", "appliesWhen", "state", "readFirst", "beforeChange", "afterChange", "commands", "mustNotDo", "nextCommand", "rule"],
+    intentLease: {
+      command: "aienvmap intent --actor agent:id --session thread:id --action planned-change --target dependency --lease-minutes 60",
+      optionalFields: ["session", "leaseMinutes", "leaseExpiresAt"],
+      states: ["active", "expired", "invalid", "unscoped"],
+      boundsMinutes: { minimum: 5, maximum: 1440 },
+      ownership: "actor plus optional session; separate sessions sharing an actor label are separate conflict owners",
+      expiry: "advisory-review-only",
+      removalAuthorized: false,
+      rule: "Expiry never resolves, deletes, transfers, or authorizes an environment change; use resolve or record a reviewed new intent."
+    },
     operationalSafety: operationalSafetyContract(),
     qualitySignals: qualitySignalsContract(),
     aiLoop: {
@@ -249,7 +259,7 @@ export function schemaContract() {
         { step: "sync", command: "aienvmap sync", purpose: "refresh AIENV.md, discovery, start-here README, status, summary, SBOM, ledger, and dashboard" },
         { step: "status", command: "aienvmap status", purpose: "read the 5-line clear/review decision" },
         { step: "context", command: "aienvmap context --json", purpose: "read the full AI preflight contract when details are needed" },
-        { step: "intent", command: "aienvmap intent --actor agent:id --action planned-change --target dependency", purpose: "record planned environment-affecting changes before touching shared state" },
+        { step: "intent", command: "aienvmap intent --actor agent:id --session thread:id --action planned-change --target dependency --lease-minutes 60", purpose: "record session-owned planned environment changes before touching shared state" },
         { step: "checkpoint", command: "aienvmap checkpoint --actor agent:id --summary dependency-change --target dependency", purpose: "record accepted changes, refresh outputs, and write handoff context" },
         { step: "handoff", command: "aienvmap handoff", purpose: "tell the next AI what to read, avoid, and review" }
       ],
@@ -496,6 +506,7 @@ export function schemaContract() {
         aiDecisionEnvelopeFields: ["schemaName", "schemaVersion", "decision", "reasonCodes", "evidenceRefs", "nextSafeCommand", "requiresHumanApproval", "requiresHumanApprovalBefore", "projectLocalWork", "environmentChanges", "removalAuthorized", "rule"],
         externalSbomFields: ["status", "decision", "requiresReview", "verification", "artifact", "digest", "baselineDrift", "identityConfidence", "truncated", "nextCommand", "removalAuthorized", "rule"],
         compareAndSwap: "Use coordinationRevision with intent/resolve --if-revision to reject stale multi-AI coordination writes.",
+        intentLeaseFields: ["session", "leaseMinutes", "leaseExpiresAt", "lease.state", "lease.expiresAt", "lease.removalAuthorized", "lease.rule"],
         agentPointerFields: ["installedCount", "missingCount", "installed", "missing", "discovery", "discoveryDecision", "nextSetupCommand", "startupChecklist", "onboardCommand", "fallbackCommand", "fallbackRead", "next", "targets", "rule"],
         contract: preflightContract()
       },

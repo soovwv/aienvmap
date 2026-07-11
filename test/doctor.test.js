@@ -7,6 +7,7 @@ import { doctorWorkspace } from "../src/commands/doctor.js";
 import { strictResult } from "../src/commands/doctor.js";
 import { coordinationWarnings, diagnose, handoffWarnings, multiAgentRecordWarnings, securityWarnings, staleIntentWarnings } from "../src/doctor.js";
 import { writeJson } from "../src/fsutil.js";
+import { openIntents } from "../src/timeline.js";
 
 test("diagnose reports mixed lockfiles and version mismatches", () => {
   const warnings = diagnose({
@@ -162,6 +163,35 @@ test("coordinationWarnings infers dependency intent conflicts", () => {
   assert.equal(warnings.length, 1);
   assert.equal(warnings[0].code, "conflicting-open-intents");
   assert.equal(warnings[0].target, "dependency");
+});
+
+test("coordinationWarnings distinguishes sessions sharing one actor label", () => {
+  const warnings = coordinationWarnings([
+    { actor: "agent:codex", session: "thread:one", action: "update node", target: "node" },
+    { actor: "agent:codex", session: "thread:two", action: "switch node", target: "node" }
+  ]);
+  assert.equal(warnings.length, 1);
+  assert.equal(warnings[0].code, "conflicting-open-intents");
+});
+
+test("staleIntentWarnings reports expired leases without granting authority", () => {
+  const now = new Date("2026-07-12T12:00:00.000Z");
+  const intents = openIntents([{
+    id: "int_expired",
+    at: "2026-07-12T11:00:00.000Z",
+    type: "intent",
+    status: "open",
+    actor: "agent:codex",
+    session: "thread:old",
+    action: "update node",
+    target: "node",
+    leaseExpiresAt: "2026-07-12T11:30:00.000Z"
+  }], now);
+  const warnings = staleIntentWarnings(intents, now);
+  assert.equal(warnings.length, 1);
+  assert.equal(warnings[0].code, "expired-intent-lease");
+  assert.match(warnings[0].message, /Resolve or renew/);
+  assert.equal(intents[0].lease.removalAuthorized, false);
 });
 
 test("strictResult filters failures by strict scope", () => {

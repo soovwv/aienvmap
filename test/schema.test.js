@@ -78,6 +78,10 @@ test("schemaContract describes stable AI output contracts", () => {
   assert.ok(schema.releaseReadiness.contractReview.surfaces.includes("reconcileCheck"));
   assert.ok(schema.outputs.status.rootFields.includes("coordinationRevision"));
   assert.match(schema.outputs.status.compareAndSwap, /--if-revision/);
+  assert.ok(schema.outputs.status.intentLeaseFields.includes("lease.state"));
+  assert.equal(schema.intentLease.expiry, "advisory-review-only");
+  assert.equal(schema.intentLease.removalAuthorized, false);
+  assert.deepEqual(schema.intentLease.boundsMinutes, { minimum: 5, maximum: 1440 });
   assert.match(schema.compatibilityPolicy, /backward-compatible/);
   assert.match(schema.breakingChangePolicy, /contractVersion bump/);
   assert.equal(schema.recommendation.category, "AI workspace coordination");

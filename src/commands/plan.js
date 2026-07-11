@@ -107,7 +107,7 @@ function environmentSteps(warnings = []) {
 }
 
 function environmentCategory(code = "") {
-  if (["conflicting-open-intents", "stale-open-intent", "handoff-stale", "multi-agent-records"].includes(code)) return "coordination";
+  if (["conflicting-open-intents", "stale-open-intent", "expired-intent-lease", "handoff-stale", "multi-agent-records"].includes(code)) return "coordination";
   if (code.includes("docker")) return "container";
   if (code.includes("lockfile") || code.includes("package-manager")) return "package-manager";
   if (code.includes("node") || code.includes("python") || code.includes("version") || code.includes("runtime")) return "runtime";
@@ -157,6 +157,11 @@ function environmentStepLines(code = "") {
   if (code === "stale-open-intent") return [
     "Confirm whether the old intent is still valid.",
     "Resolve or renew the intent before changing the environment."
+  ];
+  if (code === "expired-intent-lease") return [
+    "Confirm whether the owning AI session is still active.",
+    "Resolve the old intent or record a new leased intent after review.",
+    "Do not treat lease expiry as permission to change the environment."
   ];
   if (code === "handoff-stale") return [
     "Run aienvmap handoff --record --actor agent:id before the next AI continues.",

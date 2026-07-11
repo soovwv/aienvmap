@@ -145,6 +145,6 @@ function warningMatchesScope(warning, scope) {
 
 function warningScope(code = "") {
   if (code === "security-vulnerabilities") return "security";
-  if (["conflicting-open-intents", "stale-open-intent", "handoff-stale", "multi-agent-records"].includes(code)) return "coordination";
+  if (["conflicting-open-intents", "stale-open-intent", "expired-intent-lease", "handoff-stale", "multi-agent-records"].includes(code)) return "coordination";
   return "policy";
 }

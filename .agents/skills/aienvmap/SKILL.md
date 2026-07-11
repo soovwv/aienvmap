@@ -131,8 +131,10 @@ The demo should show a `review-before-env-change` collaboration state when multi
 Record intent before changing shared environment state:
 
 ```bash
-npx aienvmap intent --actor agent:codex --action "<planned change>" --target "<tool-or-runtime>"
+npx aienvmap intent --actor agent:codex --session thread:id --action "<planned change>" --target "<tool-or-runtime>" --lease-minutes 60
 ```
+
+On a shared server, use a stable per-session identifier when concurrent sessions may share one actor label. Lease expiry is review evidence only: never treat it as permission to resolve an intent, remove software, or change the environment.
 
 Use this for changes such as:
 
