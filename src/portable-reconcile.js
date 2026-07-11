@@ -30,6 +30,10 @@ export function buildPortableReconciliation(value = {}, runtime = {}) {
       installations: (inventory.installations || []).map((item) => ({ version: item.version, active: item.active === true, source: item.source, scope: item.scope, deliveryEvidence: item.deliveryEvidence, ownershipProven: false, removalAuthorized: false }))
     }];
   }));
+  const pythonTools = Object.fromEntries(["uv", "pipx"].map((tool) => {
+    const inventory = value.python?.toolEntryPoints?.[tool] || {};
+    return [tool, { count: inventory.installations?.length || 0, distinctVersions: inventory.distinctVersions || [], installations: (inventory.installations || []).map((item) => ({ version: item.version, active: item.active === true, source: item.source, scope: item.scope, routingEvidence: item.routingEvidence, ownershipProven: false, removalAuthorized: false })) }];
+  }));
   const plan = value.aiDecision?.consolidationPlan || {};
   const report = {
     schemaName: "aienvmap.reconcile-portable",
@@ -54,6 +58,7 @@ export function buildPortableReconciliation(value = {}, runtime = {}) {
       npm: { count: value.npm?.installations?.length || 0, distinctVersions: value.npm?.distinctVersions || [], installations: summarizeInstallations(value.npm?.installations) },
       nodePackageManagers,
       python: { count: value.python?.installations?.length || 0, distinctVersions: value.python?.distinctVersions || [], installations: summarizeInstallations(value.python?.installations, { python: true }) },
+      pythonTools,
       otherRuntimes
     },
     findings: (value.findings || []).map((item) => ({ code: item.code, severity: item.severity })),
