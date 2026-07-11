@@ -673,7 +673,7 @@ export function buildAiDecision({ node = [], npm = [], python = [], java = {}, p
   return {
     consumer: "AI agent",
     decision: findings.some((item) => item.severity === "review") ? "review" : "clear",
-    readFirst: ["project", "node.active", "npm.active", "npm.runtimeLinks", "python.active", "python.runtimeLinks", "findings", "aiDecision.actionCandidates"],
+    readFirst: ["project", "node.active", "node.managerInventories", "npm.active", "npm.runtimeLinks", "python.active", "python.runtimeLinks", "findings", "aiDecision.actionCandidates"],
     canonicalCandidates: {
       node: chooseCanonical(node, project.node?.versionFile || ""),
       npm: chooseCanonical(npm, project.packageManager?.name === "npm" ? project.packageManager.version : ""),

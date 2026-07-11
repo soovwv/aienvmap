@@ -355,6 +355,7 @@ test("AI decision summarizes strong, inferred, and unresolved runtime links", ()
   assert.deepEqual(result.runtimeLinkSummary.pip, { total: 1, strong: 0, inferred: 0, unresolved: 1 });
   assert.match(result.runtimeLinkSummary.rule, /not proof/);
   assert.ok(result.readFirst.includes("npm.runtimeLinks"));
+  assert.ok(result.readFirst.includes("node.managerInventories"));
   assert.deepEqual(result.pythonInstallerEvidence.installerCounts, { pip: 4, uv: 2 });
   assert.equal(result.pythonInstallerEvidence.collectedRuntimes, 1);
   assert.equal(result.pythonInstallerEvidence.failedRuntimes, 1);
