@@ -21,10 +21,15 @@ permissions:
   contents: read
   id-token: write
 
+concurrency:
+  group: npm-release
+  cancel-in-progress: false
+
 jobs:
   publish:
     name: Manual npm publish
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     if: ${{ github.event.inputs.confirm_publish == 'publish' }}
 
     steps:
@@ -39,10 +44,13 @@ jobs:
 
       - name: Verify package version
         shell: bash
+        env:
+          EXPECTED_VERSION: ${{ github.event.inputs.version }}
+          NPM_TAG: ${{ github.event.inputs.npm_tag }}
         run: |
           actual="$(node -p "require('./package.json').version")"
-          expected="${{ github.event.inputs.version }}"
-          npm_tag="${{ github.event.inputs.npm_tag }}"
+          expected="$EXPECTED_VERSION"
+          npm_tag="$NPM_TAG"
           if ! [[ "$expected" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?$ ]]; then
             echo "Version input must be a semver-like value, got $expected"
             exit 1
@@ -55,11 +63,68 @@ jobs:
             echo "package.json version is $actual, expected $expected"
             exit 1
           fi
+          if [[ "$expected" == *-* && "$npm_tag" == "latest" ]]; then
+            echo "Prerelease versions must not use the latest dist-tag"
+            exit 1
+          fi
+
+      - name: Verify immutable release source
+        shell: bash
+        env:
+          EXPECTED_VERSION: ${{ github.event.inputs.version }}
+        run: |
+          if [ "$GITHUB_REF" != "refs/heads/main" ]; then
+            echo "Release workflow must run from main, got $GITHUB_REF"
+            exit 1
+          fi
+          git fetch --force origin main --tags
+          head_commit="$(git rev-parse HEAD)"
+          main_commit="$(git rev-parse origin/main)"
+          if [ "$head_commit" != "$main_commit" ]; then
+            echo "Checked out commit is not current origin/main"
+            exit 1
+          fi
+          tag="v$EXPECTED_VERSION"
+          tag_commit="$(git rev-list -n 1 "$tag" 2>/dev/null || true)"
+          if [ -z "$tag_commit" ] || [ "$tag_commit" != "$head_commit" ]; then
+            echo "$tag must exist and resolve to the current main commit"
+            exit 1
+          fi
+
+      - name: Verify version is unpublished
+        shell: bash
+        env:
+          EXPECTED_VERSION: ${{ github.event.inputs.version }}
+        run: |
+          existing="$(npm view "aienvmap@$EXPECTED_VERSION" version 2>/dev/null || true)"
+          if [ "$existing" = "$EXPECTED_VERSION" ]; then
+            echo "aienvmap@$EXPECTED_VERSION is already published"
+            exit 1
+          fi
 
       - name: Release check
         run: npm run release:check
 
       - name: Publish to npm
-        run: npm publish --tag "${{ github.event.inputs.npm_tag }}" --provenance
+        run: npm publish --access public --tag "${{ github.event.inputs.npm_tag }}" --provenance
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Verify published registry metadata
+        shell: bash
+        env:
+          EXPECTED_VERSION: ${{ github.event.inputs.version }}
+        run: |
+          observed=""
+          integrity=""
+          for attempt in 1 2 3; do
+            observed="$(npm view "aienvmap@$EXPECTED_VERSION" version 2>/dev/null || true)"
+            integrity="$(npm view "aienvmap@$EXPECTED_VERSION" dist.integrity 2>/dev/null || true)"
+            if [ "$observed" = "$EXPECTED_VERSION" ] && [ -n "$integrity" ]; then break; fi
+            sleep 5
+          done
+          if [ "$observed" != "$EXPECTED_VERSION" ] || [ -z "$integrity" ]; then
+            echo "Published registry metadata did not verify for aienvmap@$EXPECTED_VERSION"
+            exit 1
+          fi
+          echo "verified aienvmap@$observed with registry integrity $integrity"
