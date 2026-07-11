@@ -13,7 +13,7 @@ const pythonNames = process.platform === "win32" ? ["python.exe", "python3.exe"]
 const pipNames = process.platform === "win32" ? ["pip.exe", "pip3.exe"] : ["pip3", "pip"];
 
 export async function inspectPackageManagers(dir, options = {}) {
-  const [candidates, nodeCandidates, pythonCandidates, pipCandidates, commonRuntimes, project, uvPythonManager, pyenvPythonManager, voltaNodeManager] = await Promise.all([
+  const [candidates, nodeCandidates, pythonCandidates, pipCandidates, commonRuntimes, project, uvPythonManager, pyenvPythonManager, voltaNodeManager, miseRuntimeManager] = await Promise.all([
     findNpmCandidates(options),
     findNodeCandidates(options),
     findPythonCandidates({ ...options, projectDir: dir }),
@@ -22,7 +22,8 @@ export async function inspectPackageManagers(dir, options = {}) {
     readProjectExpectation(dir),
     inspectUvPythonManager(options),
     inspectPyenvPythonManager(options),
-    inspectVoltaNodeManager({ ...options, projectDir: dir })
+    inspectVoltaNodeManager({ ...options, projectDir: dir }),
+    inspectMiseRuntimeManager({ ...options, projectDir: dir })
   ]);
   const inspected = await Promise.all(candidates.map(async (candidate, index) => {
     const version = await npmCandidateVersion(candidate.path);
@@ -50,9 +51,9 @@ export async function inspectPackageManagers(dir, options = {}) {
     active: index === 0
   })).map(({ candidateOrder: _candidateOrder, ...item }) => item);
   const inspectedPythonInstallations = await inspectPythonCandidates(pythonCandidates, options);
-  const pythonInstallations = attachPyenvManagerEvidence(attachUvManagerEvidence(inspectedPythonInstallations, uvPythonManager), pyenvPythonManager);
+  const pythonInstallations = attachMisePythonEvidence(attachPyenvManagerEvidence(attachUvManagerEvidence(inspectedPythonInstallations, uvPythonManager), pyenvPythonManager), miseRuntimeManager);
   const pipCommands = await inspectPipCandidates(pipCandidates, options);
-  const nodeInstallations = attachVoltaManagerEvidence(await inspectNodeCandidates(nodeCandidates, options), voltaNodeManager);
+  const nodeInstallations = attachMiseNodeEvidence(attachVoltaManagerEvidence(await inspectNodeCandidates(nodeCandidates, options), voltaNodeManager), miseRuntimeManager);
   const npmRuntimeLinks = linkNodeNpmRuntimes(nodeInstallations, installations);
   const pipRuntimeLinks = linkPythonPipRuntimes(pythonInstallations, pipCommands);
   const findings = [
@@ -83,7 +84,7 @@ export async function inspectPackageManagers(dir, options = {}) {
       installations: nodeInstallations,
       active: nodeInstallations.find((item) => item.active) || null,
       distinctVersions: [...new Set(nodeInstallations.map((item) => item.version))],
-      managerInventories: { volta: voltaNodeManager }
+      managerInventories: { volta: voltaNodeManager, mise: miseRuntimeManager }
     },
     npm: {
       installations,
@@ -103,12 +104,122 @@ export async function inspectPackageManagers(dir, options = {}) {
       runtimeLinks: pipRuntimeLinks,
       packageComparisons: comparePythonPackages(pythonInstallations),
       managerEvidence: uvPythonManager,
-      managerInventories: { uv: uvPythonManager, pyenv: pyenvPythonManager }
+      managerInventories: { uv: uvPythonManager, pyenv: pyenvPythonManager, mise: miseRuntimeManager }
     },
     otherRuntimes: commonRuntimes,
     findings,
     decision: findings.some((item) => item.severity === "review") ? "review" : "clear",
     aiDecision
+  };
+}
+
+export async function inspectMiseRuntimeManager(options = {}) {
+  if (!options.fullPackages) return {
+    collection: "not-requested",
+    reason: "Use --full-packages for mise-managed Node and Python evidence."
+  };
+  const platform = options.platform || process.platform;
+  const command = options.miseCommand || (platform === "win32" ? "mise.exe" : "mise");
+  const versionResult = await portableCommandResult(command, ["--version"], { timeout: 3500, platform, cwd: options.projectDir });
+  const managerVersion = firstVersion(`${versionResult.stdout}\n${versionResult.stderr}`);
+  if (!versionResult.ok || !managerVersion) return { collection: "unavailable", manager: "mise", reason: "mise was not available." };
+  const listResult = await portableCommandResult(command, ["ls", "--installed", "--json", "node", "python"], {
+    timeout: 6000, maxBuffer: 2 * 1024 * 1024, platform, cwd: options.projectDir
+  });
+  if (!listResult.ok) return {
+    collection: "unsupported-or-failed", manager: "mise", version: managerVersion, reason: "mise did not return its installed JSON inventory."
+  };
+  const parsed = parseMiseRuntimeInventory(listResult.stdout, options);
+  if (!parsed) return {
+    collection: "unsupported-or-failed", manager: "mise", version: managerVersion, reason: "mise returned unsupported installed JSON."
+  };
+  return {
+    collection: "collected",
+    manager: "mise",
+    version: managerVersion,
+    runtimes: parsed.runtimes,
+    runtimeCount: parsed.runtimes.length,
+    truncated: parsed.truncated,
+    semantics: "mise installed JSON inventory; exact version and install-path matches prove manager control, never removal authorization."
+  };
+}
+
+export function parseMiseRuntimeInventory(raw, options = {}) {
+  let value;
+  try { value = JSON.parse(String(raw || "")); } catch { return null; }
+  if (!value || typeof value !== "object" || Array.isArray(value)) return null;
+  const all = [];
+  for (const runtime of ["node", "python"]) {
+    const entries = Array.isArray(value[runtime]) ? value[runtime] : [];
+    for (const item of entries) {
+      const version = String(item?.version || "").replace(/^v/, "");
+      const installPath = String(item?.install_path || "");
+      if (!version || !path.isAbsolute(installPath)) continue;
+      all.push({
+        runtime,
+        version,
+        installPath: displayPath(installPath, options),
+        configured: Boolean(item?.source),
+        sourceType: String(item?.source?.type || "")
+      });
+    }
+  }
+  return { runtimes: all.slice(0, 100), truncated: all.length > 100 };
+}
+
+export function attachMiseNodeEvidence(nodeInstallations = [], mise = {}) {
+  return nodeInstallations.map((node) => {
+    if (node.managerEvidence?.ownershipProven === true) return node;
+    const matched = mise.collection === "collected" && (mise.runtimes || []).find((item) =>
+      item.runtime === "node" && item.version === node.version && pathContains(item.installPath, node.reportedExecutable)
+    );
+    const inferred = node.source === "mise" || (mise.runtimes || []).some((item) => item.runtime === "node" && (pathContains(item.installPath, node.path) || pathContains(item.installPath, node.reportedExecutable)));
+    if (!matched && !inferred) return node;
+    return {
+      ...node,
+      managerEvidence: matched ? miseManagerEvidence(mise, matched, "node") : miseInferenceEvidence(mise)
+    };
+  });
+}
+
+export function attachMisePythonEvidence(pythonInstallations = [], mise = {}) {
+  return pythonInstallations.map((python) => {
+    if (python.managerEvidence?.ownershipProven === true) return python;
+    const matched = mise.collection === "collected" && (mise.runtimes || []).find((item) =>
+      item.runtime === "python" && item.version === python.version && (normalizeCompare(item.installPath) === normalizeCompare(python.prefix) || normalizeCompare(item.installPath) === normalizeCompare(python.basePrefix))
+    );
+    const inferred = python.source === "mise" || (mise.runtimes || []).some((item) => item.runtime === "python" && (pathContains(item.installPath, python.prefix) || pathContains(item.installPath, python.basePrefix)));
+    if (!matched && !inferred) return python;
+    return {
+      ...python,
+      managerEvidence: matched ? miseManagerEvidence(mise, matched, "python") : miseInferenceEvidence(mise)
+    };
+  });
+}
+
+function miseManagerEvidence(mise, matched, runtime) {
+  return {
+    manager: "mise",
+    managerVersion: mise.version,
+    relationship: "installed-json-path-match",
+    confidence: "strong",
+    ownershipProven: true,
+    proofScope: `mise-managed-${runtime}`,
+    matchedKey: `${runtime}@${matched.version}`,
+    removalAuthorized: false
+  };
+}
+
+function miseInferenceEvidence(mise) {
+  return {
+    manager: "mise",
+    managerVersion: mise.version || "",
+    relationship: "managed-root-inference",
+    confidence: "medium",
+    ownershipProven: false,
+    proofScope: "path-only",
+    matchedKey: "",
+    removalAuthorized: false
   };
 }
 
@@ -905,29 +1016,35 @@ function pathEntries(value) {
 
 function knownNodeRoots(env, home) {
   const roots = [];
+  const miseInstalls = env.MISE_INSTALLS_DIR || (process.platform === "win32"
+    ? path.join(env.LOCALAPPDATA || path.join(home, "AppData", "Local"), "mise", "installs")
+    : path.join(home, ".local", "share", "mise", "installs"));
   if (env.NVM_HOME) roots.push({ path: env.NVM_HOME, depth: 3, source: "nvm", scope: "user" });
   if (env.NVM_SYMLINK) roots.push({ path: env.NVM_SYMLINK, depth: 1, source: "nvm", scope: "user" });
   if (process.platform === "win32") {
     roots.push({ path: path.join(home, "AppData", "Local", "Volta", "tools", "image", "node"), depth: 4, source: "volta", scope: "user" });
-    roots.push({ path: path.join(home, "AppData", "Local", "mise", "installs", "node"), depth: 4, source: "mise", scope: "user" });
+    roots.push({ path: path.join(miseInstalls, "node"), depth: 4, source: "mise", scope: "user" });
   } else {
     roots.push({ path: env.NVM_DIR || path.join(home, ".nvm", "versions", "node"), depth: 4, source: "nvm", scope: "user" });
     roots.push({ path: path.join(home, ".volta", "tools", "image", "node"), depth: 4, source: "volta", scope: "user" });
-    roots.push({ path: path.join(home, ".local", "share", "mise", "installs", "node"), depth: 4, source: "mise", scope: "user" });
+    roots.push({ path: path.join(miseInstalls, "node"), depth: 4, source: "mise", scope: "user" });
   }
   return roots;
 }
 
 function knownPythonRoots(env, home) {
   const roots = [];
+  const miseInstalls = env.MISE_INSTALLS_DIR || (process.platform === "win32"
+    ? path.join(env.LOCALAPPDATA || path.join(home, "AppData", "Local"), "mise", "installs")
+    : path.join(home, ".local", "share", "mise", "installs"));
   if (process.platform === "win32") {
     roots.push({ path: path.join(home, "AppData", "Local", "Programs", "Python"), depth: 3, source: "python-org", scope: "user" });
     roots.push({ path: path.join(home, ".pyenv", "pyenv-win", "versions"), depth: 4, source: "pyenv", scope: "user" });
-    roots.push({ path: path.join(home, "AppData", "Local", "mise", "installs", "python"), depth: 4, source: "mise", scope: "user" });
+    roots.push({ path: path.join(miseInstalls, "python"), depth: 4, source: "mise", scope: "user" });
     roots.push({ path: path.join(home, "AppData", "Roaming", "uv", "python"), depth: 5, source: "uv", scope: "user" });
   } else {
     roots.push({ path: env.PYENV_ROOT || path.join(home, ".pyenv", "versions"), depth: 4, source: "pyenv", scope: "user" });
-    roots.push({ path: path.join(home, ".local", "share", "mise", "installs", "python"), depth: 4, source: "mise", scope: "user" });
+    roots.push({ path: path.join(miseInstalls, "python"), depth: 4, source: "mise", scope: "user" });
     roots.push({ path: path.join(home, ".local", "share", "uv", "python"), depth: 5, source: "uv", scope: "user" });
     roots.push({ path: "/opt/homebrew/bin", depth: 1, source: "homebrew", scope: "host" });
     roots.push({ path: "/usr/local/bin", depth: 1, source: "system", scope: "host" });
