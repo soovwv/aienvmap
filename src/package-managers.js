@@ -6,6 +6,7 @@ import { commandOutput, commandVersion, firstVersion, portableCommandResult } fr
 import { exists } from "./fsutil.js";
 import { parseNpmGlobal } from "./inventory.js";
 import { analyzeCommonRuntimes, analyzeJavaBuildTools, inspectCommonRuntimes } from "./runtime-discovery.js";
+import { buildAiDecisionEnvelope } from "./ai-decision-envelope.js";
 
 const npmNames = process.platform === "win32" ? ["npm.cmd", "npm.exe"] : ["npm"];
 const nodeNames = process.platform === "win32" ? ["node.exe"] : ["node"];
@@ -68,6 +69,12 @@ export async function inspectPackageManagers(dir, options = {}) {
     ...analyzeJavaBuildTools(commonRuntimes.java)
   ];
   const aiDecision = buildAiDecision({ node: nodeInstallations, npm: installations, python: pythonInstallations, java: commonRuntimes.java, project, findings, runtimeLinks: { npm: npmRuntimeLinks, pip: pipRuntimeLinks } });
+  const aiDecisionEnvelope = buildAiDecisionEnvelope({
+    decision: aiDecision.decision,
+    reasonCodes: findings.map((item) => item.code),
+    evidenceRefs: [".aienvmap/reconcile.json", ...(findings.length ? ["findings", "aiDecision.actionCandidates"] : [])],
+    nextSafeCommand: aiDecision.decision === "review" ? "aienvmap reconcile --json --full-packages" : "aienvmap status --json"
+  });
   const publicPythonInstallations = pythonInstallations.map((item) => summarizePythonPackages(item, options.fullPackages));
   return {
     schemaName: "aienvmap.reconcile",
@@ -111,7 +118,8 @@ export async function inspectPackageManagers(dir, options = {}) {
     otherRuntimes: commonRuntimes,
     findings,
     decision: findings.some((item) => item.severity === "review") ? "review" : "clear",
-    aiDecision
+    aiDecision,
+    aiDecisionEnvelope
   };
 }
 

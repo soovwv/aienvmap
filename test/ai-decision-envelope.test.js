@@ -7,6 +7,7 @@ test("AI decision envelope stays compact and conservative when clear", () => {
   assert.equal(result.decision, "clear");
   assert.deepEqual(result.reasonCodes, ["no-review-signal"]);
   assert.equal(result.requiresHumanApproval, false);
+  assert.deepEqual(result.requiresHumanApprovalBefore, ["removal", "global-install", "runtime-switch", "lockfile-rewrite"]);
   assert.equal(result.environmentChanges, "intent-first");
   assert.equal(result.removalAuthorized, false);
 });
@@ -22,5 +23,6 @@ test("AI decision envelope deduplicates bounded review evidence", () => {
   assert.equal(result.reasonCodes.length, 20);
   assert.deepEqual(result.evidenceRefs, [".aienvmap/status.json", "aienvmap context --json"]);
   assert.equal(result.requiresHumanApproval, true);
+  assert.ok(result.requiresHumanApprovalBefore.includes("removal"));
   assert.equal(result.nextSafeCommand, "aienvmap plan --write");
 });

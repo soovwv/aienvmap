@@ -3,6 +3,7 @@ import { readJson, writeJson } from "../fsutil.js";
 import fs from "node:fs/promises";
 import { cyclonedxSbomPath, externalSbomEvidencePath, manifestPath, sbomJsonPath, workspaceDir } from "../paths.js";
 import { compareSbomEvidence, importSbomEvidence, verifySbomEvidence } from "../sbom-evidence.js";
+import { buildAiDecisionEnvelope } from "../ai-decision-envelope.js";
 
 export async function sbomWorkspace(args = {}) {
   const dir = workspaceDir(args);
@@ -50,6 +51,7 @@ export function buildSbomArtifact(manifest = {}, externalEvidence = noExternalEv
   const aiReviewPlan = sbomReviewPlan(lightSbom, dependencyReview, nextSafeCommand);
   const dependencyCoordination = sbomDependencyCoordination(dependencyReview, scannerGuidance, nextSafeCommand);
   const dependencyQuickCheck = sbomDependencyQuickCheck(dependencyReview, dependencyCoordination, scannerGuidance, nextSafeCommand);
+  const aiDecisionEnvelope = sbomDecisionEnvelope(lightSbom, externalEvidence, nextSafeCommand);
   return {
     schemaVersion: 1,
     schemaName: "aienvmap.light-sbom",
@@ -72,6 +74,7 @@ export function buildSbomArtifact(manifest = {}, externalEvidence = noExternalEv
     aiReviewPlan,
     dependencyCoordination,
     dependencyQuickCheck,
+    aiDecisionEnvelope,
     externalEvidence,
     externalEvidenceDecision: externalEvidenceDecision(externalEvidence),
     aiDependencyReview: dependencyReview,
@@ -334,6 +337,7 @@ export function buildCycloneDxLite(manifest = {}, externalEvidence = noExternalE
   const scannerGuidance = sbomScannerGuidance(dependencyReview);
   const dependencyCoordination = sbomDependencyCoordination(dependencyReview, scannerGuidance, nextSafeCommand);
   const dependencyQuickCheck = sbomDependencyQuickCheck(dependencyReview, dependencyCoordination, scannerGuidance, nextSafeCommand);
+  const aiDecisionEnvelope = sbomDecisionEnvelope(lightSbom, externalEvidence, nextSafeCommand);
   return {
     bomFormat: "CycloneDX",
     specVersion: "1.6",
@@ -395,9 +399,33 @@ export function buildCycloneDxLite(manifest = {}, externalEvidence = noExternalE
       { name: "aienvmap:externalEvidence:specVersion", value: externalEvidence.specVersion || "" },
       { name: "aienvmap:externalEvidence:summary", value: JSON.stringify(externalEvidence.summary || {}) },
       { name: "aienvmap:externalEvidence:baselineDrift", value: JSON.stringify(externalEvidence.baselineDrift || {}) },
+      { name: "aienvmap:aiDecisionEnvelope:decision", value: aiDecisionEnvelope.decision },
+      { name: "aienvmap:aiDecisionEnvelope:reasonCodes", value: JSON.stringify(aiDecisionEnvelope.reasonCodes) },
+      { name: "aienvmap:aiDecisionEnvelope:nextSafeCommand", value: aiDecisionEnvelope.nextSafeCommand },
+      { name: "aienvmap:aiDecisionEnvelope:requiresHumanApprovalBefore", value: JSON.stringify(aiDecisionEnvelope.requiresHumanApprovalBefore) },
       { name: "aienvmap:aiBootstrap:rule", value: aiBootstrap.rule }
     ]
   };
+}
+
+function sbomDecisionEnvelope(lightSbom = {}, externalEvidence = {}, nextSafeCommand) {
+  const risk = lightSbom.riskSummary || {};
+  const drifted = externalEvidence.baselineDrift?.status === "changed";
+  const stale = externalEvidence.status === "stale";
+  const review = ["review", "review-required"].includes(lightSbom.aiDependencyReview?.status)
+    || ["medium", "high", "urgent", "critical"].includes(risk.level)
+    || drifted || stale;
+  return buildAiDecisionEnvelope({
+    decision: review ? "review" : "clear",
+    reasonCodes: [
+      ...(["medium", "high", "urgent", "critical"].includes(risk.level) ? [`sbom-risk-${risk.level}`] : []),
+      ...(drifted ? ["external-sbom-component-drift"] : []),
+      ...(stale ? [`external-sbom-${externalEvidence.verification || "stale"}`] : []),
+      ...(lightSbom.packageManagerPolicy?.status === "review-required" ? ["package-manager-policy"] : [])
+    ],
+    evidenceRefs: [".aienvmap/sbom.json", ...(externalEvidence.artifact ? [externalEvidence.artifact] : [])],
+    nextSafeCommand
+  });
 }
 
 function cycloneComponent(pkg = {}) {

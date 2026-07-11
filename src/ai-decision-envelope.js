@@ -2,6 +2,7 @@ export function buildAiDecisionEnvelope(options = {}) {
   const review = options.reviewRequired === true || ["review", "review-required", "review-first"].includes(options.decision);
   const reasonCodes = boundedUnique(options.reasonCodes);
   const evidenceRefs = boundedUnique(options.evidenceRefs);
+  const approvalBefore = boundedUnique(options.requiresHumanApprovalBefore || ["removal", "global-install", "runtime-switch", "lockfile-rewrite"]);
   return {
     schemaName: "aienvmap.ai-decision",
     schemaVersion: 1,
@@ -10,6 +11,7 @@ export function buildAiDecisionEnvelope(options = {}) {
     evidenceRefs: evidenceRefs.length ? evidenceRefs : [".aienvmap/status.json"],
     nextSafeCommand: String(options.nextSafeCommand || "aienvmap status --json"),
     requiresHumanApproval: review,
+    requiresHumanApprovalBefore: approvalBefore,
     projectLocalWork: options.projectLocalWork || "allowed",
     environmentChanges: review ? "review-first" : "intent-first",
     removalAuthorized: false,

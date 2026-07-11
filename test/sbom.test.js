@@ -92,6 +92,8 @@ test("buildSbomArtifact creates standalone AI-readable light SBOM", () => {
   assert.match(sbom.aiUse.mustNotDo.join(" "), /security claims/);
   assert.equal(sbom.aiUse.rule, sbom.scannerGuidance.rule);
   assert.equal(sbom.externalEvidence.status, "not-imported");
+  assert.equal(sbom.aiDecisionEnvelope.removalAuthorized, false);
+  assert.ok(sbom.aiDecisionEnvelope.evidenceRefs.includes(".aienvmap/sbom.json"));
   assert.equal(sbom.externalEvidenceDecision.decision, "no-external-evidence");
   assert.equal(sbom.aiUse.externalEvidence.decision, "no-external-evidence");
 });
@@ -145,6 +147,9 @@ test("buildCycloneDxLite exports project manifest packages with limitations", ()
   assert.match(propertyValue(cdx.properties, "aienvmap:aiBootstrap:rule"), /Review SBOM risk/);
   assert.equal(propertyValue(cdx.properties, "aienvmap:externalEvidence:status"), "not-imported");
   assert.equal(propertyValue(cdx.properties, "aienvmap:externalEvidence:verification"), "not-imported");
+  assert.equal(propertyValue(cdx.properties, "aienvmap:aiDecisionEnvelope:decision"), "review");
+  assert.match(propertyValue(cdx.properties, "aienvmap:aiDecisionEnvelope:reasonCodes"), /sbom-risk-high/);
+  assert.match(propertyValue(cdx.properties, "aienvmap:aiDecisionEnvelope:requiresHumanApprovalBefore"), /removal/);
   assert.equal(propertyValue(cdx.properties, "aienvmap:scannerGuidance:mode"), "optional-read-only");
   assert.equal(propertyValue(cdx.properties, "aienvmap:scannerGuidance:command"), "aienvmap sync --security");
   assert.equal(propertyValue(cdx.properties, "aienvmap:scannerGuidance:externalTools"), "syft,trivy,grype,dependency-track");
@@ -293,6 +298,8 @@ test("sbomWorkspace imports, persists, reuses, and clears external evidence", as
   assert.equal(refreshed.externalEvidence.baselineDigest, imported.externalEvidence.digest);
   assert.equal(refreshed.externalEvidence.baselineDrift.status, "changed");
   assert.equal(refreshed.externalEvidenceDecision.decision, "component-drift-review");
+  assert.equal(refreshed.aiDecisionEnvelope.decision, "review");
+  assert.ok(refreshed.aiDecisionEnvelope.reasonCodes.includes("external-sbom-component-drift"));
 
   const cdx = await sbomWorkspace({ dir, format: "cyclonedx-lite", quiet: true });
   assert.equal(propertyValue(cdx.properties, "aienvmap:externalEvidence:artifact"), "syft.cdx.json");
