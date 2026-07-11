@@ -1,13 +1,23 @@
 import { sbomReadOrder } from "../ai-contract.js";
 import { readJson, writeJson } from "../fsutil.js";
-import { cyclonedxSbomPath, manifestPath, sbomJsonPath, workspaceDir } from "../paths.js";
+import fs from "node:fs/promises";
+import { cyclonedxSbomPath, externalSbomEvidencePath, manifestPath, sbomJsonPath, workspaceDir } from "../paths.js";
+import { importSbomEvidence, verifySbomEvidence } from "../sbom-evidence.js";
 
 export async function sbomWorkspace(args = {}) {
   const dir = workspaceDir(args);
   const manifest = await readJson(manifestPath(dir));
   if (!manifest) throw new Error("missing manifest; run `aienvmap sync` first");
+  if (args.import && args.clear_import) throw new Error("use either --import or --clear-import, not both");
+  if (args.clear_import && !args.write) throw new Error("--clear-import requires --write");
+  const evidenceFile = externalSbomEvidencePath(dir);
+  if (args.clear_import) await fs.rm(evidenceFile, { force: true });
+  const importedEvidence = args.import ? await importSbomEvidence(dir, args.import) : null;
+  if (importedEvidence && args.write) await writeJson(evidenceFile, importedEvidence);
+  const persistedEvidence = !args.clear_import ? await readJson(evidenceFile, null) : null;
+  const externalEvidence = importedEvidence || (persistedEvidence ? await verifySbomEvidence(dir, persistedEvidence) : null) || noExternalEvidence();
   const format = normalizeFormat(args.format);
-  const sbom = format === "cyclonedx-lite" ? buildCycloneDxLite(manifest) : buildSbomArtifact(manifest);
+  const sbom = format === "cyclonedx-lite" ? buildCycloneDxLite(manifest, externalEvidence) : buildSbomArtifact(manifest, externalEvidence);
   const artifact = args.write ? await writeSbomArtifact(dir, sbom, format) : "";
   const output = artifact ? { ...sbom, artifact } : sbom;
   if (args.json || args.write || args.quiet) {
@@ -16,13 +26,14 @@ export async function sbomWorkspace(args = {}) {
     console.log(`sbom: ${sbom.riskSummary.level}/${sbom.riskSummary.score}`);
     console.log(`packages: ${sbom.summary.packages || 0}`);
     console.log(`vulnerabilities: ${sbom.summary.vulnerabilities || 0}`);
+    console.log(`external evidence: ${externalEvidence.status}${externalEvidence.format ? ` / ${externalEvidence.format}` : ""}`);
     console.log(`dependency: ${sbom.dependencyQuickCheck.status} / ${sbom.dependencyQuickCheck.scannerEvidence}`);
     console.log(`next: ${sbom.dependencyQuickCheck.nextCommand || sbom.riskSummary.next || sbom.nextSafeCommand}`);
   }
   return output;
 }
 
-export function buildSbomArtifact(manifest = {}) {
+export function buildSbomArtifact(manifest = {}, externalEvidence = noExternalEvidence()) {
   const lightSbom = manifest.lightSbom || {};
   const dependencyReview = lightSbom.aiDependencyReview || aiDependencyReview(lightSbom);
   const nextSafeCommand = dependencyReview.beforeDependencyChange?.[0]
@@ -55,6 +66,8 @@ export function buildSbomArtifact(manifest = {}) {
     aiReviewPlan,
     dependencyCoordination,
     dependencyQuickCheck,
+    externalEvidence,
+    externalEvidenceDecision: externalEvidenceDecision(externalEvidence),
     aiDependencyReview: dependencyReview,
     aiUse: {
       purpose: "Standalone AI-readable light SBOM artifact.",
@@ -64,11 +77,40 @@ export function buildSbomArtifact(manifest = {}) {
       readFirst: sbomReadOrder,
       nextCommand: nextSafeCommand,
       scannerCommand: scannerGuidance.scannerCommand,
+      externalEvidence: externalEvidenceDecision(externalEvidence),
       beforeChange: nextSafeCommand,
       afterChange: dependencyReview.afterDependencyChange?.slice(-1)[0] || "aienvmap checkpoint --actor agent:id --summary dependency-change --target dependency",
       mustNotDo: dependencyQuickCheck.mustNotDo,
       rule: scannerGuidance.rule
     }
+  };
+}
+
+function noExternalEvidence() {
+  return {
+    status: "not-imported",
+    mode: "summary-reference",
+    securityEvidence: "none",
+    removalAuthorized: false,
+    rule: "Import an existing workspace-local CycloneDX/SPDX JSON file explicitly; aienvmap never installs or runs its generator."
+  };
+}
+
+function externalEvidenceDecision(evidence = {}) {
+  const imported = evidence.status === "imported";
+  const stale = evidence.status === "stale";
+  return {
+    decision: imported ? "read-original-before-claims" : stale ? "refresh-import-required" : "no-external-evidence",
+    artifact: imported || stale ? evidence.artifact : "",
+    digest: imported || stale ? evidence.digest : "",
+    format: imported || stale ? evidence.format : "",
+    securityEvidence: evidence.securityEvidence || "none",
+    nextCommand: imported ? `review ${evidence.artifact}` : stale ? `aienvmap sbom --import ${evidence.artifact} --write` : "aienvmap sbom --import <workspace-sbom.json> --write",
+    rule: imported
+      ? "Use this summary for coordination only; read and validate the original external SBOM before security, compliance, remediation, or release claims."
+      : stale
+        ? "The source changed or became unavailable after import; explicitly review and re-import before relying on it."
+      : "External evidence is optional and must be generated outside aienvmap before explicit import."
   };
 }
 
@@ -272,7 +314,7 @@ export async function writeSbomArtifact(dir, sbom) {
   return out;
 }
 
-export function buildCycloneDxLite(manifest = {}) {
+export function buildCycloneDxLite(manifest = {}, externalEvidence = noExternalEvidence()) {
   const snapshot = manifest.dependencySnapshot || {};
   const packages = snapshot.packages || [];
   const lightSbom = manifest.lightSbom || {};
@@ -336,6 +378,14 @@ export function buildCycloneDxLite(manifest = {}) {
       { name: "aienvmap:dependencyQuickCheck:status", value: dependencyQuickCheck.status },
       { name: "aienvmap:dependencyQuickCheck:nextCommand", value: dependencyQuickCheck.nextCommand },
       { name: "aienvmap:dependencyQuickCheck:scannerEvidence", value: dependencyQuickCheck.scannerEvidence },
+      { name: "aienvmap:externalEvidence:status", value: externalEvidence.status || "not-imported" },
+      { name: "aienvmap:externalEvidence:verification", value: externalEvidence.verification || "not-imported" },
+      { name: "aienvmap:externalEvidence:artifact", value: externalEvidence.artifact || "" },
+      { name: "aienvmap:externalEvidence:digest", value: externalEvidence.digest || "" },
+      { name: "aienvmap:externalEvidence:currentDigest", value: externalEvidence.currentDigest || "" },
+      { name: "aienvmap:externalEvidence:format", value: externalEvidence.format || "" },
+      { name: "aienvmap:externalEvidence:specVersion", value: externalEvidence.specVersion || "" },
+      { name: "aienvmap:externalEvidence:summary", value: JSON.stringify(externalEvidence.summary || {}) },
       { name: "aienvmap:aiBootstrap:rule", value: aiBootstrap.rule }
     ]
   };

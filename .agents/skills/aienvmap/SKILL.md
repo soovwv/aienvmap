@@ -98,6 +98,8 @@ npx aienvmap context --json
 
 Before dependency, lockfile, security remediation, or release-affecting dependency work, read `.aienvmap/sbom.json` or `npx aienvmap sbom --json` and follow `dependencyQuickCheck`.
 
+When a human or CI already generated CycloneDX/SPDX JSON, preview it with `npx aienvmap sbom --import <workspace-file> --json`; persist only after review with `--write`. Read `externalEvidenceDecision`, verify `verification` is `digest-match`, and open the original `artifact` before security/compliance claims. `digest-mismatch` or `source-unavailable` requires explicit re-import; use `--clear-import --write` to remove only aienvmap's summary reference. Never install or run Syft/Trivy automatically from this contract.
+
 Before consolidating runtimes or package managers on an existing machine, read `.aienvmap/reconcile.json` or run `npx aienvmap reconcile --json`. Use `--full-packages` only when package-level, Python installer metadata, or manager-native evidence is required. Read `python.managerInventories`; exact uv interpreter, pyenv prefix, and mise installed-path matches may prove manager control. Treat `runtimeLinks`, `installerEvidence`, and per-installation `managerEvidence` as evidence; even `ownershipProven: true` never overrides `removalAuthorized: false` or human approval.
 
 For Node, read `node.managerInventories.volta`, `node.managerInventories.mise`, and each installation's `reportedExecutable` plus `managerEvidence`. Only Volta `inventory-and-image-path-match` or mise `installed-json-path-match` proves manager control; version/root inference remains routing evidence. Never uninstall or rewrite project manager pins automatically.

@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Added explicit workspace-local CycloneDX/SPDX JSON evidence import with realpath confinement, 32 MB bound, SHA-256 identity/freshness checks, bounded tool/count summaries, preview/persist/clear flows, and original-first AI guidance without running scanners.
 - Added one bounded mise installed-JSON inventory for Node and Python, exact reported-path ownership evidence, custom install-root discovery, runtime-scoped drift, and AI/schema integration without retaining config paths or authorizing removal.
 - Added opt-in Volta plain Node inventory, reported `process.execPath` image matching, conservative ownership relationships, Windows command integration, and AI/drift/schema summaries without removal authority.
 - Added opt-in pyenv manager-native inventory using bounded root/version commands, exact Python prefix ownership evidence, Windows batch support, AI/drift/schema integration, and a permanent no-removal-authority rule.

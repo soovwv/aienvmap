@@ -45,6 +45,12 @@ test("schemaContract describes stable AI output contracts", () => {
   assert.equal(schema.outputs.reconcileCheck.command, "aienvmap reconcile --check --json");
   assert.ok(schema.outputs.reconcileCheck.rootFields.includes("drift"));
   assert.match(schema.outputs.reconcileCheck.rule, /self-hosted/);
+  assert.ok(schema.outputs.sbom.rootFields.includes("externalEvidence"));
+  assert.ok(schema.outputs.sbom.externalEvidenceFields.includes("verification"));
+  assert.ok(schema.outputs.sbom.externalEvidenceDecisionFields.includes("nextCommand"));
+  assert.match(schema.outputs.sbom.importCommand, /--import/);
+  assert.match(schema.outputs.sbom.clearImportCommand, /--clear-import/);
+  assert.ok(schema.outputs.sbom.aiUseFields.includes("externalEvidence"));
   assert.ok(schema.releaseReadiness.contractReview.surfaces.includes("reconcile"));
   assert.ok(schema.releaseReadiness.contractReview.surfaces.includes("reconcileCheck"));
   assert.ok(schema.outputs.status.rootFields.includes("coordinationRevision"));

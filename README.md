@@ -11,7 +11,7 @@
 - Prevent: different AI agents silently installing or assuming different software versions.
 - Skip: you only need a full compliance SBOM scanner or hard policy lock manager.
 - AI signal: shared Codex/Claude/Gemini work, version drift, or repeated env handoffs.
-- SBOM signal: use Syft, Trivy, Grype, or Dependency-Track for full evidence; keep `aienvmap` as the AI coordination layer.
+- SBOM signal: attach existing CycloneDX/SPDX JSON with `sbom --import <file> --write`; aienvmap keeps a digest and bounded summary and never runs the scanner.
 - Start: run `npx aienvmap start`; it creates the env map, light SBOM, status, summary, discovery entry, and dashboard when missing or stale.
 - Existing environment: run `npx aienvmap reconcile`; it reports visible Node/npm and Python/pip installations, package locations, inventory digests/samples, project expectations, and lockfile conflicts without changing anything. Add `--write` to save the AI-readable report or `--full-packages` for package-level comparison.
 - Runtime routing evidence: `npm.runtimeLinks` and `python.runtimeLinks` connect commands to likely runtimes, while full scans use bounded Volta/mise inventories plus reported Node paths for exact ownership. Routing links keep `ownershipProven: false`; proven manager ownership still never grants removal permission.
@@ -75,7 +75,7 @@ AIENV.md                 # Markdown env map for AI agents
 .aienvmap/README.md       # generated start-here file when AI finds the artifact folder
 .aienvmap/summary.md      # compact AI/CI summary with start-here path
 .aienvmap/manifest.json   # runtime map + light SBOM
-.aienvmap/sbom.json       # standalone AI-readable light SBOM
+.aienvmap/sbom.json       # light SBOM; optional external evidence summary lives beside it
 .aienvmap/sbom.cdx.json   # CycloneDX-lite export from project manifests
 .aienvmap/intents.jsonl   # planned env changes
 .aienvmap/timeline.jsonl  # append-only change ledger
@@ -93,7 +93,7 @@ AIENV.md                 # Markdown env map for AI agents
 - `.aienvmap/discovery.json`, `discovery.json.maintenance`, `agentDiscovery.sessionStart`, and `readOrder` give the fallback start path for schema-only or Markdown-first agents.
 - `environmentChangeProtocol`, `operationalSafety`, `followUpPlan`, `collaboration`, `coordination`, and `agentActivity` keep shared changes advisory; `followUpPlan` points to sync, status, or handoff when needed.
 - `coordinationRevision` enables optional compare-and-swap protection for intent and resolution writes without a daemon, database, or runtime dependency.
-- `aiUse`, `dependencyQuickCheck`, `sbomStrategy`, `scannerGuidance.decision`, `aiReviewPlan`, `externalTools`, and `evidenceWorkflow` keep SBOM review light while pointing to Syft, Trivy, Grype, or Dependency-Track when full evidence is needed.
+- `aiUse`, `dependencyQuickCheck`, `externalEvidenceDecision`, `sbomStrategy`, and `scannerGuidance` keep review light, detect imported-file digest drift, and point back to original Syft/Trivy/CycloneDX/SPDX evidence before claims.
 - `qualitySignals`, `releaseGate`, and `releaseReadiness` expose the AI-friendly, lightweight, batched stable-contract gate.
 - After `0.2.0`, documented JSON fields stay backward-compatible; new fields are additive.
 
@@ -105,7 +105,7 @@ aienvmap start                   # one-command AI startup + copy-paste prompt
 aienvmap sync                    # update env map, discovery, start-here README, status, summary, SBOM, dashboard
 aienvmap status                  # 5-line env decision with start-here path
 aienvmap context --json          # AI decision contract
-aienvmap sbom --json             # light SBOM + dependencyQuickCheck
+aienvmap sbom --json             # light SBOM; add --import <workspace-json> --write for an external evidence reference
 aienvmap plan --write            # read-only action plan
 aienvmap handoff --record        # next-agent summary
 aienvmap intent                  # record planned env change
