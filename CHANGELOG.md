@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Updated the evidence-bounded competitive map for Microsoft APM, Devbox, and Flox, narrowing the product wedge to observed mixed-host runtime evidence and review-first multi-AI coordination.
 - Isolated Node/Python/Conda routing judgment rules from discovery I/O while preserving package-manager compatibility exports and findings.
 - Added version-only Conda discovery by default and opt-in bounded `conda info --envs --json` path summaries, excluding packages, channels, credentials, and automatic activation.
 - Added bounded uv and pipx entry-point/version discovery plus duplicate pip/uv/pipx findings, portable evidence, and drift tracking while leaving tool package enumeration opt-in.

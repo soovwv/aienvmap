@@ -16,12 +16,14 @@ test("product scorecard gives AI consumers evidence and bounded competitor categ
   const result = productScorecard();
   assert.ok(result.technicalReadiness.dimensions.every((item) => item.evidence.length > 0 && item.next));
   assert.ok(result.marketValidation.dimensions.every((item) => item.evidence.length > 0 && item.next));
-  assert.deepEqual(result.adjacentAlternatives.map((item) => item.name), ["mise", "Renovate", "Syft", "CycloneDX"]);
+  assert.deepEqual(result.adjacentAlternatives.map((item) => item.name), ["Microsoft APM", "mise", "Devbox", "Flox", "Renovate", "Syft", "CycloneDX"]);
   assert.match(result.rule, /not use overall score alone/);
   assert.equal(result.externalEvidenceRequirements.marketCreditStartsAt, "outcome-verified");
   assert.equal(result.externalEvidenceRequirements.mustBeIndependent, true);
   assert.ok(result.externalEvidenceRequirements.disallowedAsMarketProof.includes("repository fixtures"));
   assert.equal(result.marketResearch.publicSignals.npmDownloadsWindow.requests, 108);
+  assert.equal(result.marketResearch.adjacentSignals.microsoftApmStars, 3181);
+  assert.match(result.weaknesses.join(" "), /reproducible environments/);
   assert.match(result.marketResearch.interpretation, /not unique users/);
   assert.match(result.marketResearch.scoreImpact, /none until/);
 });
