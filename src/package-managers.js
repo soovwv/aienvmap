@@ -8,14 +8,16 @@ import { parseNpmGlobal } from "./inventory.js";
 import { analyzeCommonRuntimes, analyzeJavaBuildTools, inspectCommonRuntimes } from "./runtime-discovery.js";
 import { buildAiDecisionEnvelope } from "./ai-decision-envelope.js";
 import { analyzeCondaRouting, analyzeNodePackageManagers, analyzePythonToolEntryPoints } from "./tool-routing.js";
+import { classifyScope, classifySource, displayPath, namedFilesBelow, pathEntries } from "./path-evidence.js";
+import { findCondaCandidates, findPythonToolCandidates, inspectCondaCandidates, inspectPythonToolCandidates, parseCondaEnvironmentInfo } from "./python-tool-discovery.js";
 
 export { analyzeCondaRouting, analyzeNodePackageManagers, analyzePythonToolEntryPoints } from "./tool-routing.js";
+export { findCondaCandidates, findPythonToolCandidates, inspectCondaCandidates, inspectPythonToolCandidates, parseCondaEnvironmentInfo } from "./python-tool-discovery.js";
 
 const npmNames = process.platform === "win32" ? ["npm.cmd", "npm.exe"] : ["npm"];
 const nodeNames = process.platform === "win32" ? ["node.exe"] : ["node"];
 const pythonNames = process.platform === "win32" ? ["python.exe", "python3.exe"] : ["python3", "python"];
 const pipNames = process.platform === "win32" ? ["pip.exe", "pip3.exe"] : ["pip3", "pip"];
-const pythonToolNames = process.platform === "win32" ? { uv: ["uv.exe"], pipx: ["pipx.exe"] } : { uv: ["uv"], pipx: ["pipx"] };
 const nodePackageManagerNames = process.platform === "win32"
   ? { pnpm: ["pnpm.cmd", "pnpm.exe"], yarn: ["yarn.cmd", "yarn.exe"], corepack: ["corepack.cmd", "corepack.exe"] }
   : { pnpm: ["pnpm"], yarn: ["yarn"], corepack: ["corepack"] };
@@ -718,101 +720,6 @@ export async function findPipCandidates(options = {}) {
   return found;
 }
 
-export async function findPythonToolCandidates(options = {}) {
-  const found = [];
-  const seen = new Set();
-  const add = async (tool, file, discovery = "PATH") => {
-    if (!(await exists(file))) return;
-    let key = `${tool}:${path.resolve(file).toLowerCase()}`;
-    try { key = `${tool}:${(await fs.realpath(file)).toLowerCase()}`; } catch {}
-    if (seen.has(key)) return;
-    seen.add(key);
-    const dir = path.dirname(file);
-    found.push({ tool, path: path.resolve(file), source: classifySource(dir), scope: classifyScope(dir), discovery });
-  };
-  for (const dir of pathEntries(options.pathValue ?? process.env.PATH)) {
-    for (const [tool, names] of Object.entries(pythonToolNames)) for (const name of names) await add(tool, path.join(dir, name));
-  }
-  const home = options.home || os.homedir();
-  const env = options.env || process.env;
-  const userBins = process.platform === "win32"
-    ? [path.join(env.USERPROFILE || home, ".local", "bin"), path.join(env.APPDATA || path.join(home, "AppData", "Roaming"), "Python", "Scripts")]
-    : [path.join(home, ".local", "bin")];
-  for (const dir of userBins) for (const [tool, names] of Object.entries(pythonToolNames)) for (const name of names) await add(tool, path.join(dir, name), "known-user-bin");
-  if (process.platform === "win32") {
-    const pythonUserRoot = path.join(env.APPDATA || path.join(home, "AppData", "Roaming"), "Python");
-    const allNames = Object.values(pythonToolNames).flat();
-    for (const file of await namedFilesBelow(pythonUserRoot, 3, allNames)) {
-      const tool = Object.entries(pythonToolNames).find(([, names]) => names.includes(path.basename(file).toLowerCase()))?.[0];
-      if (tool) await add(tool, file, "known-user-python-scripts");
-    }
-  }
-  return found;
-}
-
-export async function inspectPythonToolCandidates(candidates = [], pipCommands = [], options = {}) {
-  const inspected = await Promise.all(candidates.map(async (candidate) => {
-    const result = await portableCommandResult(candidate.path, ["--version"], { timeout: 3500, platform: options.platform || process.platform });
-    const version = result.ok ? firstVersion(`${result.stdout}\n${result.stderr}`) : null;
-    if (!version) return null;
-    const pipDirs = new Set(pipCommands.map((item) => path.dirname(item.path).toLowerCase()));
-    return { tool: candidate.tool, version, path: displayPath(candidate.path, options), source: candidate.source, scope: candidate.scope, discovery: candidate.discovery, routingEvidence: pipDirs.has(path.dirname(displayPath(candidate.path, options)).toLowerCase()) ? "co-located-with-pip" : "standalone-or-unknown", ownershipProven: false, removalAuthorized: false };
-  }));
-  return Object.fromEntries(["uv", "pipx"].map((tool) => {
-    const installations = inspected.filter((item) => item?.tool === tool).map((item, index) => ({ ...item, active: index === 0 }));
-    return [tool, { installations, active: installations[0] || null, distinctVersions: [...new Set(installations.map((item) => item.version))] }];
-  }));
-}
-
-export async function findCondaCandidates(options = {}) {
-  const platform = options.platform || process.platform;
-  const env = options.env || process.env;
-  const home = options.home || os.homedir();
-  const names = platform === "win32" ? ["conda.exe", "conda.bat"] : ["conda"];
-  const found = [];
-  const seen = new Set();
-  const add = async (file, discovery) => {
-    if (!file || !(await exists(file))) return;
-    let key = path.resolve(file).toLowerCase();
-    try { key = (await fs.realpath(file)).toLowerCase(); } catch {}
-    if (seen.has(key)) return;
-    seen.add(key);
-    const dir = path.dirname(file);
-    found.push({ path: path.resolve(file), source: classifySource(dir), scope: classifyScope(dir), discovery });
-  };
-  if (env.CONDA_EXE) await add(env.CONDA_EXE, "CONDA_EXE");
-  for (const dir of pathEntries(options.pathValue ?? env.PATH)) for (const name of names) await add(path.join(dir, name), "PATH");
-  const roots = ["miniconda3", "anaconda3", "miniforge3", "mambaforge"];
-  for (const root of roots) {
-    const base = path.join(home, root);
-    for (const name of names) await add(platform === "win32" ? path.join(base, "Scripts", name) : path.join(base, "bin", name), "known-user-root");
-  }
-  return found;
-}
-
-export async function inspectCondaCandidates(candidates = [], options = {}) {
-  const installations = [];
-  for (const candidate of candidates.slice(0, 20)) {
-    const versionResult = await portableCommandResult(candidate.path, ["--version"], { timeout: 4000, platform: options.platform || process.platform });
-    const version = versionResult.ok ? firstVersion(`${versionResult.stdout}\n${versionResult.stderr}`) : null;
-    if (!version) continue;
-    let environmentEvidence = { collection: options.fullPackages ? "unsupported-or-failed" : "not-requested", count: 0, activePrefix: "", prefixes: [], truncated: false };
-    if (options.fullPackages) {
-      const envResult = await portableCommandResult(candidate.path, ["info", "--envs", "--json"], { timeout: 8000, maxBuffer: 2 * 1024 * 1024, platform: options.platform || process.platform });
-      environmentEvidence = parseCondaEnvironmentInfo(envResult.ok ? envResult.stdout : "", options);
-    }
-    installations.push({ manager: "conda", version, path: displayPath(candidate.path, options), source: candidate.source, scope: candidate.scope, discovery: candidate.discovery, environmentEvidence, ownershipProven: false, removalAuthorized: false, active: installations.length === 0 });
-  }
-  return { installations, active: installations[0] || null, distinctVersions: [...new Set(installations.map((item) => item.version))], collection: options.fullPackages ? "environment-summary-requested" : "version-only" };
-}
-
-export function parseCondaEnvironmentInfo(raw, options = {}) {
-  let value;
-  try { value = JSON.parse(String(raw || "")); } catch { return { collection: "unsupported-or-failed", count: 0, activePrefix: "", prefixes: [], truncated: false }; }
-  const all = Array.isArray(value.envs) ? value.envs.filter((item) => typeof item === "string").slice(0, 501) : [];
-  return { collection: "collected", count: Math.min(all.length, 500), activePrefix: displayPath(value.active_prefix || "", options), prefixes: all.slice(0, 500).map((item) => displayPath(item, options)), truncated: all.length > 500, semantics: "Environment paths only; packages, channels, credentials, and tokens are not collected." };
-}
-
 async function inspectPipCandidates(candidates, options) {
   const inspected = await Promise.all(candidates.map(async (candidate) => {
     const raw = await commandOutput(candidate.path, ["--version"], { timeout: 5000 });
@@ -1356,10 +1263,6 @@ function quoteCmdArg(value) {
   return /^[A-Za-z0-9._@:/=-]+$/.test(text) ? text : `"${text.replaceAll('"', '""')}"`;
 }
 
-function pathEntries(value) {
-  return String(value || "").split(path.delimiter).map((item) => item.trim()).filter(Boolean);
-}
-
 function knownNodeRoots(env, home) {
   const roots = [];
   const fnmInstalls = path.join(env.FNM_DIR || defaultFnmDir(process.platform, env, home), "node-versions");
@@ -1427,33 +1330,6 @@ async function npmFilesBelow(root, depth) {
     else if (npmNames.includes(entry.name.toLowerCase())) out.push(full);
   }
   return out;
-}
-
-async function namedFilesBelow(root, depth, names) {
-  if (!root || depth < 0 || !(await exists(root))) return [];
-  const out = [];
-  let entries = [];
-  try { entries = await fs.readdir(root, { withFileTypes: true }); } catch { return out; }
-  for (const entry of entries) {
-    const full = path.join(root, entry.name);
-    if (entry.isDirectory()) out.push(...await namedFilesBelow(full, depth - 1, names));
-    else if (names.includes(entry.name.toLowerCase())) out.push(full);
-  }
-  return out;
-}
-
-function classifySource(value) {
-  const lower = String(value).toLowerCase();
-  if (lower.includes("nvm")) return "nvm";
-  if (lower.includes("volta")) return "volta";
-  if (lower.includes("fnm")) return "fnm";
-  if (lower.includes("mise")) return "mise";
-  if (lower.includes("pyenv")) return "pyenv";
-  if (lower.includes("uv")) return "uv";
-  if (lower.includes("homebrew")) return "homebrew";
-  if (lower.includes("programs\\python")) return "python-org";
-  if (lower.includes("program files") || lower.startsWith("/usr/") || lower.startsWith("/opt/")) return "system";
-  return "path";
 }
 
 export function parsePipList(raw) {
@@ -1585,21 +1461,6 @@ function pathContains(parent, child) {
 
 function majorMinor(value) {
   return String(value || "").match(/(\d+)\.(\d+)/)?.slice(1).join(".") || "";
-}
-
-function classifyScope(value) {
-  const home = os.homedir().toLowerCase();
-  return String(value).toLowerCase().startsWith(home) ? "user" : "host";
-}
-
-function displayPath(value, options) {
-  if (!value) return "";
-  if (options.showPaths) return path.normalize(value);
-  const home = os.homedir();
-  const normalized = path.normalize(value);
-  return normalized.toLowerCase().startsWith(path.normalize(home).toLowerCase())
-    ? `$HOME${normalized.slice(home.length)}`
-    : normalized;
 }
 
 function compact(value) {
