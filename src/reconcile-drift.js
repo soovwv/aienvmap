@@ -81,6 +81,7 @@ function pythonSection(section = {}) {
     managerInventories: normalize(section.managerInventories || {}),
     pipCommands: normalizeInstallations(section.pipCommands, ["pythonVersion", "packageLocation"]),
     toolEntryPoints: normalize(section.toolEntryPoints || {}),
+    conda: normalize(section.conda || {}),
     runtimeLinks: normalizeRuntimeLinks(section.runtimeLinks)
   };
 }
