@@ -50,7 +50,7 @@ test("schemaContract describes stable AI output contracts", () => {
   assert.match(schema.outputs.reconcilePortable.fingerprintRule, /pseudonymous/);
   assert.match(schema.outputs.reconcilePortableCompare.command, /--portable-compare/);
   assert.ok(schema.outputs.reconcilePortableCompare.rootFields.includes("changes"));
-  assert.deepEqual(schema.outputs.reconcile.detailedToolchains, ["node/npm", "python/pip"]);
+  assert.deepEqual(schema.outputs.reconcile.detailedToolchains, ["node/npm/pnpm/yarn/corepack", "python/pip"]);
   assert.ok(schema.outputs.reconcile.discoveryEvidenceFields.includes("osNativeCount"));
   assert.deepEqual(schema.outputs.reconcile.javaNativeSources, ["windows-registry", "macos-java-home", "linux-alternatives"]);
   assert.ok(schema.outputs.reconcile.javaIdentityFields.includes("vendor"));
@@ -75,6 +75,8 @@ test("schemaContract describes stable AI output contracts", () => {
   assert.match(schema.outputs.sbom.clearImportCommand, /--clear-import/);
   assert.ok(schema.outputs.sbom.aiUseFields.includes("externalEvidence"));
   assert.ok(schema.releaseReadiness.contractReview.surfaces.includes("reconcile"));
+  assert.ok(schema.outputs.reconcile.nodePackageManagerFields.includes("deliveryEvidence"));
+  assert.ok(schema.outputs.reconcile.nodePackageManagerDeliveryEvidence.includes("co-located-with-corepack"));
   assert.ok(schema.releaseReadiness.contractReview.surfaces.includes("reconcileCheck"));
   assert.ok(schema.outputs.status.rootFields.includes("coordinationRevision"));
   assert.match(schema.outputs.status.compareAndSwap, /--if-revision/);
