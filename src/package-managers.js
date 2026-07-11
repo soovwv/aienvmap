@@ -714,7 +714,7 @@ export async function findPipCandidates(options = {}) {
     found.push({ path: path.resolve(file), source, scope, discovery });
   };
   for (const dir of pathEntries(options.pathValue ?? process.env.PATH)) {
-    for (const name of pipNames) await add(path.join(dir, name), classifySource(dir), classifyScope(dir), "PATH");
+    for (const name of pipNames) await add(path.join(dir, name), classifySource(dir), classifyScope(dir, options.home || os.homedir()), "PATH");
   }
   for (const file of projectPipCandidates(options.projectDir)) await add(file, "project-venv", "project", "project-known-path");
   return found;
@@ -768,7 +768,7 @@ export async function findNodeCandidates(options = {}) {
     found.push({ path: path.resolve(file), source, scope, discovery });
   };
   for (const dir of pathEntries(options.pathValue ?? process.env.PATH)) {
-    for (const name of nodeNames) await add(path.join(dir, name), classifySource(dir), classifyScope(dir), "PATH");
+    for (const name of nodeNames) await add(path.join(dir, name), classifySource(dir), classifyScope(dir, options.home || os.homedir()), "PATH");
   }
   for (const root of knownNodeRoots(options.env || process.env, options.home || os.homedir())) {
     for (const file of await namedFilesBelow(root.path, root.depth, nodeNames)) await add(file, root.source, root.scope, "known-root");
@@ -827,7 +827,7 @@ export async function findPythonCandidates(options = {}) {
     found.push({ path: path.resolve(file), source, scope, discovery });
   };
   for (const dir of pathEntries(options.pathValue ?? process.env.PATH)) {
-    for (const name of pythonNames) await add(path.join(dir, name), classifySource(dir), classifyScope(dir), "PATH");
+    for (const name of pythonNames) await add(path.join(dir, name), classifySource(dir), classifyScope(dir, options.home || os.homedir()), "PATH");
   }
   for (const file of projectPythonCandidates(options.projectDir)) {
     await add(file, "project-venv", "project", "project-known-path");
@@ -1085,7 +1085,7 @@ export async function findNpmCandidates(options = {}) {
   };
 
   for (const dir of pathEntries(options.pathValue ?? process.env.PATH)) {
-    for (const name of npmNames) await add(path.join(dir, name), classifySource(dir), classifyScope(dir));
+    for (const name of npmNames) await add(path.join(dir, name), classifySource(dir), classifyScope(dir, options.home || os.homedir()));
   }
 
   for (const root of knownNodeRoots(options.env || process.env, options.home || os.homedir())) {
@@ -1104,7 +1104,7 @@ export async function findNodePackageManagerCandidates(options = {}) {
     if (seen.has(key)) return;
     seen.add(key);
     const dir = path.dirname(file);
-    found.push({ manager, path: path.resolve(file), source: classifySource(dir), scope: classifyScope(dir) });
+    found.push({ manager, path: path.resolve(file), source: classifySource(dir), scope: classifyScope(dir, options.home || os.homedir()) });
   };
   for (const dir of pathEntries(options.pathValue ?? process.env.PATH)) {
     for (const [manager, names] of Object.entries(nodePackageManagerNames)) {

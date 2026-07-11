@@ -3,7 +3,17 @@ import assert from "node:assert/strict";
 import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
-import { analyzeCommonRuntimes, analyzeJavaBuildTools, inspectJavaBuildTools, javaManagerEvidence, linkJavaBuildTool, parseDotnetRuntimes, parseGradleVersion, parseJavaProperties, parseLinuxJavaAlternatives, parseMacJavaHomes, parseMavenVersion, parseRustToolchains, parseVersionLines, parseWindowsJavaRegistry, summarizeDiscoveryEvidence, summarizeJavaMetadata } from "../src/runtime-discovery.js";
+import { analyzeCommonRuntimes, analyzeJavaBuildTools, findRuntimeCandidates, inspectJavaBuildTools, javaManagerEvidence, linkJavaBuildTool, parseDotnetRuntimes, parseGradleVersion, parseJavaProperties, parseLinuxJavaAlternatives, parseMacJavaHomes, parseMavenVersion, parseRustToolchains, parseVersionLines, parseWindowsJavaRegistry, summarizeDiscoveryEvidence, summarizeJavaMetadata } from "../src/runtime-discovery.js";
+
+test("explicit home controls information-only runtime PATH scope", async () => {
+  const home = await fs.mkdtemp(path.join(os.tmpdir(), "aienvmap-runtime-home-"));
+  const bin = path.join(home, "bin");
+  await fs.mkdir(bin, { recursive: true });
+  const name = process.platform === "win32" ? "sample.exe" : "sample";
+  await fs.writeFile(path.join(bin, name), "", "utf8");
+  const candidates = await findRuntimeCandidates({ id: "sample", names: [name], direct: [], roots: [] }, { pathValue: bin, home });
+  assert.equal(candidates[0].scope, "user");
+});
 
 test("parseVersionLines extracts installed SDK versions", () => {
   assert.deepEqual(parseVersionLines("8.0.410 [C:\\dotnet\\sdk]\n9.0.100-preview.1 [C:\\dotnet\\sdk]\n"), ["8.0.410", "9.0.100-preview.1"]);

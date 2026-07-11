@@ -10,6 +10,8 @@ const pythonToolNames = process.platform === "win32" ? { uv: ["uv.exe"], pipx: [
 export async function findPythonToolCandidates(options = {}) {
   const found = [];
   const seen = new Set();
+  const home = options.home || os.homedir();
+  const env = options.env || process.env;
   const add = async (tool, file, discovery = "PATH") => {
     if (!(await exists(file))) return;
     let key = `${tool}:${path.resolve(file).toLowerCase()}`;
@@ -17,11 +19,9 @@ export async function findPythonToolCandidates(options = {}) {
     if (seen.has(key)) return;
     seen.add(key);
     const dir = path.dirname(file);
-    found.push({ tool, path: path.resolve(file), source: classifySource(dir), scope: classifyScope(dir), discovery });
+    found.push({ tool, path: path.resolve(file), source: classifySource(dir), scope: classifyScope(dir, home), discovery });
   };
   for (const dir of pathEntries(options.pathValue ?? process.env.PATH)) for (const [tool, names] of Object.entries(pythonToolNames)) for (const name of names) await add(tool, path.join(dir, name));
-  const home = options.home || os.homedir();
-  const env = options.env || process.env;
   const userBins = process.platform === "win32" ? [path.join(env.USERPROFILE || home, ".local", "bin"), path.join(env.APPDATA || path.join(home, "AppData", "Roaming"), "Python", "Scripts")] : [path.join(home, ".local", "bin")];
   for (const dir of userBins) for (const [tool, names] of Object.entries(pythonToolNames)) for (const name of names) await add(tool, path.join(dir, name), "known-user-bin");
   if (process.platform === "win32") {
@@ -64,7 +64,7 @@ export async function findCondaCandidates(options = {}) {
     if (seen.has(key)) return;
     seen.add(key);
     const dir = path.dirname(file);
-    found.push({ path: path.resolve(file), source: classifySource(dir), scope: classifyScope(dir), discovery });
+    found.push({ path: path.resolve(file), source: classifySource(dir), scope: classifyScope(dir, home), discovery });
   };
   if (env.CONDA_EXE) await add(env.CONDA_EXE, "CONDA_EXE");
   for (const dir of pathEntries(options.pathValue ?? env.PATH)) for (const name of names) await add(path.join(dir, name), "PATH");
