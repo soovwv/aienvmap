@@ -56,6 +56,7 @@ test("node package-manager candidate discovery stays bounded to PATH", async () 
   await fs.writeFile(path.join(dir, name), "", "utf8");
   const candidates = await findNodePackageManagerCandidates({ pathValue: dir, env: {}, home: dir });
   assert.ok(candidates.some((item) => item.manager === "pnpm" && item.path === path.join(dir, name)));
+  assert.ok(candidates.every((item) => item.scope === "user"));
 });
 
 test("node package-manager inspection reads versions without claiming shim ownership", async () => {
@@ -92,10 +93,27 @@ test("Python tool discovery and inspection stay bounded and advisory", async () 
     await fs.writeFile(file, "#!/bin/sh\necho uv 0.8.1\n", "utf8");
     await fs.chmod(file, 0o755);
     const candidates = await findPythonToolCandidates({ pathValue: dir, env: {}, home: dir });
+    assert.ok(candidates.every((item) => item.scope === "user"));
     const inspected = await inspectPythonToolCandidates(candidates, [], { showPaths: true });
     assert.equal(inspected.uv.active.version, "0.8.1");
     assert.equal(inspected.uv.active.ownershipProven, false);
   }
+});
+
+test("explicit home controls Node and Python PATH candidate scope", async () => {
+  const home = await fs.mkdtemp(path.join(os.tmpdir(), "aienvmap-other-home-"));
+  const bin = path.join(home, "bin");
+  await fs.mkdir(bin, { recursive: true });
+  const nodeName = process.platform === "win32" ? "node.exe" : "node";
+  const pythonName = process.platform === "win32" ? "python.exe" : "python3";
+  await fs.writeFile(path.join(bin, nodeName), "", "utf8");
+  await fs.writeFile(path.join(bin, pythonName), "", "utf8");
+  const [nodes, pythons] = await Promise.all([
+    findNodeCandidates({ pathValue: bin, env: {}, home }),
+    findPythonCandidates({ pathValue: bin, env: {}, home })
+  ]);
+  assert.equal(nodes.find((item) => item.path === path.join(bin, nodeName))?.scope, "user");
+  assert.equal(pythons.find((item) => item.path === path.join(bin, pythonName))?.scope, "user");
 });
 
 test("Conda environment JSON keeps bounded path-only evidence", () => {

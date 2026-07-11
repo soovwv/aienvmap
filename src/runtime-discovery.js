@@ -138,7 +138,7 @@ export async function findRuntimeCandidates(definition, options = {}) {
     found.push({ path: path.resolve(file), source, scope, discovery });
   };
   for (const dir of pathEntries(options.pathValue ?? process.env.PATH)) {
-    for (const name of definition.names) await add(path.join(dir, name), classifySource(dir), classifyScope(dir), "PATH");
+    for (const name of definition.names) await add(path.join(dir, name), classifySource(dir), classifyScope(dir, options.home || os.homedir()), "PATH");
   }
   for (const candidate of definition.direct || []) await add(candidate.path, candidate.source, candidate.scope, "known-path");
   if (definition.id === "java") {
@@ -478,15 +478,15 @@ function classifySource(value) {
   return "path";
 }
 
-function classifyScope(value) {
-  return String(value).toLowerCase().startsWith(os.homedir().toLowerCase()) ? "user" : "host";
+function classifyScope(value, home = os.homedir()) {
+  return String(value).toLowerCase().startsWith(String(home).toLowerCase()) ? "user" : "host";
 }
 
 function displayPath(value, options) {
   if (!value) return "";
   const normalized = path.normalize(value);
   if (options.showPaths) return normalized;
-  const home = path.normalize(os.homedir());
+  const home = path.normalize(options.home || os.homedir());
   return normalized.toLowerCase().startsWith(home.toLowerCase()) ? `$HOME${normalized.slice(home.length)}` : normalized;
 }
 
