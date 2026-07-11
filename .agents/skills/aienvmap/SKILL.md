@@ -100,6 +100,8 @@ Before dependency, lockfile, security remediation, or release-affecting dependen
 
 Before consolidating runtimes or package managers on an existing machine, read `.aienvmap/reconcile.json` or run `npx aienvmap reconcile --json`. Use `--full-packages` only when package-level, Python installer metadata, or uv/pyenv manager-native interpreter evidence is required. Read `python.managerInventories`; exact uv interpreter and pyenv prefix matches may prove manager control. Treat `runtimeLinks`, `installerEvidence`, and per-installation `managerEvidence` as evidence; even `ownershipProven: true` never overrides `removalAuthorized: false` or human approval.
 
+For Node, read `node.managerInventories.volta` and each installation's `reportedExecutable` plus `managerEvidence`. Only `inventory-and-image-path-match` proves Volta control; `inventory-version-match` and `managed-root-inference` remain routing evidence. Never uninstall or rewrite project Volta pins automatically.
+
 For Java, read `otherRuntimes.java.discoveryEvidence` and each installation's `source`/`discovery`. Windows Registry, macOS `java_home`, and Linux alternatives are provenance signals only; do not infer that an OS-native entry is safe to remove.
 
 Use `otherRuntimes.java.runtimeMetadata` and each Java installation's vendor, architecture, `runtimeKind`, `javaHome`, and `propertyEvidence` to distinguish same-version JDKs. Treat `jdk` as sibling-`javac` evidence and `jre-or-runtime-image` as a conservative label, not a cleanup decision.

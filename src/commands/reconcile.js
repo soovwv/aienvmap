@@ -39,7 +39,10 @@ export async function reconcileWorkspace(args = {}) {
   const expected = result.project.packageManager;
   console.log(`project: ${expected ? `${expected.name}@${expected.version}` : "packageManager not declared"}; lockfiles: ${result.project.lockManagers.join(", ") || "none"}`);
   if (!result.node.installations.length) console.log("node: not detected");
-  for (const item of result.node.installations) console.log(`node: ${item.version} ${item.active ? "[active]" : "[inactive]"} ${item.source}/${item.scope} ${item.path}`);
+  for (const item of result.node.installations) {
+    console.log(`node: ${item.version} ${item.active ? "[active]" : "[inactive]"} ${item.source}/${item.scope} ${item.path}`);
+    console.log(`  manager: ${item.managerEvidence?.manager || "unknown"}; relationship: ${item.managerEvidence?.relationship || "unconfirmed"}; ownership: ${item.managerEvidence?.ownershipProven ? "proven" : "not-proven"}; removal: not-authorized`);
+  }
   if (!result.npm.installations.length) console.log("npm: not detected");
   for (const item of result.npm.installations) {
     console.log(`npm: ${item.version} ${item.active ? "[active]" : "[inactive]"} ${item.source}/${item.scope} ${item.path}`);
@@ -141,6 +144,13 @@ export function summarizeReconciliation(value = {}) {
       proven: (value.python?.installations || []).filter((item) => item.managerEvidence?.ownershipProven === true).length,
       inferred: (value.python?.installations || []).filter((item) => item.managerEvidence?.confidence === "medium").length,
       unconfirmed: (value.python?.installations || []).filter((item) => item.managerEvidence?.confidence === "none").length,
+      removalAuthorized: false
+    },
+    nodeManagerEvidence: {
+      proven: (value.node?.installations || []).filter((item) => item.managerEvidence?.ownershipProven === true).length,
+      inferred: (value.node?.installations || []).filter((item) => item.managerEvidence?.confidence === "medium").length,
+      unconfirmed: (value.node?.installations || []).filter((item) => item.managerEvidence?.confidence === "none").length,
+      managers: [...new Set((value.node?.installations || []).map((item) => item.managerEvidence?.manager).filter((item) => item && item !== "unknown"))].sort(),
       removalAuthorized: false
     },
     nextCommand: value.decision === "review" ? "aienvmap reconcile --json --full-packages" : "aienvmap status --json",

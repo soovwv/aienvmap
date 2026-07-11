@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Added opt-in Volta plain Node inventory, reported `process.execPath` image matching, conservative ownership relationships, Windows command integration, and AI/drift/schema summaries without removal authority.
 - Added opt-in pyenv manager-native inventory using bounded root/version commands, exact Python prefix ownership evidence, Windows batch support, AI/drift/schema integration, and a permanent no-removal-authority rule.
 - Added Java SDKMAN/mise/jenv manager evidence with canonical-root ownership proof, routing-only treatment for external registrations and jenv, compact AI summaries, and drift detection while keeping removal unauthorized.
 - Added read-only Maven/Gradle JVM binding evidence with project-wrapper precedence, distinct Gradle Launcher/Daemon roles, conservative links to detected Java installations, AI review findings, compact startup summaries, and drift detection.
