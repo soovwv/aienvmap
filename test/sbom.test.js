@@ -144,6 +144,7 @@ test("buildCycloneDxLite exports project manifest packages with limitations", ()
   assert.equal(propertyValue(cdx.metadata.properties, "aienvmap:aiBootstrap:environmentChanges"), "review-first");
   assert.match(propertyValue(cdx.properties, "aienvmap:aiBootstrap:rule"), /Review SBOM risk/);
   assert.equal(propertyValue(cdx.properties, "aienvmap:externalEvidence:status"), "not-imported");
+  assert.equal(propertyValue(cdx.properties, "aienvmap:externalEvidence:verification"), "not-imported");
   assert.equal(propertyValue(cdx.properties, "aienvmap:scannerGuidance:mode"), "optional-read-only");
   assert.equal(propertyValue(cdx.properties, "aienvmap:scannerGuidance:command"), "aienvmap sync --security");
   assert.equal(propertyValue(cdx.properties, "aienvmap:scannerGuidance:externalTools"), "syft,trivy,grype,dependency-track");
@@ -292,6 +293,7 @@ test("sbomWorkspace imports, persists, reuses, and clears external evidence", as
   const cdx = await sbomWorkspace({ dir, format: "cyclonedx-lite", quiet: true });
   assert.equal(propertyValue(cdx.properties, "aienvmap:externalEvidence:artifact"), "syft.cdx.json");
   assert.equal(propertyValue(cdx.properties, "aienvmap:externalEvidence:digest"), refreshed.externalEvidence.digest);
+  assert.equal(propertyValue(cdx.properties, "aienvmap:externalEvidence:verification"), "digest-match");
 
   const cleared = await sbomWorkspace({ dir, clear_import: true, write: true, quiet: true });
   assert.equal(cleared.externalEvidence.status, "not-imported");

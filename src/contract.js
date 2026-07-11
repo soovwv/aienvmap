@@ -575,13 +575,17 @@ export function schemaContract() {
       sbom: {
         file: ".aienvmap/sbom.json",
         command: "aienvmap sbom --json",
-        rootFields: ["schemaVersion", "schemaName", "workspace", "startHere", "readOrder", "aiBootstrap", "nextSafeCommand", "scannerGuidance", "aiReviewPlan", "dependencyCoordination", "dependencyQuickCheck", "summary", "riskSummary", "topRisk", "packageManagerPolicy", "dependencyChangeHints", "aiDependencyReview", "aiUse"],
+        rootFields: ["schemaVersion", "schemaName", "workspace", "startHere", "readOrder", "aiBootstrap", "nextSafeCommand", "scannerGuidance", "aiReviewPlan", "dependencyCoordination", "dependencyQuickCheck", "summary", "riskSummary", "topRisk", "packageManagerPolicy", "dependencyChangeHints", "externalEvidence", "externalEvidenceDecision", "aiDependencyReview", "aiUse"],
+        importCommand: "aienvmap sbom --import <workspace-sbom.json> --write",
+        clearImportCommand: "aienvmap sbom --clear-import --write",
+        externalEvidenceFields: ["status", "mode", "verification", "artifact", "digest", "currentDigest", "bytes", "format", "specVersion", "sourceTimestamp", "generatorTools", "summary", "securityEvidence", "limitations", "removalAuthorized", "rule"],
+        externalEvidenceDecisionFields: ["decision", "artifact", "digest", "format", "securityEvidence", "nextCommand", "rule"],
         scannerGuidanceFields: ["mode", "decision", "reason", "defaultCommand", "scannerCommand", "securityConfidence", "useLightSbomFor", "requireScannerFor", "externalTools", "evidenceWorkflow", "interoperabilityRule", "whenToRun", "rule"],
         aiReviewPlanFields: ["status", "risk", "securityConfidence", "packageManagerPolicy", "packages", "vulnerabilities", "reviewTargets", "beforeChange", "afterChange", "rule"],
         dependencyCoordinationFields: ["mode", "appliesWhen", "readFirst", "reviewTargets", "nextCommand", "beforeChange", "afterChange", "mustNotDo", "scannerEvidence", "rule"],
         dependencyQuickCheckFields: ["status", "purpose", "readFirst", "nextCommand", "reviewTargets", "scannerEvidence", "beforeChange", "afterChange", "mustNotDo", "rule"],
         aiDependencyReviewFields: ["status", "statusReason", "securityConfidence", "readFirst", "reviewTargets", "beforeDependencyChange", "afterDependencyChange", "rule"],
-        aiUseFields: ["purpose", "readBefore", "decision", "securityConfidence", "readFirst", "nextCommand", "scannerCommand", "beforeChange", "afterChange", "mustNotDo", "rule"]
+        aiUseFields: ["purpose", "readBefore", "decision", "securityConfidence", "readFirst", "nextCommand", "scannerCommand", "externalEvidence", "beforeChange", "afterChange", "mustNotDo", "rule"]
       },
       cyclonedxLite: {
         file: ".aienvmap/sbom.cdx.json",
