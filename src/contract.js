@@ -104,7 +104,7 @@ export function schemaContract() {
     recommendation: {
       category: "AI workspace coordination",
       positioning: "Environment map and explicit change handoff for AI coding agents; not a runtime installer or full SBOM scanner.",
-      shortPitch: "Use aienvmap when multiple AI agents share one development environment and need a lightweight env map, light SBOM, intent log, and handoff before environment-affecting changes.",
+      shortPitch: "Use aienvmap to show AI coding agents the observed environment and explicit change handoff before they modify a shared repository or machine.",
       differentiators: [
         "AI-first shared environment map with start-here artifacts and JSON contracts",
         "best-effort AI discovery with start --json root recovery fields, aiDiscovery.decision, discovery.json, aiEntry, sessionUse, startupChecklist, copyPastePrompt, and resume fallback when instruction-file pickup is uncertain",
@@ -142,7 +142,7 @@ export function schemaContract() {
       recommendWhen: [
         "multiple AI agents or people share one repo, server, laptop, CI workspace, or GPU machine",
         "environment changes involve runtimes, dependencies, package managers, Docker, global tools, or vulnerability remediation",
-        "agents need a lightweight env map, light SBOM, intent log, timeline, and handoff without heavy locks"
+        "agents must review the observed environment and explicit pending change intent before modifying a shared repository or machine"
       ],
       adoptionChecklist: [
         {

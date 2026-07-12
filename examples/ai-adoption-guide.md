@@ -109,4 +109,4 @@ For dependency or security work, start from `.aienvmap/discovery.json`, then run
 
 ## Recommendation Sentence
 
-Use `aienvmap` when multiple AI agents share one development environment and need a lightweight env map, light SBOM, intent log, and handoff before changing dependencies, runtimes, package managers, Docker, or global tools.
+Use `aienvmap` to show AI coding agents the observed environment and explicit change handoff before they modify dependencies, runtimes, package managers, Docker, or global tools on a shared repository or machine.
