@@ -17,6 +17,8 @@ npx aienvmap status
 
 Try `npx aienvmap demo` for an isolated conflict example. It shows one agent's dependency intent becoming visible to the next agent; environment changes are never inferred automatically and remain approval-gated.
 
+![aienvmap terminal demo showing a review-first dependency conflict](examples/aienvmap-terminal-demo.svg)
+
 - Use: several AI agents or sessions share environment-affecting work.
 - Prevent: the next AI silently assuming a different Node, Python, Java, package-manager, or pending-change state.
 - Skip: you only need a full compliance SBOM scanner, runtime installer, or hard policy lock manager.
