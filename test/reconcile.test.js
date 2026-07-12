@@ -19,7 +19,7 @@ test("reconcile command preserves the portable helper compatibility exports", as
 
 test("explicit home inspection validates the boundary and isolates invoking-user variables", async () => {
   const home = await fs.mkdtemp(path.join(os.tmpdir(), "aienvmap-inspected-home-"));
-  assert.equal(await resolveInspectedHome(home), path.normalize(home));
+  assert.equal(await resolveInspectedHome(home), path.normalize(await fs.realpath(home)));
   await assert.rejects(resolveInspectedHome("relative/home"), /absolute existing directory/);
   await assert.rejects(resolveInspectedHome(path.join(home, "missing")), /absolute existing directory/);
   const env = isolatedHomeEnvironment(home, { PATH: "session-path", NVM_DIR: "wrong-user", PYENV_ROOT: "wrong-user", CONDA_PREFIX: "secret" });
