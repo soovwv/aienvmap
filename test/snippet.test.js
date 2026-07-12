@@ -4,6 +4,17 @@ import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { snippetWorkspace } from "../src/commands/snippet.js";
+import { renderAgentPointer } from "../src/render.js";
+
+test("every agent pointer treats aienvmap as evidence rather than authority", () => {
+  for (const target of ["agents", "codex", "claude", "gemini", "cursor", "copilot"]) {
+    const pointer = renderAgentPointer(target);
+    assert.match(pointer, /observed environment evidence and an explicit change handoff/);
+    assert.match(pointer, /not as authoritative machine state/);
+    assert.match(pointer, /does not replace .*the active shell, or owning-user verification/);
+    assert.doesNotMatch(pointer, /source of truth|live env map|live env pointer/i);
+  }
+});
 
 test("snippet writes only an aienvmap marker block when explicitly requested", async () => {
   const dir = await fs.mkdtemp(path.join(os.tmpdir(), "aienvmap-snippet-"));

@@ -297,7 +297,7 @@ export function schemaContract() {
         "Run aienvmap sync if .aienvmap/status.json is missing or stale.",
         "Continue project-local code work unless status/context requires environment review."
       ],
-      rule: "aienvmap does not replace agent instruction files; it gives them a shared live env map and light SBOM. Instruction-file pointers improve automatic discovery, while discovery.json and aienvmap start give AI hosts a fallback entry contract when pickup is uncertain. Existing artifacts remain directly usable through the fallback read path starting at .aienvmap/discovery.json. Optional Cursor and Copilot pointers are opt-in."
+      rule: "aienvmap does not replace agent instruction files, the active shell, or owning-user verification; it gives AI agents shared observed environment evidence and a light SBOM. Instruction-file pointers improve automatic discovery, while discovery.json and aienvmap start give AI hosts a fallback entry contract when pickup is uncertain. Existing artifacts remain directly usable through the fallback read path starting at .aienvmap/discovery.json. Optional Cursor and Copilot pointers are opt-in."
     },
     demo: {
       command: "aienvmap demo",

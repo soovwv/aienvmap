@@ -216,7 +216,9 @@ test("schemaContract describes stable AI output contracts", () => {
   assert.match(schema.agentDiscovery.startupChecklist.join(" "), /dependencyQuickCheck/);
   assert.match(schema.agentDiscovery.startupChecklist.join(" "), /record intent before/);
   assert.ok(schema.agentDiscovery.sessionStart.includes("Start at .aienvmap/discovery.json when artifacts are present, then read .aienvmap/status.json."));
-  assert.match(schema.agentDiscovery.rule, /shared live env map/);
+  assert.match(schema.agentDiscovery.rule, /shared observed environment evidence/);
+  assert.match(schema.agentDiscovery.rule, /does not replace .*the active shell, or owning-user verification/);
+  assert.doesNotMatch(schema.agentDiscovery.rule, /live env map|source of truth/i);
   assert.equal(schema.demo.command, "aienvmap demo");
   assert.equal(schema.demo.jsonCommand, "aienvmap demo --json");
   assert.equal(schema.demo.scenario, "multi-agent-conflict");
