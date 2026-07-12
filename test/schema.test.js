@@ -33,6 +33,10 @@ test("schemaContract describes stable AI output contracts", () => {
   assert.match(schema.outputs.reconcile.nodeManagerInventories, /Volta, fnm, nvm\/nvm-windows, and Node-only mise/);
   assert.ok(schema.outputs.reconcile.aiDecisionFields.includes("nodeManagerEvidence"));
   assert.ok(schema.outputs.reconcile.aiDecisionFields.includes("consolidationPlan"));
+  assert.ok(schema.outputs.reconcile.aiDecisionFields.includes("clarification"));
+  assert.ok(schema.outputs.reconcile.clarificationFields.includes("question"));
+  assert.ok(schema.outputs.reconcile.clarificationFields.includes("defaultChoice"));
+  assert.ok(schema.outputs.reconcile.clarificationFields.includes("removalAuthorized"));
   assert.ok(schema.outputs.reconcile.consolidationPlanFields.includes("rollbackRequirements"));
   assert.ok(schema.outputs.reconcile.voltaNodeInventoryFields.includes("runtimeCount"));
   assert.deepEqual(schema.outputs.reconcile.voltaNodeRelationships, ["inventory-and-image-path-match", "inventory-version-match", "managed-root-inference", "unconfirmed"]);

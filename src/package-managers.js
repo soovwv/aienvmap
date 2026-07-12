@@ -954,12 +954,14 @@ export function buildAiDecision({ node = [], npm = [], python = [], java = {}, p
     npm: chooseCanonical(npm, project.packageManager?.name === "npm" ? project.packageManager.version : ""),
     python: chooseCanonical(python, project.python?.versionFile || "")
   };
+  const clarification = buildEnvironmentClarification(actionCandidates);
   return {
     consumer: "AI agent",
     decision: findings.some((item) => item.severity === "review") ? "review" : "clear",
     readFirst: ["project", "node.active", "node.managerInventories", "npm.active", "npm.runtimeLinks", "python.active", "python.managerInventories", "python.runtimeLinks", "findings", "aiDecision.actionCandidates"],
     canonicalCandidates,
     actionCandidates,
+    clarification,
     consolidationPlan: buildConsolidationPlan({ actionCandidates, canonicalCandidates }),
     runtimeLinkSummary: {
       npm: summarizeRuntimeLinkConfidence(runtimeLinks.npm),
@@ -989,6 +991,23 @@ export function buildAiDecision({ node = [], npm = [], python = [], java = {}, p
       "A removal candidate requires project ownership checks, package comparison, a rollback plan, and explicit human approval.",
       "If package digests differ and package-level evidence is needed, rerun `aienvmap reconcile --json --full-packages` before deciding."
     ]
+  };
+}
+
+export function buildEnvironmentClarification(actionCandidates = []) {
+  const kinds = [...new Set(actionCandidates.map((item) => item.kind).filter(Boolean))].sort();
+  const required = kinds.length > 0;
+  return {
+    required,
+    status: required ? "ask-user-before-consolidation" : "not-needed",
+    reason: required ? "Multiple or inactive installations are evidence of complexity, not proof that consolidation is wanted." : "No inactive runtime or package-manager candidate requires an intent question.",
+    question: required ? "Are these installations intentionally retained for different projects or workflows, or should the AI prepare a reviewed consolidation proposal?" : "",
+    choices: required ? ["keep-intentional", "review-consolidation", "need-more-evidence"] : [],
+    defaultChoice: required ? "need-more-evidence" : "none",
+    affectedKinds: kinds,
+    environmentChangesAuthorized: false,
+    removalAuthorized: false,
+    rule: "Do not infer cleanup intent from duplicate or inactive installations; ask the user and gather ownership, consumer, and rollback evidence before proposing a change."
   };
 }
 

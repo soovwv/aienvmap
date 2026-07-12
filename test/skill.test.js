@@ -115,4 +115,8 @@ test("packaged aienvmap skill points AI agents to current startup contracts", as
   assert.match(skill, /--case-summary portable\.json --markdown/);
   assert.match(skill, /writes nothing and uploads nothing/);
   assert.match(skill, /never completes human verification/);
+  assert.match(skill, /aiDecision\.clarification\.required/);
+  assert.match(skill, /default to `need-more-evidence`/);
+  assert.match(skill, /preserve `keep-intentional` as a valid answer/);
+  assert.match(skill, /never infer cleanup intent from duplication/);
 });

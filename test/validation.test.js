@@ -12,5 +12,11 @@ test("cross-platform validation records redacted compatibility evidence without 
   assert.match(validation, /Removal authorized/);
   assert.match(validation, /false/);
   assert.match(validation, /cleanup was verified/);
+  assert.match(validation, /scripts\/scenario-check\.mjs/);
+  assert.match(validation, /Intentional complexity policy/);
+  assert.match(validation, /ask before consolidation/);
+  assert.match(validation, /not three independent users or three market cases/);
+  assert.match(validation, /Docker backend stopped responding/);
+  assert.match(validation, /not reported as a product pass or failure/);
   assert.doesNotMatch(validation, /211\.226\.|mil_user|password|qhst/i);
 });

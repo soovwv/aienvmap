@@ -163,6 +163,10 @@ export async function reconcileWorkspace(args = {}) {
     console.log("AI action candidates (review only):");
     for (const item of result.aiDecision.actionCandidates) console.log(`- ${item.kind} ${item.recommendation}: ${item.target} (${item.confidence})`);
   }
+  if (result.aiDecision.clarification?.required) {
+    console.log(`user question: ${result.aiDecision.clarification.question}`);
+    console.log(`choices: ${result.aiDecision.clarification.choices.join(", ")}; default: ${result.aiDecision.clarification.defaultChoice}`);
+  }
   console.log(`consolidation plan: ${result.aiDecision.consolidationPlan.status}; apply: none; approval: required for environment changes`);
   console.log("changes: none; review findings before changing runtimes, PATH, prefixes, or lockfiles");
   if (result.written) console.log(`written: ${result.written}`);

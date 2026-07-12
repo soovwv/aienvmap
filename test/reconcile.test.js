@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
-import { analyzeNodeInstallations, analyzeNodePackageManagers, analyzeNpmInstallations, analyzePythonCommandRouting, analyzePythonInstallations, analyzeRuntimeLinks, attachFnmManagerEvidence, attachMiseNodeEvidence, attachMisePythonEvidence, attachNvmManagerEvidence, attachPyenvManagerEvidence, attachUvManagerEvidence, attachVoltaManagerEvidence, buildAiDecision, buildConsolidationPlan, compareNpmGlobalPackages, comparePythonPackages, findNodeCandidates, findNodePackageManagerCandidates, findPythonCandidates, inspectFnmNodeManager, inspectMiseRuntimeManager, inspectNodeCandidates, inspectNodePackageManagerCandidates, inspectNvmNodeManager, inspectPyenvPythonManager, inspectPythonCandidates, inspectVoltaNodeManager, linkNodeNpmRuntimes, linkPythonPipRuntimes, miseInventoryForRuntime, parseFnmNodeList, parseMiseRuntimeInventory, parsePackageManager, parsePipList, parsePipVersion, parsePyenvVersions, parseVoltaNodeList, summarizePipInspect, summarizePythonPackages } from "../src/package-managers.js";
+import { analyzeNodeInstallations, analyzeNodePackageManagers, analyzeNpmInstallations, analyzePythonCommandRouting, analyzePythonInstallations, analyzeRuntimeLinks, attachFnmManagerEvidence, attachMiseNodeEvidence, attachMisePythonEvidence, attachNvmManagerEvidence, attachPyenvManagerEvidence, attachUvManagerEvidence, attachVoltaManagerEvidence, buildAiDecision, buildConsolidationPlan, buildEnvironmentClarification, compareNpmGlobalPackages, comparePythonPackages, findNodeCandidates, findNodePackageManagerCandidates, findPythonCandidates, inspectFnmNodeManager, inspectMiseRuntimeManager, inspectNodeCandidates, inspectNodePackageManagerCandidates, inspectNvmNodeManager, inspectPyenvPythonManager, inspectPythonCandidates, inspectVoltaNodeManager, linkNodeNpmRuntimes, linkPythonPipRuntimes, miseInventoryForRuntime, parseFnmNodeList, parseMiseRuntimeInventory, parsePackageManager, parsePipList, parsePipVersion, parsePyenvVersions, parseVoltaNodeList, summarizePipInspect, summarizePythonPackages } from "../src/package-managers.js";
 import { buildPortableCaseSummary, buildPortableReconciliation, comparePortableReconciliations, isolatedHomeEnvironment, portableEvidenceFingerprint, resolveInspectedHome } from "../src/commands/reconcile.js";
 import { analyzePythonToolEntryPoints, findPythonToolCandidates, inspectPythonToolCandidates } from "../src/package-managers.js";
 import { analyzeCondaRouting, inspectCondaCandidates, parseCondaEnvironmentInfo } from "../src/package-managers.js";
@@ -778,6 +778,21 @@ test("consolidation plan stays clear when no inactive installation exists", () =
   assert.equal(result.status, "no-candidates");
   assert.deepEqual(result.candidates, []);
   assert.equal(result.nextSafeCommand, "aienvmap status --json");
+});
+
+test("environment clarification asks intent before treating multiple installations as cleanup", () => {
+  const clarification = buildEnvironmentClarification([
+    { kind: "python-installation" }, { kind: "node-installation" }, { kind: "node-installation" }
+  ]);
+  assert.equal(clarification.required, true);
+  assert.equal(clarification.status, "ask-user-before-consolidation");
+  assert.deepEqual(clarification.choices, ["keep-intentional", "review-consolidation", "need-more-evidence"]);
+  assert.equal(clarification.defaultChoice, "need-more-evidence");
+  assert.deepEqual(clarification.affectedKinds, ["node-installation", "python-installation"]);
+  assert.equal(clarification.environmentChangesAuthorized, false);
+  assert.equal(clarification.removalAuthorized, false);
+  assert.match(clarification.rule, /Do not infer cleanup intent/);
+  assert.deepEqual(buildEnvironmentClarification().choices, []);
 });
 
 test("portable reconciliation keeps diagnostic facts and strips local identifiers", () => {
