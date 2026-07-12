@@ -175,6 +175,43 @@ export async function readPortableEvidence(file) {
   throw new Error("portable comparison inputs must be aienvmap.reconcile or aienvmap.reconcile-portable v1 JSON artifacts");
 }
 
+export function buildPortableCaseSummary(report = {}, comparison = null) {
+  validatePortableReconciliation(report);
+  if (comparison && (comparison.schemaName !== "aienvmap.reconcile-portable-compare" || comparison.schemaVersion !== 1)) throw new Error("--comparison requires an aienvmap.reconcile-portable-compare v1 JSON artifact");
+  const inventoryCounts = {
+    node: safeCount(report.inventory?.node?.count), npm: safeCount(report.inventory?.npm?.count), python: safeCount(report.inventory?.python?.count), conda: safeCount(report.inventory?.conda?.count),
+    nodePackageManagers: safeNamedCounts(report.inventory?.nodePackageManagers, ["pnpm", "yarn", "corepack"]),
+    pythonTools: safeNamedCounts(report.inventory?.pythonTools, ["uv", "pipx"]),
+    otherRuntimes: safeNamedCounts(report.inventory?.otherRuntimes, ["java", "dotnet", "ruby", "go", "rust"])
+  };
+  return {
+    schemaName: "aienvmap.environment-case-summary", schemaVersion: 1, status: "draft-human-review-required",
+    evidence: { platform: safeEnum(report.platform, ["win32", "darwin", "linux", "aix", "freebsd", "openbsd", "sunos", "android"]), architecture: safeEnum(report.architecture, ["x64", "arm64", "arm", "ia32", "ppc64", "s390x", "riscv64"]), scanMode: safeEnum(report.scanMode, ["quick", "standard", "full-packages", "unknown"]), evidenceRole: safeEnum(report.source?.evidenceRole, ["administrator-no-exec", "current-or-owning-user", "unknown"]), inventoryCounts, findingCodes: (report.findings || []).map((item) => String(item.code || "")).filter((code) => /^[a-z0-9-]{1,80}$/.test(code)).slice(0, 50), decision: safeEnum(report.decision, ["clear", "review", "unknown"]) },
+    comparison: comparison ? { present: true, decision: safeEnum(comparison.decision, ["clear", "review", "unknown"]), changeCount: safeCount(comparison.changeCount), changedSections: (comparison.changedSections || []).filter((item) => ["platform", "architecture", "scanMode", "projectSignals", "inventory", "findings", "decision", "consolidation"].includes(item)), ownerVerification: comparison.ownerVerification ? { status: safeEnum(comparison.ownerVerification.status, ["coverage-reported", "coverage-incomplete"]), coverage: (comparison.ownerVerification.coverage || []).map((item) => ({ runtime: safeVerificationRuntime(item.runtime), status: safeEnum(item.status, ["owner-missing", "owner-partial", "owner-reported"]) })).filter((item) => item.runtime !== "unknown").slice(0, 20) } : null, structureValidatedOnly: true } : { present: false },
+    humanVerification: { complete: false, requiredFields: ["problemObserved", "aiConsumer", "aiJudgment", "detectedProblemReal", "usefulnessRating", "falsePositivesOrNegatives", "outcome", "independenceConfirmation", "privacyConfirmation"] },
+    marketEvidence: { eligible: false, reason: "A generated draft is not independent outcome-verified evidence; a human must review, complete, and submit it manually." },
+    privacy: { excluded: ["paths", "usernames and hostnames", "project and package names", "runtime versions", "evidence fingerprints", "timestamps", "raw inventories"], reviewRequired: true },
+    environmentChangesAuthorized: false, removalAuthorized: false,
+    rule: "Use as a minimal public submission draft only; review prose and complete human verification before manual submission."
+  };
+}
+
+function safeNamedCounts(value = {}, allowed = []) {
+  return Object.fromEntries(allowed.filter((name) => value?.[name]).map((name) => [name, safeCount(value[name].count)]));
+}
+
+function safeCount(value) {
+  return Number.isSafeInteger(value) && value >= 0 ? Math.min(value, 100000) : 0;
+}
+
+function safeEnum(value, allowed) {
+  return allowed.includes(value) ? value : "unknown";
+}
+
+function safeVerificationRuntime(value) {
+  return /^(node|npm|python|conda|node-manager:(pnpm|yarn|corepack)|python-tool:(uv|pipx)|runtime:(java|dotnet|ruby|go|rust))$/.test(String(value || "")) ? value : "unknown";
+}
+
 export function validatePortableReconciliation(value) {
   if (value?.schemaName !== "aienvmap.reconcile-portable" || value?.schemaVersion !== 1 || !value.evidenceFingerprint) throw new Error("expected an aienvmap.reconcile-portable v1 artifact with evidenceFingerprint");
   if (portableEvidenceFingerprint(value) !== value.evidenceFingerprint) throw new Error("portable evidence fingerprint does not match its retained facts");

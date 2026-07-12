@@ -625,6 +625,12 @@ export function schemaContract() {
         rootFields: ["schemaName", "schemaVersion", "mode", "before", "after", "same", "decision", "changeCount", "changedSections", "changes", "truncated", "ownerVerification", "environmentChangesAuthorized", "removalAuthorized", "rule"],
         ownerVerificationFields: ["mode", "status", "coverage", "identityProven", "installationMatchesProven", "versionsAuthoritativeForAdministratorPaths", "environmentChangesAuthorized", "removalAuthorized", "limitations", "nextSafeAction"]
       },
+      environmentCaseSummary: {
+        command: "aienvmap reconcile --case-summary portable.json [--comparison compare.json] --json",
+        mode: "offline minimal public-submission draft; human review and completion required",
+        rootFields: ["schemaName", "schemaVersion", "status", "evidence", "comparison", "humanVerification", "marketEvidence", "privacy", "environmentChangesAuthorized", "removalAuthorized", "rule"],
+        excluded: ["paths", "usernames and hostnames", "project and package names", "runtime versions", "evidence fingerprints", "timestamps", "raw inventories"]
+      },
       reconcileCheck: {
         command: "aienvmap reconcile --check --json",
         mode: "read-only opt-in drift gate; exit 0 means unchanged, exit 2 means review",

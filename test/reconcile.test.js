@@ -4,7 +4,7 @@ import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { analyzeNodeInstallations, analyzeNodePackageManagers, analyzeNpmInstallations, analyzePythonCommandRouting, analyzePythonInstallations, analyzeRuntimeLinks, attachFnmManagerEvidence, attachMiseNodeEvidence, attachMisePythonEvidence, attachNvmManagerEvidence, attachPyenvManagerEvidence, attachUvManagerEvidence, attachVoltaManagerEvidence, buildAiDecision, buildConsolidationPlan, compareNpmGlobalPackages, comparePythonPackages, findNodeCandidates, findNodePackageManagerCandidates, findPythonCandidates, inspectFnmNodeManager, inspectMiseRuntimeManager, inspectNodeCandidates, inspectNodePackageManagerCandidates, inspectNvmNodeManager, inspectPyenvPythonManager, inspectPythonCandidates, inspectVoltaNodeManager, linkNodeNpmRuntimes, linkPythonPipRuntimes, miseInventoryForRuntime, parseFnmNodeList, parseMiseRuntimeInventory, parsePackageManager, parsePipList, parsePipVersion, parsePyenvVersions, parseVoltaNodeList, summarizePipInspect, summarizePythonPackages } from "../src/package-managers.js";
-import { buildPortableReconciliation, comparePortableReconciliations, isolatedHomeEnvironment, portableEvidenceFingerprint, resolveInspectedHome } from "../src/commands/reconcile.js";
+import { buildPortableCaseSummary, buildPortableReconciliation, comparePortableReconciliations, isolatedHomeEnvironment, portableEvidenceFingerprint, resolveInspectedHome } from "../src/commands/reconcile.js";
 import { analyzePythonToolEntryPoints, findPythonToolCandidates, inspectPythonToolCandidates } from "../src/package-managers.js";
 import { analyzeCondaRouting, inspectCondaCandidates, parseCondaEnvironmentInfo } from "../src/package-managers.js";
 import * as portableReconcile from "../src/portable-reconcile.js";
@@ -757,6 +757,34 @@ test("portable comparison rejects a tampered fingerprint", () => {
   assert.throws(() => comparePortableReconciliations(report, { ...report, decision: "review" }), /fingerprint does not match/);
 });
 
+test("case summary excludes versions and fingerprints and cannot self-qualify as market evidence", () => {
+  const report = buildPortableReconciliation({
+    scanMode: "quick", node: { installations: [{ version: "22.7.1", active: true, path: "/home/alice/node" }], distinctVersions: ["22.7.1"] },
+    npm: { installations: [], distinctVersions: [] }, python: { installations: [], distinctVersions: [] }, otherRuntimes: {}, findings: [{ code: "multiple-node-installations", severity: "review" }], decision: "review"
+  }, { platform: "linux", arch: "x64" });
+  const summary = buildPortableCaseSummary(report);
+  const serialized = JSON.stringify(summary);
+  assert.equal(summary.status, "draft-human-review-required");
+  assert.equal(summary.evidence.inventoryCounts.node, 1);
+  assert.deepEqual(summary.evidence.findingCodes, ["multiple-node-installations"]);
+  assert.equal(summary.marketEvidence.eligible, false);
+  for (const privateValue of ["22.7.1", "alice", report.evidenceFingerprint]) assert.equal(serialized.includes(privateValue), false);
+  assert.equal(summary.environmentChangesAuthorized, false);
+  assert.equal(summary.removalAuthorized, false);
+});
+
+test("case summary allowlists retained labels even when a fingerprint-valid input is hostile", () => {
+  const report = buildPortableReconciliation({}, { platform: "linux", arch: "x64" });
+  report.platform = "/home/alice/private";
+  report.findings = [{ code: "secret/path" }, { code: "safe-finding" }];
+  report.inventory.otherRuntimes["secret-hostname"] = { count: 99, installations: [] };
+  report.evidenceFingerprint = portableEvidenceFingerprint(report);
+  const comparison = { schemaName: "aienvmap.reconcile-portable-compare", schemaVersion: 1, decision: "secret", changeCount: -4, changedSections: ["inventory", "/home/alice"], ownerVerification: { status: "secret", coverage: [{ runtime: "/home/alice", status: "secret" }] } };
+  const serialized = JSON.stringify(buildPortableCaseSummary(report, comparison));
+  for (const secret of ["alice", "secret-hostname", "secret/path"]) assert.equal(serialized.includes(secret), false);
+  assert.equal(serialized.includes("safe-finding"), true);
+});
+
 test("owner verification compares redacted category coverage without claiming identity", () => {
   const admin = buildPortableReconciliation({
     scanMode: "quick", node: { installations: [{ version: "unverified-no-exec", versionVerified: false, active: false, source: "nvm", scope: "user" }, { version: "unverified-no-exec", versionVerified: false, active: false, source: "nvm", scope: "user" }], distinctVersions: [] },
@@ -887,6 +915,23 @@ test("reconcile --portable emits a quick redacted shareable report", async () =>
   assert.equal(serialized.includes("private-project"), false);
   assert.equal(json.consolidation.environmentChangesAuthorized, false);
   assert.deepEqual(json.source, { mode: "live-quick", evidenceRole: "current-or-owning-user", scanMode: "quick", platformEvidence: "embedded", artifactPathIncluded: false });
+});
+
+test("reconcile --case-summary emits a minimal human-review draft", async () => {
+  const dir = await fs.mkdtemp(path.join(os.tmpdir(), "aienvmap-case-summary-"));
+  const file = path.join(dir, "portable.json");
+  const portable = buildPortableReconciliation({ scanMode: "quick", node: { installations: [{ version: "24.1.0" }], distinctVersions: ["24.1.0"] }, findings: [], decision: "clear" }, { platform: process.platform, arch: process.arch });
+  await fs.writeFile(file, JSON.stringify(portable));
+  const { execFile } = await import("node:child_process");
+  const { promisify } = await import("node:util");
+  const result = await promisify(execFile)(process.execPath, [path.resolve("bin/aienvmap.js"), "reconcile", "--case-summary", file, "--json", "--dir", dir], { cwd: path.resolve(".") });
+  const json = JSON.parse(result.stdout);
+  const serialized = JSON.stringify(json);
+  assert.equal(json.schemaName, "aienvmap.environment-case-summary");
+  assert.equal(json.humanVerification.complete, false);
+  assert.equal(json.marketEvidence.eligible, false);
+  assert.equal(serialized.includes("24.1.0"), false);
+  assert.equal(serialized.includes(file), false);
 });
 
 test("reconcile --portable-from redacts a reviewed full artifact without rescanning", async () => {
