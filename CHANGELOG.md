@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- Added a one-command, read-only `trial` flow that writes a privacy-reviewed tester bundle locally without telemetry or automatic upload.
+- Added external tester and AI-assisted testing guides with explicit human consent, redaction, and no-cleanup rules.
+
+## Unreleased
+
 - Extended intentional-version questions and project-local memory to multiple Java runtimes while keeping Java information-only and outside consolidation candidates.
 - Allowed reviewed intentional Node/Python version sets in the project-local policy to suppress repeat consolidation questions while unexpected versions and routing/project mismatches still trigger review.
 - Added an explicit AI clarification contract for intentional multi-version environments and a redacted cross-platform maintainer scenario runner covering first start, reconciliation, light/external SBOM, and case drafting.

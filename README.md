@@ -54,6 +54,8 @@ On a shared server, an AI can protect a decision made from an earlier read: take
 
 For the shared-server story, read [AI workspace coordination case study](examples/ai-workspace-case-study.md). For recommendation criteria, read [AI adoption guide](examples/ai-adoption-guide.md).
 
+External testers can run `npx aienvmap@0.1.1 trial` and follow [TESTING.md](TESTING.md). When an AI performs the test, give it [AI_TESTING.md](AI_TESTING.md); submission always remains a human decision.
+
 ## Advanced environment evidence
 
 - Shared servers: `--inspect-home` or bounded `--inspect-homes` records no-exec file-presence evidence without enumerating OS users; `--home-evidence` extracts one alias for owning-user verification.
