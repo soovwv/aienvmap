@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.1.1
 
 - Added a one-command, read-only `trial` flow that writes a privacy-reviewed tester bundle locally without telemetry or automatic upload.
 - Added external tester and AI-assisted testing guides with explicit human consent, redaction, and no-cleanup rules.

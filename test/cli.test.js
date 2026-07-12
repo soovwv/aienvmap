@@ -153,7 +153,7 @@ test("package stays runtime dependency-free for lightweight shared machines", as
   assert.equal(pkg.optionalDependencies, undefined);
   assert.equal(pkg.peerDependencies, undefined);
   assert.equal(pkg.bundledDependencies, undefined);
-  assert.equal(pkg.version, "0.1.0");
+  assert.equal(pkg.version, "0.1.1");
 });
 
 test("package publish allowlist stays small and intentional", async () => {
