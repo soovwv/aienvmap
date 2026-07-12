@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Reordered the README around the user problem, 10-second trial, and concrete two-agent outcome before advanced environment evidence.
 - Replaced authoritative "source of truth" and "live env map" wording in generated AI pointers and schema guidance with observed-evidence and owning-user verification boundaries.
 - Made trusted-publisher authentication the token-free default for manual npm releases, with explicit Node/npm floors and a separately selected token fallback.
 - Added privacy-safe Markdown environment-case drafts generated only from the allowlisted public summary, without files, uploads, or automatic submissions.

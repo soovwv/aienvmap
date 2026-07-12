@@ -7,6 +7,12 @@
 
 `aienvmap` is a dependency-free environment map and explicit change handoff for AI coding agents working in the same repository or shared machine. It shows Codex, Claude, Gemini, Cursor, and Copilot the observed runtimes, package-manager routing, light SBOM evidence, and pending change intent without silently installing, switching, or removing software.
 
+## Why
+
+AI coding agents are good at changing code. They are bad at remembering what another agent assumed about Node, Python, Java, package managers, or dependency changes. `aienvmap` gives the next agent observed evidence and pending intent before it guesses.
+
+Use it if several AI agents or sessions share environment-affecting work in one repository, laptop, server, or CI workspace. Skip it if you only need a full compliance SBOM scanner, runtime installer, or hard policy lock manager.
+
 ## 10-Second Use
 
 ```bash
@@ -19,23 +25,18 @@ Try `npx aienvmap demo` for an isolated conflict example. It shows one agent's d
 
 ![aienvmap terminal demo showing a review-first dependency conflict](examples/aienvmap-terminal-demo.svg)
 
-- Use: several AI agents or sessions share environment-affecting work.
-- Prevent: the next AI silently assuming a different Node, Python, Java, package-manager, or pending-change state.
-- Skip: you only need a full compliance SBOM scanner, runtime installer, or hard policy lock manager.
-- Start: `npx aienvmap start` creates the env map, light SBOM, AI status, discovery entry, and human dashboard when missing or stale.
+- Agent A records a planned dependency change.
+- Agent B starts later and sees the pending intent.
+- The workspace becomes review-first; no package is installed, removed, or switched.
 
-## What it maps
+## What the AI gets
 
-- SBOM bridge: attach existing CycloneDX/SPDX JSON with `sbom --import <file> --write`; aienvmap keeps a digest and bounded summary and never runs the scanner.
-- Existing environment: run `npx aienvmap reconcile`; it reports visible Node/npm/pnpm/Yarn/Corepack and Python/pip/uv/pipx/Conda installations, package locations, inventory digests/samples, project expectations, and routing conflicts without changing anything. On a shared server, `--inspect-home /absolute/user/home` records bounded file-presence evidence without invoking discovered executables, excludes the invoking PATH, redacts home paths, and disables deep/raw-path modes. Use `--inspect-homes homes.json --json` with the [bounded manifest example](examples/inspect-homes.json) for up to eight explicit homes; it never enumerates system users. Pair an owning-user report using `--portable-compare admin.json --against owner.json --owner-verification --json`; this checks category coverage but cannot prove identity, exact installation matches, or cleanup authority.
-- Runtime routing evidence: full scans use bounded Volta/fnm/nvm/mise inventories and reported Node paths for exact ownership. nvm roots are canonicalized so external symlinks cannot prove control; manager proof never grants removal permission.
-- Deep Python evidence: `reconcile --full-packages` optionally summarizes the stable `pip inspect` report into installer counts, requested/editable counts, a digest, and a bounded redacted metadata sample. Default and quick scans do not run it.
-- Python manager proof: the same explicit deep scan uses offline uv inventory, bounded pyenv root/versions, and mise installed JSON. Exact uv interpreter, pyenv prefix, or mise install-path matches set `ownershipProven: true`; `removalAuthorized` always remains false and defaults stay inference-only.
-- Java, .NET, Ruby, Go, and Rust stay information-only. Java candidates include PATH/JAVA_HOME/known roots plus Windows Registry, macOS `java_home`, or Linux alternatives provenance; packages are not inspected and cleanup is never proposed automatically.
-- Java identity: each detected runtime reports selected `java.vendor`, `os.arch`, runtime/VM names, reported `java.home`, and whether sibling `javac` proves a JDK. User/classpath/security properties are not retained.
-- Java build-tool routing: project `mvnw`/`gradlew` wrappers are preferred over PATH Maven/Gradle. Maven's reported runtime and Gradle's distinct Launcher/Daemon JVM evidence are preserved; only an exact Daemon home match is strong. Ambiguous or active-command-divergent routing is review-only and never changes wrappers, `JAVA_HOME`, or PATH.
-- Java manager evidence: SDKMAN/mise are marked as installation managers only when Java's reported canonical home remains inside their configured install root. External registrations and shims are routing-only; jenv is always routing-only because it selects rather than installs Java. `ownershipProven` never means removal is authorized.
-- Optional drift gate: save a reviewed baseline with `aienvmap reconcile --write`, then use `aienvmap reconcile --check --json` before environment-sensitive PR work. Exit `2` means review; it never authorizes cleanup.
+- observed Node, npm, pnpm, Yarn, Corepack, Python, pip, uv, pipx, Conda, and Java state;
+- information-only .NET, Ruby, Go, and Rust presence;
+- project expectations, routing conflicts, light SBOM context, and pending change intent;
+- one bounded `aiDecisionEnvelope` with the next safe command and approval boundaries.
+
+`start` creates the env map, light SBOM, AI status, discovery entry, and human dashboard when missing or stale. `reconcile` is read-only by default. Removal, PATH edits, runtime switching, global installs, and lockfile rewrites always require review.
 
 `discover` is read-only and reports `aiDiscovery.decision`: `auto-ready` or `fallback-required`. `onboard --dry-run` previews tiny marker-scoped pointers before `onboard` writes `AGENTS.md`, `CLAUDE.md`, or `GEMINI.md`; `onboard --uninstall` removes only those markers. Automatic discovery is best-effort; if pointers are missing, paste `copyPastePrompt` from `start --json` or `.aienvmap/discovery.json`, then follow `sessionUse` and `aiEntry`.
 
@@ -53,17 +54,14 @@ On a shared server, an AI can protect a decision made from an earlier read: take
 
 For the shared-server story, read [AI workspace coordination case study](examples/ai-workspace-case-study.md). For recommendation criteria, read [AI adoption guide](examples/ai-adoption-guide.md).
 
-## Core
+## Advanced environment evidence
 
-- stops AI agents from silently using different environment assumptions
-- gives every AI the same env map, light SBOM, intent log, timeline, and handoff
-- shows humans the same state in `.aienvmap/dashboard.html`
-- stays advisory and dependency-free by default; strict mode is opt-in
-- keeps light SBOM useful for coordination, not as a full compliance scanner replacement
-- AI loop: `sync` -> `status` -> `context --json` -> `intent` -> `checkpoint` -> `handoff`
-- Existing-state loop: `reconcile` -> review findings -> choose the canonical toolchain -> make only explicitly approved changes
-
-Local mode is warn-only. Use strict doctor checks only for CI or explicit human-requested gates.
+- Shared servers: `--inspect-home` or bounded `--inspect-homes` records no-exec file-presence evidence without enumerating OS users; `--home-evidence` extracts one alias for owning-user verification.
+- Portable review: `--portable`, `--portable-from`, `--portable-compare`, and `--owner-verification` redact paths and compare evidence without proving identity or cleanup authority.
+- Manager proof: explicit full scans use bounded Volta/fnm/nvm/mise, uv/pyenv, SDKMAN, and jenv evidence; even `ownershipProven: true` never authorizes removal.
+- Java routing: project Maven/Gradle wrappers take precedence; Launcher/Daemon JVM evidence and native discovery remain review-only.
+- SBOM bridge: `sbom --import <file> --write` retains a digest and bounded CycloneDX/SPDX summary and never runs the external scanner.
+- Drift gate: `reconcile --write` saves a reviewed baseline; `reconcile --check --json` returns exit `2` for review and never authorizes cleanup.
 
 ## Outputs
 
