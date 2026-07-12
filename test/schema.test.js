@@ -50,6 +50,7 @@ test("schemaContract describes stable AI output contracts", () => {
   assert.match(schema.outputs.reconcilePortable.fingerprintRule, /pseudonymous/);
   assert.ok(schema.outputs.reconcilePortable.handoffFields.includes("nextSafeActor"));
   assert.match(schema.outputs.reconcileHomes.command, /--inspect-homes/);
+  assert.match(schema.outputs.reconcileHomes.extractCommand, /--home-evidence/);
   assert.match(schema.outputs.reconcileHomes.mode, /up to eight explicit homes/);
   assert.match(schema.outputs.reconcileHomes.privacyRule, /system users are never enumerated/);
   assert.match(schema.outputs.reconcilePortableCompare.command, /--portable-compare/);

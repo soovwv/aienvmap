@@ -5,7 +5,7 @@ import { readJson } from "../fsutil.js";
 import { compareReconciliation } from "../reconcile-drift.js";
 import path from "node:path";
 import { buildPortableCaseSummary, buildPortableReconciliation, comparePortableReconciliations, readPortableEvidence } from "../portable-reconcile.js";
-import { inspectExplicitHome, inspectHomes, isolatedHomeEnvironment, readHomesManifest, resolveInspectedHome } from "../home-inspection.js";
+import { inspectExplicitHome, inspectHomes, isolatedHomeEnvironment, readHomeEvidence, readHomesManifest, resolveInspectedHome } from "../home-inspection.js";
 
 export { buildPortableCaseSummary, buildPortableReconciliation, comparePortableReconciliations, portableEvidenceFingerprint } from "../portable-reconcile.js";
 export { isolatedHomeEnvironment, resolveInspectedHome } from "../home-inspection.js";
@@ -19,6 +19,15 @@ export async function reconcileWorkspace(args = {}) {
   if (args.portable && (args.write || args.check || args.show_paths || args.full_packages || args.baseline)) throw new Error("--portable is quick, read-only, and cannot be combined with --write, --check, --baseline, --show-paths, or --full-packages");
   const dir = workspaceDir(args);
   const inspectedHome = args.inspect_home ? await resolveInspectedHome(args.inspect_home) : null;
+  if (args.alias && !args.home_evidence) throw new Error("--alias requires --home-evidence <aggregate.json>");
+  if (args.home_evidence) {
+    if (args.home_evidence === true || !args.alias || args.alias === true) throw new Error("--home-evidence <aggregate.json> requires --alias <alias>");
+    if (args.inspect_home || args.inspect_homes || args.portable || args.portable_from || args.portable_compare || args.case_summary || args.write || args.check || args.quick || args.full_packages || args.show_paths || args.baseline || args.against) throw new Error("--home-evidence cannot be combined with scanning, writing, checking, comparison, baseline, or path options");
+    const evidence = await readHomeEvidence(path.resolve(dir, String(args.home_evidence)), args.alias);
+    if (args.json) console.log(JSON.stringify(evidence, null, 2));
+    else if (!args.quiet) printPortable(evidence);
+    return evidence;
+  }
   if (args.inspect_homes) {
     if (args.inspect_homes === true) throw new Error("--inspect-homes requires an aienvmap.inspect-homes v1 JSON manifest");
     if (args.inspect_home || args.portable || args.portable_from || args.portable_compare || args.case_summary || args.write || args.check || args.quick || args.full_packages || args.show_paths || args.baseline) throw new Error("--inspect-homes cannot be combined with other reconciliation modes or path options");
