@@ -36,6 +36,10 @@ try {
     node: [{ path: "active-node", version: "22", active: true }, { path: "inactive-node", version: "20", active: false, source: "fixture" }],
     npm: [], python: [], project: {}, findings: [{ code: "multiple-node-installations", severity: "review" }]
   });
+  const acknowledgedDecision = buildAiDecision({
+    node: [{ path: "active-node", version: "22.14.0", active: true }, { path: "inactive-node", version: "20.19.0", active: false, source: "fixture" }],
+    npm: [], python: [], project: {}, policy: { intentionalNodeVersions: "20,22" }, findings: []
+  });
   const summary = {
     schemaName: "aienvmap-maintainer-scenario-result",
     schemaVersion: 1,
@@ -48,7 +52,8 @@ try {
       lightSbom: { pass: true, durationMs: sbom.durationMs, packages: sbomJson.summary?.packages || 0 },
       externalSbom: { pass: true, durationMs: imported.durationMs, decision: importJson.externalEvidenceDecision?.decision || "unknown", format: importJson.externalEvidenceDecision?.format || "unknown" },
       caseDraft: { pass: draft.stdout.startsWith("# Portable environment case") && !draft.stdout.includes(workspace), durationMs: draft.durationMs },
-      intentionalComplexity: { pass: mixedDecision.clarification.required && mixedDecision.clarification.defaultChoice === "need-more-evidence" && mixedDecision.clarification.removalAuthorized === false, status: mixedDecision.clarification.status, choices: mixedDecision.clarification.choices }
+      intentionalComplexity: { pass: mixedDecision.clarification.required && mixedDecision.clarification.defaultChoice === "need-more-evidence" && mixedDecision.clarification.removalAuthorized === false, status: mixedDecision.clarification.status, choices: mixedDecision.clarification.choices },
+      persistedIntent: { pass: !acknowledgedDecision.clarification.required && acknowledgedDecision.clarification.status === "intentional-versions-recorded" && acknowledgedDecision.consolidationPlan.candidates.length === 0, status: acknowledgedDecision.clarification.status, policyMatchedKinds: acknowledgedDecision.clarification.policyMatchedKinds }
     },
     privacy: { workspacePathIncluded: false, packageNamesIncluded: false, rawEvidenceIncluded: false },
     marketEvidence: false

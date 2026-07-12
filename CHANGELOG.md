@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Allowed reviewed intentional Node/Python version sets in the project-local policy to suppress repeat consolidation questions while unexpected versions and routing/project mismatches still trigger review.
 - Added an explicit AI clarification contract for intentional multi-version environments and a redacted cross-platform maintainer scenario runner covering first start, reconciliation, light/external SBOM, and case drafting.
 - Reordered the README around the user problem, 10-second trial, and concrete two-agent outcome before advanced environment evidence.
 - Replaced authoritative "source of truth" and "live env map" wording in generated AI pointers and schema guidance with observed-evidence and owning-user verification boundaries.
