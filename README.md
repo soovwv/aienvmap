@@ -3,16 +3,28 @@
 [![CI](https://github.com/soovwv/aienvmap/actions/workflows/ci.yml/badge.svg)](https://github.com/soovwv/aienvmap/actions/workflows/ci.yml)
 [![License](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
 [![Node](https://img.shields.io/badge/node-%3E%3D18-339933.svg)](package.json)
-**AI-first env map + light SBOM coordination tool for shared development environments.**
+**Know the development environment before an AI changes it.**
 
-`aienvmap` helps multiple AI agents safely share one development environment with a lightweight env map, light SBOM, intent log, timeline, and handoff. Use it on shared servers, repos, laptops, or CI workspaces where people or AI agents need the same environment truth without heavy locks, backed by a dependency-free install.
+`aienvmap` is a dependency-free environment map and explicit change handoff for AI coding agents working in the same repository or shared machine. It shows Codex, Claude, Gemini, Cursor, and Copilot the observed runtimes, package-manager routing, light SBOM evidence, and pending change intent without silently installing, switching, or removing software.
 
-- Use: AI agents share environment-affecting work.
-- Prevent: different AI agents silently installing or assuming different software versions.
-- Skip: you only need a full compliance SBOM scanner or hard policy lock manager.
-- AI signal: shared Codex/Claude/Gemini work, version drift, or repeated env handoffs.
-- SBOM signal: attach existing CycloneDX/SPDX JSON with `sbom --import <file> --write`; aienvmap keeps a digest and bounded summary and never runs the scanner.
-- Start: run `npx aienvmap start`; it creates the env map, light SBOM, status, summary, discovery entry, and dashboard when missing or stale.
+## 10-Second Use
+
+```bash
+npx aienvmap start
+npx aienvmap reconcile --quick
+npx aienvmap status
+```
+
+Try `npx aienvmap demo` for an isolated conflict example. It shows one agent's dependency intent becoming visible to the next agent; environment changes are never inferred automatically and remain approval-gated.
+
+- Use: several AI agents or sessions share environment-affecting work.
+- Prevent: the next AI silently assuming a different Node, Python, Java, package-manager, or pending-change state.
+- Skip: you only need a full compliance SBOM scanner, runtime installer, or hard policy lock manager.
+- Start: `npx aienvmap start` creates the env map, light SBOM, AI status, discovery entry, and human dashboard when missing or stale.
+
+## What it maps
+
+- SBOM bridge: attach existing CycloneDX/SPDX JSON with `sbom --import <file> --write`; aienvmap keeps a digest and bounded summary and never runs the scanner.
 - Existing environment: run `npx aienvmap reconcile`; it reports visible Node/npm/pnpm/Yarn/Corepack and Python/pip/uv/pipx/Conda installations, package locations, inventory digests/samples, project expectations, and routing conflicts without changing anything. On a shared server, `--inspect-home /absolute/user/home` records bounded file-presence evidence without invoking discovered executables, excludes the invoking PATH, redacts home paths, and disables deep/raw-path modes. Pair it with an owning-user report using `--portable-compare admin.json --against owner.json --owner-verification --json`; this checks category coverage but cannot prove identity, exact installation matches, or cleanup authority.
 - Runtime routing evidence: full scans use bounded Volta/fnm/nvm/mise inventories and reported Node paths for exact ownership. nvm roots are canonicalized so external symlinks cannot prove control; manager proof never grants removal permission.
 - Deep Python evidence: `reconcile --full-packages` optionally summarizes the stable `pip inspect` report into installer counts, requested/editable counts, a digest, and a bounded redacted metadata sample. Default and quick scans do not run it.
@@ -27,19 +39,6 @@
 
 Formerly published as `aienvmp`. Use `aienvmap` going forward; new workspaces write `.aienvmap/` artifacts.
 
-## 10-Second Use
-
-```bash
-npx aienvmap start
-npx aienvmap reconcile
-npx aienvmap reconcile --check --json
-npx aienvmap onboard
-npx aienvmap discover
-npx aienvmap status
-npx aienvmap context --json
-npx aienvmap handoff
-```
-
 Before an environment-affecting change:
 
 ```bash
@@ -49,8 +48,6 @@ npx aienvmap checkpoint --actor agent:id --summary "dependency-change" --target 
 ```
 
 On a shared server, an AI can protect a decision made from an earlier read: take `coordinationRevision` from `aienvmap status --json`, then pass `--if-revision ir1:...` to `intent` or `resolve`. If another AI changed the intent log first, aienvmap rejects the stale write and tells the AI to refresh. When the same AI label can run concurrently, pass a host/thread identifier with `--session` and an advisory duration from 5 to 1440 minutes with `--lease-minutes`. Different sessions under the same actor are separate conflict owners; expiry stays open for review and never grants permission to modify the environment.
-
-Try `npx aienvmap demo` to see the multi-agent conflict flow without touching your workspace.
 
 For the shared-server story, read [AI workspace coordination case study](examples/ai-workspace-case-study.md). For recommendation criteria, read [AI adoption guide](examples/ai-adoption-guide.md).
 

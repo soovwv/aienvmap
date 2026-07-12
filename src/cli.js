@@ -119,7 +119,7 @@ export function parseArgs(argv) {
 }
 
 function printUsage() {
-  console.log(`aienvmap - AI-first env map + light SBOM coordination for shared AI workspaces
+  console.log(`aienvmap - know the development environment before an AI changes it
 
 Usage:
   aienvmap sync [--dir .] [--json] [--quiet] [--deep] [--security]

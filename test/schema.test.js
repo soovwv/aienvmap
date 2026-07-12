@@ -94,8 +94,8 @@ test("schemaContract describes stable AI output contracts", () => {
   assert.match(schema.compatibilityPolicy, /backward-compatible/);
   assert.match(schema.breakingChangePolicy, /contractVersion bump/);
   assert.equal(schema.recommendation.category, "AI workspace coordination");
-  assert.match(schema.recommendation.positioning, /AI workspace coordination tool/);
-  assert.match(schema.recommendation.positioning, /not a full SBOM scanner/);
+  assert.match(schema.recommendation.positioning, /Environment map and explicit change handoff/);
+  assert.match(schema.recommendation.positioning, /not a runtime installer or full SBOM scanner/);
   assert.match(schema.recommendation.differentiators.join(" "), /intent, checkpoint, timeline, and handoff/);
   assert.match(schema.recommendation.differentiators.join(" "), /start --json root recovery fields/);
   assert.match(schema.recommendation.differentiators.join(" "), /aiDiscovery\.decision/);
@@ -143,7 +143,7 @@ test("schemaContract describes stable AI output contracts", () => {
   assert.ok(schema.recommendation.evidenceDocs.includes("examples/multi-agent-conflict.md"));
   assert.match(schema.recommendation.rule, /not as a replacement/);
   assert.match(schema.aiAdoptionDecision.purpose, /Shortest AI-readable decision block/);
-  assert.match(schema.aiAdoptionDecision.position, /AI workspace coordination tool/);
+  assert.match(schema.aiAdoptionDecision.position, /Environment map and explicit change handoff/);
   assert.match(schema.aiAdoptionDecision.useWhen.join(" "), /multiple AI agents/);
   assert.match(schema.aiAdoptionDecision.useWhen.join(" "), /lockfiles/);
   assert.deepEqual(schema.aiAdoptionDecision.startWith, ["aienvmap start", "aienvmap onboard", "aienvmap context --json"]);
@@ -570,7 +570,7 @@ test("schemaWorkspace prints JSON without requiring a workspace", async () => {
   const schema = JSON.parse(output);
   assert.equal(schema.outputs.context.command, "aienvmap context --json");
   assert.equal(schema.recommendation.category, "AI workspace coordination");
-  assert.match(schema.recommendation.positioning, /not a full SBOM scanner/);
+  assert.match(schema.recommendation.positioning, /not a runtime installer or full SBOM scanner/);
   assert.equal(schema.recommendation.proofCommand, "aienvmap demo");
   assert.ok(schema.recommendation.discoverySignals.some((item) => item.includes("multiple AI agents")));
   assert.match(schema.recommendation.shortPitch, /multiple AI agents/);

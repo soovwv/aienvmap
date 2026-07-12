@@ -52,7 +52,7 @@ test("sync creates the AI-facing env map outputs with simple defaults", async ()
   const aiEnv = await fs.readFile(path.join(dir, "AIENV.md"), "utf8");
   assert.match(aiEnv, /10-Second AI Flow/);
   assert.match(aiEnv, /This workspace uses `aienvmap`/);
-  assert.match(aiEnv, /Multiple AI agents should use this AI-first env map and light SBOM/);
+  assert.match(aiEnv, /AI coding agents should read this environment map and explicit change handoff/);
   assert.match(aiEnv, /aienvmap discover/);
   assert.match(aiEnv, /automatic discovery as best-effort/);
   assert.match(aiEnv, /fallback read order/);
@@ -84,7 +84,7 @@ test("sync creates the AI-facing env map outputs with simple defaults", async ()
   const startHere = await fs.readFile(path.join(dir, ".aienvmap", "README.md"), "utf8");
   assert.match(startHere, /# aienvmap start here/);
   assert.match(startHere, /This workspace uses `aienvmap`/);
-  assert.match(startHere, /AI-first env map and light SBOM/);
+  assert.match(startHere, /environment map and explicit change handoff/);
   assert.match(startHere, /shortest AI entry: `\.aienvmap\/discovery\.json`/);
   assert.match(startHere, /read order: `\.aienvmap\/discovery\.json -> \.aienvmap\/README\.md -> \.aienvmap\/status\.json/);
   assert.match(startHere, /AI session: `aienvmap status --json -> aienvmap context --json`/);
