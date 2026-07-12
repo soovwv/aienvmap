@@ -34,6 +34,7 @@ export async function reconcileWorkspace(args = {}) {
   if (args.quick && args.full_packages) throw new Error("use either --quick or --full-packages, not both");
   if (args.check && args.write) throw new Error("use either --check or --write, not both; checking must not replace its baseline");
   if (args.inspect_home && (args.full_packages || args.show_paths)) throw new Error("--inspect-home is privacy-bounded and cannot be combined with --full-packages or --show-paths");
+  if (args.owner_verification && !args.portable_compare) throw new Error("--owner-verification requires --portable-compare <admin.json> --against <owner.json>");
   if (args.portable && (args.write || args.check || args.show_paths || args.full_packages || args.baseline)) throw new Error("--portable is quick, read-only, and cannot be combined with --write, --check, --baseline, --show-paths, or --full-packages");
   const dir = workspaceDir(args);
   const inspectedHome = await resolveInspectedHome(args.inspect_home);
@@ -44,7 +45,7 @@ export async function reconcileWorkspace(args = {}) {
       readPortableEvidence(path.resolve(dir, String(args.portable_compare))),
       readPortableEvidence(path.resolve(dir, String(args.against)))
     ]);
-    const comparison = comparePortableReconciliations(before, after);
+    const comparison = comparePortableReconciliations(before, after, { ownerVerification: args.owner_verification === true });
     if (args.json) console.log(JSON.stringify(comparison, null, 2));
     else if (!args.quiet) printPortableComparison(comparison);
     return comparison;
@@ -171,6 +172,10 @@ function printPortableComparison(value) {
   console.log(`before: ${value.before.evidenceFingerprint}`);
   console.log(`after: ${value.after.evidenceFingerprint}`);
   console.log(`changes: ${value.changeCount}; sections: ${value.changedSections.join(", ") || "none"}`);
+  if (value.ownerVerification) {
+    console.log(`owner verification: ${value.ownerVerification.status} (identity/path matches not proven)`);
+    for (const item of value.ownerVerification.coverage) console.log(`- ${item.runtime}: admin=${item.administratorDiscovered}, owner=${item.ownerVerified}, ${item.status}`);
+  }
   for (const item of value.changes.slice(0, 20)) console.log(`- ${item.field}: ${item.kind}`);
   console.log(`rule: ${value.rule}`);
 }

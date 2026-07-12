@@ -757,6 +757,31 @@ test("portable comparison rejects a tampered fingerprint", () => {
   assert.throws(() => comparePortableReconciliations(report, { ...report, decision: "review" }), /fingerprint does not match/);
 });
 
+test("owner verification compares redacted category coverage without claiming identity", () => {
+  const admin = buildPortableReconciliation({
+    scanMode: "quick", node: { installations: [{ version: "unverified-no-exec", versionVerified: false, active: false, source: "nvm", scope: "user" }, { version: "unverified-no-exec", versionVerified: false, active: false, source: "nvm", scope: "user" }], distinctVersions: [] },
+    npm: { installations: [], distinctVersions: [] }, python: { installations: [{ version: "unverified-no-exec", versionVerified: false, active: false, source: "pyenv", scope: "user" }], distinctVersions: [] }, otherRuntimes: {}, findings: [{ code: "unverified-no-exec-evidence", severity: "review" }], decision: "review"
+  }, { platform: "linux", arch: "x64" });
+  const owner = buildPortableReconciliation({
+    scanMode: "quick", node: { installations: [{ version: "22.1.0", active: true, source: "PATH", scope: "user" }], distinctVersions: ["22.1.0"] },
+    npm: { installations: [], distinctVersions: [] }, python: { installations: [{ version: "3.12.4", active: true, source: "PATH", scope: "user" }], distinctVersions: ["3.12.4"] }, otherRuntimes: {}, findings: [], decision: "clear"
+  }, { platform: "linux", arch: "x64" });
+  const result = comparePortableReconciliations(admin, owner, { ownerVerification: true });
+  assert.equal(result.ownerVerification.status, "coverage-incomplete");
+  assert.deepEqual(result.ownerVerification.coverage.map((item) => [item.runtime, item.status]), [["node", "owner-partial"], ["python", "owner-reported"]]);
+  assert.equal(result.ownerVerification.identityProven, false);
+  assert.equal(result.ownerVerification.installationMatchesProven, false);
+  assert.equal(result.ownerVerification.removalAuthorized, false);
+  assert.equal(JSON.stringify(result).includes("/home/"), false);
+});
+
+test("owner verification rejects unrelated platforms and reports without no-exec evidence", () => {
+  const verified = buildPortableReconciliation({ node: { installations: [{ version: "22" }] } }, { platform: "linux", arch: "x64" });
+  const otherPlatform = buildPortableReconciliation({ node: { installations: [{ version: "22" }] } }, { platform: "win32", arch: "x64" });
+  assert.throws(() => comparePortableReconciliations(verified, otherPlatform, { ownerVerification: true }), /matching platform/);
+  assert.throws(() => comparePortableReconciliations(verified, verified, { ownerVerification: true }), /no-exec file-presence/);
+});
+
 test("AI decision summarizes strong, inferred, and unresolved runtime links", () => {
   const result = buildAiDecision({
     node: [
@@ -905,6 +930,21 @@ test("reconcile --portable-compare accepts raw artifacts and omits input paths",
   assert.equal(serialized.includes(dir), false);
   assert.equal(serialized.includes("private-before"), false);
   assert.ok(json.changeCount > 0);
+});
+
+test("reconcile --owner-verification exposes only redacted coverage assertions", async () => {
+  const dir = await fs.mkdtemp(path.join(os.tmpdir(), "aienvmap-owner-verification-"));
+  const artifact = (version, verified) => ({ schemaName: "aienvmap.reconcile", schemaVersion: 1, platform: process.platform, architecture: process.arch, scanMode: "quick", project: { packageManager: null, lockManagers: [] }, node: { distinctVersions: verified ? [version] : [], installations: [{ version, versionVerified: verified, active: verified, path: `${dir}/private/node` }] }, npm: { distinctVersions: [], installations: [] }, python: { distinctVersions: [], installations: [] }, otherRuntimes: {}, findings: verified ? [] : [{ code: "unverified-no-exec-evidence", severity: "review" }], decision: verified ? "clear" : "review", aiDecision: { consolidationPlan: { status: "no-candidates", candidates: [], phases: [], requiresHumanApprovalBefore: [] } } });
+  const admin = path.join(dir, "admin.json");
+  const owner = path.join(dir, "owner.json");
+  await Promise.all([fs.writeFile(admin, JSON.stringify(artifact("unverified-no-exec", false))), fs.writeFile(owner, JSON.stringify(artifact("22.1.0", true)))]);
+  const { execFile } = await import("node:child_process");
+  const { promisify } = await import("node:util");
+  const result = await promisify(execFile)(process.execPath, [path.resolve("bin/aienvmap.js"), "reconcile", "--portable-compare", admin, "--against", owner, "--owner-verification", "--json", "--dir", dir], { cwd: path.resolve(".") });
+  const json = JSON.parse(result.stdout);
+  assert.equal(json.ownerVerification.status, "coverage-reported");
+  assert.equal(json.ownerVerification.identityProven, false);
+  assert.equal(JSON.stringify(json).includes(dir), false);
 });
 
 test("reconcile --full-packages exposes package-level evidence on demand", async () => {

@@ -134,7 +134,7 @@ Usage:
   aienvmap start [--dir .] [--json]
   aienvmap discover [--dir .] [--json]
   aienvmap reconcile [--dir .] [--json] [--write|--check|--portable] [--inspect-home /absolute/home] [--portable-from reconcile.json] [--baseline file] [--quick|--full-packages] [--show-paths]
-  aienvmap reconcile --portable-compare before.json --against after.json [--json]
+  aienvmap reconcile --portable-compare before.json --against after.json [--owner-verification] [--json]
   aienvmap scorecard [--json]
   aienvmap onboard [codex claude gemini] [--agents codex,claude,gemini,cursor,copilot] [--dry-run|--uninstall] [--no-sync]
   aienvmap demo [conflict] [--json]
