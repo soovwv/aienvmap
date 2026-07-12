@@ -619,9 +619,10 @@ export function schemaContract() {
         rule: "Review before sharing because runtime versions, platform, architecture, sources, and finding codes remain visible."
       },
       reconcilePortableCompare: {
-        command: "aienvmap reconcile --portable-compare before.json --against after.json --json",
+        command: "aienvmap reconcile --portable-compare before.json --against after.json [--owner-verification] --json",
         mode: "offline comparison of validated redacted evidence; raw inputs are converted before diffing",
-        rootFields: ["schemaName", "schemaVersion", "mode", "before", "after", "same", "decision", "changeCount", "changedSections", "changes", "truncated", "environmentChangesAuthorized", "removalAuthorized", "rule"]
+        rootFields: ["schemaName", "schemaVersion", "mode", "before", "after", "same", "decision", "changeCount", "changedSections", "changes", "truncated", "ownerVerification", "environmentChangesAuthorized", "removalAuthorized", "rule"],
+        ownerVerificationFields: ["mode", "status", "coverage", "identityProven", "installationMatchesProven", "versionsAuthoritativeForAdministratorPaths", "environmentChangesAuthorized", "removalAuthorized", "limitations", "nextSafeAction"]
       },
       reconcileCheck: {
         command: "aienvmap reconcile --check --json",

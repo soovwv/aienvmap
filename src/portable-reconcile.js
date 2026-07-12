@@ -4,6 +4,7 @@ import { readJson } from "./fsutil.js";
 export function buildPortableReconciliation(value = {}, runtime = {}) {
   const summarizeInstallations = (items = [], options = {}) => items.map((item) => ({
     version: item.version || (item.versions || []).join(","),
+    versionVerified: item.versionVerified !== false,
     active: item.active === true,
     source: item.source || "unknown",
     scope: item.scope || "unknown",
@@ -27,12 +28,12 @@ export function buildPortableReconciliation(value = {}, runtime = {}) {
     return [manager, {
       count: inventory.installations?.length || 0,
       distinctVersions: inventory.distinctVersions || [],
-      installations: (inventory.installations || []).map((item) => ({ version: item.version, active: item.active === true, source: item.source, scope: item.scope, deliveryEvidence: item.deliveryEvidence, ownershipProven: false, removalAuthorized: false }))
+      installations: (inventory.installations || []).map((item) => ({ version: item.version, versionVerified: item.versionVerified !== false, active: item.active === true, source: item.source, scope: item.scope, deliveryEvidence: item.deliveryEvidence, ownershipProven: false, removalAuthorized: false }))
     }];
   }));
   const pythonTools = Object.fromEntries(["uv", "pipx"].map((tool) => {
     const inventory = value.python?.toolEntryPoints?.[tool] || {};
-    return [tool, { count: inventory.installations?.length || 0, distinctVersions: inventory.distinctVersions || [], installations: (inventory.installations || []).map((item) => ({ version: item.version, active: item.active === true, source: item.source, scope: item.scope, routingEvidence: item.routingEvidence, ownershipProven: false, removalAuthorized: false })) }];
+    return [tool, { count: inventory.installations?.length || 0, distinctVersions: inventory.distinctVersions || [], installations: (inventory.installations || []).map((item) => ({ version: item.version, versionVerified: item.versionVerified !== false, active: item.active === true, source: item.source, scope: item.scope, routingEvidence: item.routingEvidence, ownershipProven: false, removalAuthorized: false })) }];
   }));
   const plan = value.aiDecision?.consolidationPlan || {};
   const report = {
@@ -59,7 +60,7 @@ export function buildPortableReconciliation(value = {}, runtime = {}) {
       nodePackageManagers,
       python: { count: value.python?.installations?.length || 0, distinctVersions: value.python?.distinctVersions || [], installations: summarizeInstallations(value.python?.installations, { python: true }) },
       pythonTools,
-      conda: { count: value.python?.conda?.installations?.length || 0, distinctVersions: value.python?.conda?.distinctVersions || [], environmentCounts: (value.python?.conda?.installations || []).map((item) => item.environmentEvidence?.count || 0).sort((a, b) => a - b), ownershipProven: false, removalAuthorized: false },
+      conda: { count: value.python?.conda?.installations?.length || 0, distinctVersions: value.python?.conda?.distinctVersions || [], unverifiedCount: (value.python?.conda?.installations || []).filter((item) => item.versionVerified === false).length, environmentCounts: (value.python?.conda?.installations || []).map((item) => item.environmentEvidence?.count || 0).sort((a, b) => a - b), ownershipProven: false, removalAuthorized: false },
       otherRuntimes
     },
     findings: (value.findings || []).map((item) => ({ code: item.code, severity: item.severity })),
@@ -95,11 +96,12 @@ export function portableEvidenceFingerprint(report = {}) {
   return `aerp1:${createHash("sha256").update(JSON.stringify(evidence)).digest("hex").slice(0, 24)}`;
 }
 
-export function comparePortableReconciliations(before = {}, after = {}) {
+export function comparePortableReconciliations(before = {}, after = {}, options = {}) {
   validatePortableReconciliation(before);
   validatePortableReconciliation(after);
   const allChanges = diffPortableFacts(portableComparisonFacts(before), portableComparisonFacts(after));
   const same = before.evidenceFingerprint === after.evidenceFingerprint && allChanges.length === 0;
+  const ownerVerification = options.ownerVerification ? buildOwnerVerification(before, after) : null;
   return {
     schemaName: "aienvmap.reconcile-portable-compare",
     schemaVersion: 1,
@@ -112,10 +114,50 @@ export function comparePortableReconciliations(before = {}, after = {}) {
     changedSections: [...new Set(allChanges.map((item) => item.section))],
     changes: allChanges.slice(0, 100),
     truncated: allChanges.length > 100,
+    ...(ownerVerification ? { ownerVerification } : {}),
     environmentChangesAuthorized: false,
     removalAuthorized: false,
     rule: "Compare redacted facts only; differences require review and never authorize environment changes, cleanup, or removal."
   };
+}
+
+export function buildOwnerVerification(admin = {}, owner = {}) {
+  if (admin.platform !== owner.platform || admin.architecture !== owner.architecture) throw new Error("--owner-verification requires matching platform and architecture evidence");
+  const adminCounts = verificationCounts(admin.inventory);
+  const ownerCounts = verificationCounts(owner.inventory);
+  const adminUnverified = Object.values(adminCounts).reduce((sum, item) => sum + item.unverified, 0);
+  if (!adminUnverified) throw new Error("--owner-verification requires the before report to contain no-exec file-presence evidence");
+  const coverage = Object.keys(adminCounts).sort().filter((key) => adminCounts[key].unverified > 0).map((key) => {
+    const discovered = adminCounts[key].unverified;
+    const verified = ownerCounts[key]?.verified || 0;
+    return { runtime: key, administratorDiscovered: discovered, ownerVerified: verified, status: verified === 0 ? "owner-missing" : verified < discovered ? "owner-partial" : "owner-reported" };
+  });
+  return {
+    mode: "user-asserted-redacted-pairing",
+    status: coverage.every((item) => item.status === "owner-reported") ? "coverage-reported" : "coverage-incomplete",
+    coverage,
+    identityProven: false,
+    installationMatchesProven: false,
+    versionsAuthoritativeForAdministratorPaths: false,
+    environmentChangesAuthorized: false,
+    removalAuthorized: false,
+    limitations: ["The operator asserts that both redacted reports describe the intended account; portable evidence cannot prove user or machine identity.", "Counts by runtime category do not prove that owner-reported versions correspond to the administrator-discovered files."],
+    nextSafeAction: "Review category coverage and the owning user's report; investigate missing categories without assuming path or installation identity."
+  };
+}
+
+function verificationCounts(inventory = {}) {
+  const entries = [
+    ["node", inventory.node], ["npm", inventory.npm], ["python", inventory.python], ["conda", inventory.conda],
+    ...Object.entries(inventory.nodePackageManagers || {}).map(([name, value]) => [`node-manager:${name}`, value]),
+    ...Object.entries(inventory.pythonTools || {}).map(([name, value]) => [`python-tool:${name}`, value]),
+    ...Object.entries(inventory.otherRuntimes || {}).map(([name, value]) => [`runtime:${name}`, value])
+  ];
+  return Object.fromEntries(entries.map(([name, value = {}]) => {
+    const installations = value.installations || [];
+    const unverified = name === "conda" ? value.unverifiedCount || 0 : installations.filter((item) => item.versionVerified === false || item.version === "unverified-no-exec").length;
+    return [name, { unverified, verified: Math.max(0, (value.count || installations.length) - unverified) }];
+  }));
 }
 
 export async function readPortableEvidence(file) {
