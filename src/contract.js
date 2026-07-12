@@ -621,6 +621,7 @@ export function schemaContract() {
       },
       reconcileHomes: {
         command: "aienvmap reconcile --inspect-homes homes.json --json",
+        extractCommand: "aienvmap reconcile --home-evidence aggregate.json --alias build-a --json",
         manifestSchema: "aienvmap.inspect-homes v1",
         mode: "sequential read-only no-exec inspection of up to eight explicit homes",
         rootFields: ["schemaName", "schemaVersion", "mode", "scope", "entryCount", "entries", "privacy", "environmentChangesAuthorized", "removalAuthorized", "nextSafeAction", "rule"],

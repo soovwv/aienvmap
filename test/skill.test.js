@@ -99,4 +99,17 @@ test("packaged aienvmap skill points AI agents to current startup contracts", as
   assert.match(skill, /operationalSafety/);
   assert.match(skill, /must not be changed automatically/);
   assert.match(skill, /Local source edits can continue/);
+  assert.match(skill, /--inspect-home <absolute-home>/);
+  assert.match(skill, /examples\/inspect-homes\.json/);
+  assert.match(skill, /non-identifying aliases/);
+  assert.match(skill, /at most eight explicit homes/);
+  assert.match(skill, /never enumerates system users/);
+  assert.match(skill, /never invokes discovered executables/);
+  assert.match(skill, /entries\[\]\.evidence/);
+  assert.match(skill, /administrator file-presence evidence/);
+  assert.match(skill, /--home-evidence aggregate\.json --alias build-a/);
+  assert.match(skill, /owning user to run its `nextSafeCommand`/);
+  assert.match(skill, /--owner-verification/);
+  assert.match(skill, /category coverage only/);
+  assert.match(skill, /never proves identity/);
 });

@@ -1,7 +1,7 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 import { inspectPackageManagers } from "./package-managers.js";
-import { buildPortableReconciliation } from "./portable-reconcile.js";
+import { buildPortableReconciliation, validatePortableReconciliation } from "./portable-reconcile.js";
 
 export const maximumInspectedHomes = 8;
 
@@ -81,7 +81,19 @@ export async function inspectHomes(projectDir, homes) {
     privacy: { manifestPathIncluded: false, homePathsIncluded: false, aliasesAreOperatorProvided: true, warning: "Use non-identifying aliases and review retained platform, architecture, source, finding, and fingerprint evidence before sharing." },
     environmentChangesAuthorized: false,
     removalAuthorized: false,
-    nextSafeAction: "Give each owning user the portable scan command from evidence.nextSafeCommand, then compare reviewed reports with --owner-verification.",
+    nextSafeAction: "Save this aggregate, extract one alias with --home-evidence <aggregate.json> --alias <alias>, give its evidence.nextSafeCommand to the owning user, then compare reviewed reports with --owner-verification.",
     rule: `Only ${maximumInspectedHomes} explicit readable homes are accepted; system users are never enumerated and discovered executables are never invoked.`
   };
+}
+
+export async function readHomeEvidence(file, aliasValue) {
+  const alias = String(aliasValue || "");
+  if (!/^[a-z][a-z0-9_-]{0,31}$/.test(alias)) throw new Error("--alias must match ^[a-z][a-z0-9_-]{0,31}$");
+  let value;
+  try { value = JSON.parse(await fs.readFile(file, "utf8")); } catch { throw new Error("--home-evidence requires a valid aienvmap.reconcile-homes v1 JSON artifact"); }
+  if (value?.schemaName !== "aienvmap.reconcile-homes" || value?.schemaVersion !== 1 || !Array.isArray(value.entries)) throw new Error("--home-evidence requires a valid aienvmap.reconcile-homes v1 JSON artifact");
+  const matches = value.entries.filter((entry) => entry?.alias === alias);
+  if (matches.length !== 1) throw new Error(`--home-evidence requires exactly one entry for alias: ${alias}`);
+  validatePortableReconciliation(matches[0].evidence);
+  return matches[0].evidence;
 }

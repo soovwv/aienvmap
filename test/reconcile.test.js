@@ -8,7 +8,7 @@ import { buildPortableCaseSummary, buildPortableReconciliation, comparePortableR
 import { analyzePythonToolEntryPoints, findPythonToolCandidates, inspectPythonToolCandidates } from "../src/package-managers.js";
 import { analyzeCondaRouting, inspectCondaCandidates, parseCondaEnvironmentInfo } from "../src/package-managers.js";
 import * as portableReconcile from "../src/portable-reconcile.js";
-import { inspectHomes, maximumInspectedHomes, readHomesManifest } from "../src/home-inspection.js";
+import { inspectHomes, maximumInspectedHomes, readHomeEvidence, readHomesManifest } from "../src/home-inspection.js";
 
 test("reconcile command preserves the portable helper compatibility exports", async () => {
   const reconcileCommand = await import("../src/commands/reconcile.js");
@@ -84,6 +84,41 @@ test("reconcile --inspect-homes emits path-free aggregate evidence", async () =>
   assert.deepEqual(json.entries.map((item) => item.alias), ["build-a", "build-b"]);
   assert.equal(json.privacy.manifestPathIncluded, false);
   for (const privatePath of [project, first, second, manifest]) assert.equal(serialized.includes(privatePath), false);
+});
+
+test("home evidence extraction validates alias uniqueness and embedded fingerprints", async () => {
+  const project = await fs.mkdtemp(path.join(os.tmpdir(), "aienvmap-home-evidence-project-"));
+  const home = await fs.mkdtemp(path.join(os.tmpdir(), "aienvmap-home-evidence-home-"));
+  const aggregate = await inspectHomes(project, [{ alias: "build-a", home }]);
+  const file = path.join(project, "aggregate.json");
+  await fs.writeFile(file, JSON.stringify(aggregate));
+  const evidence = await readHomeEvidence(file, "build-a");
+  assert.equal(evidence.schemaName, "aienvmap.reconcile-portable");
+  assert.equal(evidence.source.evidenceRole, "administrator-no-exec");
+  await assert.rejects(readHomeEvidence(file, "missing"), /exactly one entry/);
+  aggregate.entries.push(structuredClone(aggregate.entries[0]));
+  await fs.writeFile(file, JSON.stringify(aggregate));
+  await assert.rejects(readHomeEvidence(file, "build-a"), /exactly one entry/);
+  aggregate.entries.pop();
+  aggregate.entries[0].evidence.decision = "tampered";
+  await fs.writeFile(file, JSON.stringify(aggregate));
+  await assert.rejects(readHomeEvidence(file, "build-a"), /fingerprint/);
+});
+
+test("reconcile --home-evidence emits only validated path-free portable evidence", async () => {
+  const project = await fs.mkdtemp(path.join(os.tmpdir(), "aienvmap-home-extract-cli-project-"));
+  const home = await fs.mkdtemp(path.join(os.tmpdir(), "aienvmap-home-extract-cli-home-"));
+  const file = path.join(project, "aggregate.json");
+  await fs.writeFile(file, JSON.stringify(await inspectHomes(project, [{ alias: "build-a", home }])));
+  const { execFile } = await import("node:child_process");
+  const { promisify } = await import("node:util");
+  const run = promisify(execFile);
+  const result = await run(process.execPath, [path.resolve("bin/aienvmap.js"), "reconcile", "--home-evidence", file, "--alias", "build-a", "--json", "--dir", project], { cwd: path.resolve(".") });
+  const json = JSON.parse(result.stdout);
+  assert.equal(json.schemaName, "aienvmap.reconcile-portable");
+  assert.equal(JSON.stringify(json).includes(project), false);
+  assert.equal(JSON.stringify(json).includes(home), false);
+  await assert.rejects(run(process.execPath, [path.resolve("bin/aienvmap.js"), "reconcile", "--home-evidence", file, "--alias", "build-a", "--write"], { cwd: path.resolve(".") }), /cannot be combined/);
 });
 
 test("explicit-home candidate inspection never executes discovered Node or Python files", async () => {
