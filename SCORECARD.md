@@ -2,6 +2,8 @@
 
 This scorecard deliberately separates product engineering from market proof. Run `aienvmap scorecard --json` for the bounded AI-readable evidence and methodology.
 
+Maintainer-run Windows, Alpine Linux, and macOS compatibility evidence is recorded in [VALIDATION.md](VALIDATION.md). It improves confidence in portability but does not count as independent market adoption.
+
 The dated public traction and adjacent-tool comparison live in [MARKET.md](MARKET.md); download requests are not counted as verified users.
 
 | Category | Score | Interpretation |
