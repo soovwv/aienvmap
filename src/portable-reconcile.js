@@ -2,7 +2,7 @@ import { createHash } from "node:crypto";
 import { readJson } from "./fsutil.js";
 
 export function buildPortableReconciliation(value = {}, runtime = {}) {
-  const administratorNoExec = (value.findings || []).some((item) => item.code === "unverified-no-exec-evidence");
+  const administratorNoExec = String(runtime.sourceMode || "").startsWith("administrator-") || (value.findings || []).some((item) => item.code === "unverified-no-exec-evidence");
   const summarizeInstallations = (items = [], options = {}) => items.map((item) => ({
     version: item.version || (item.versions || []).join(","),
     versionVerified: item.versionVerified !== false,
