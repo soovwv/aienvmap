@@ -767,6 +767,10 @@ test("owner verification compares redacted category coverage without claiming id
     npm: { installations: [], distinctVersions: [] }, python: { installations: [{ version: "3.12.4", active: true, source: "PATH", scope: "user" }], distinctVersions: ["3.12.4"] }, otherRuntimes: {}, findings: [], decision: "clear"
   }, { platform: "linux", arch: "x64" });
   const result = comparePortableReconciliations(admin, owner, { ownerVerification: true });
+  assert.equal(admin.source.evidenceRole, "administrator-no-exec");
+  assert.equal(admin.nextSafeActor, "owning-user");
+  assert.equal(admin.nextSafeCommand, "aienvmap reconcile --portable --json");
+  assert.equal(owner.source.evidenceRole, "current-or-owning-user");
   assert.equal(result.ownerVerification.status, "coverage-incomplete");
   assert.deepEqual(result.ownerVerification.coverage.map((item) => [item.runtime, item.status]), [["node", "owner-partial"], ["python", "owner-reported"]]);
   assert.equal(result.ownerVerification.identityProven, false);
@@ -882,7 +886,7 @@ test("reconcile --portable emits a quick redacted shareable report", async () =>
   assert.equal(serialized.includes(dir), false);
   assert.equal(serialized.includes("private-project"), false);
   assert.equal(json.consolidation.environmentChangesAuthorized, false);
-  assert.deepEqual(json.source, { mode: "live-quick", scanMode: "quick", platformEvidence: "embedded", artifactPathIncluded: false });
+  assert.deepEqual(json.source, { mode: "live-quick", evidenceRole: "current-or-owning-user", scanMode: "quick", platformEvidence: "embedded", artifactPathIncluded: false });
 });
 
 test("reconcile --portable-from redacts a reviewed full artifact without rescanning", async () => {
