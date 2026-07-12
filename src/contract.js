@@ -613,7 +613,8 @@ export function schemaContract() {
         command: "aienvmap reconcile --portable --json",
         artifactCommand: "aienvmap reconcile --portable-from .aienvmap/reconcile.json --json",
         mode: "quick, read-only, path/package/timestamp-redacted diagnostic evidence",
-        rootFields: ["schemaName", "schemaVersion", "privacy", "platform", "architecture", "source", "scanMode", "projectSignals", "inventory", "findings", "decision", "consolidation", "evidenceFingerprint", "fingerprintSemantics", "nextSafeCommand", "rule"],
+        rootFields: ["schemaName", "schemaVersion", "privacy", "platform", "architecture", "source", "scanMode", "projectSignals", "inventory", "findings", "decision", "consolidation", "evidenceFingerprint", "fingerprintSemantics", "nextSafeActor", "nextSafeCommand", "rule"],
+        handoffFields: ["source.evidenceRole", "nextSafeActor", "nextSafeCommand"],
         fingerprintRule: "aerp1 fingerprints canonical portable facts for comparison and deduplication; they are pseudonymous linkable tokens, not machine, user, or installation identifiers.",
         excluded: ["paths", "workspace and project names", "package names", "package digests", "timestamps", "raw manager inventories"],
         rule: "Review before sharing because runtime versions, platform, architecture, sources, and finding codes remain visible."

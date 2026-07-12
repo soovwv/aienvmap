@@ -2,6 +2,7 @@ import { createHash } from "node:crypto";
 import { readJson } from "./fsutil.js";
 
 export function buildPortableReconciliation(value = {}, runtime = {}) {
+  const administratorNoExec = (value.findings || []).some((item) => item.code === "unverified-no-exec-evidence");
   const summarizeInstallations = (items = [], options = {}) => items.map((item) => ({
     version: item.version || (item.versions || []).join(","),
     versionVerified: item.versionVerified !== false,
@@ -46,7 +47,7 @@ export function buildPortableReconciliation(value = {}, runtime = {}) {
     },
     platform: value.platform || runtime.platform || process.platform,
     architecture: value.architecture || runtime.arch || process.arch,
-    source: { mode: runtime.sourceMode || "in-memory", scanMode: value.scanMode || "unknown", platformEvidence: value.platform && value.architecture ? "embedded" : runtime.platform && runtime.arch ? "provided" : "current-host-fallback", artifactPathIncluded: false },
+    source: { mode: runtime.sourceMode || "in-memory", evidenceRole: administratorNoExec ? "administrator-no-exec" : "current-or-owning-user", scanMode: value.scanMode || "unknown", platformEvidence: value.platform && value.architecture ? "embedded" : runtime.platform && runtime.arch ? "provided" : "current-host-fallback", artifactPathIncluded: false },
     scanMode: value.scanMode || "unknown",
     projectSignals: {
       packageManager: value.project?.packageManager ? { name: value.project.packageManager.name, version: value.project.packageManager.version } : null,
@@ -84,7 +85,8 @@ export function buildPortableReconciliation(value = {}, runtime = {}) {
       linkabilityWarning: "Reports with identical retained facts share a fingerprint; treat it as a pseudonymous comparison token and review before publishing longitudinal data.",
       rule: "Use only to compare or deduplicate portable environment evidence; never use as a machine, user, or installation identifier."
     },
-    nextSafeCommand: value.scanMode === "quick" ? "aienvmap reconcile --json --full-packages" : "aienvmap status --json",
+    nextSafeCommand: administratorNoExec ? "aienvmap reconcile --portable --json" : value.scanMode === "quick" ? "aienvmap reconcile --json --full-packages" : "aienvmap status --json",
+    nextSafeActor: administratorNoExec ? "owning-user" : "current-user",
     rule: "Portable evidence is diagnostic context only; it omits local identifiers and never authorizes environment changes or removal."
   };
   report.evidenceFingerprint = portableEvidenceFingerprint(report);

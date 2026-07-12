@@ -48,6 +48,7 @@ test("schemaContract describes stable AI output contracts", () => {
   assert.ok(schema.outputs.reconcilePortable.excluded.includes("package names"));
   assert.match(schema.outputs.reconcilePortable.fingerprintRule, /not machine/);
   assert.match(schema.outputs.reconcilePortable.fingerprintRule, /pseudonymous/);
+  assert.ok(schema.outputs.reconcilePortable.handoffFields.includes("nextSafeActor"));
   assert.match(schema.outputs.reconcilePortableCompare.command, /--portable-compare/);
   assert.ok(schema.outputs.reconcilePortableCompare.rootFields.includes("changes"));
   assert.ok(schema.outputs.reconcilePortableCompare.rootFields.includes("ownerVerification"));
