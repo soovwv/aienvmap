@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
-import { analyzeNodeInstallations, analyzeNodePackageManagers, analyzeNpmInstallations, analyzePythonCommandRouting, analyzePythonInstallations, analyzeRuntimeLinks, attachFnmManagerEvidence, attachMiseNodeEvidence, attachMisePythonEvidence, attachNvmManagerEvidence, attachPyenvManagerEvidence, attachUvManagerEvidence, attachVoltaManagerEvidence, buildAiDecision, buildConsolidationPlan, buildEnvironmentClarification, compareNpmGlobalPackages, comparePythonPackages, findNodeCandidates, findNodePackageManagerCandidates, findPythonCandidates, inspectFnmNodeManager, inspectMiseRuntimeManager, inspectNodeCandidates, inspectNodePackageManagerCandidates, inspectNvmNodeManager, inspectPyenvPythonManager, inspectPythonCandidates, inspectVoltaNodeManager, linkNodeNpmRuntimes, linkPythonPipRuntimes, miseInventoryForRuntime, parseFnmNodeList, parseMiseRuntimeInventory, parsePackageManager, parsePipList, parsePipVersion, parsePyenvVersions, parseVoltaNodeList, summarizePipInspect, summarizePythonPackages } from "../src/package-managers.js";
+import { analyzeNodeInstallations, analyzeNodePackageManagers, analyzeNpmInstallations, analyzePythonCommandRouting, analyzePythonInstallations, analyzeRuntimeLinks, applyIntentionalRuntimePolicy, attachFnmManagerEvidence, attachMiseNodeEvidence, attachMisePythonEvidence, attachNvmManagerEvidence, attachPyenvManagerEvidence, attachUvManagerEvidence, attachVoltaManagerEvidence, buildAiDecision, buildConsolidationPlan, buildEnvironmentClarification, compareNpmGlobalPackages, comparePythonPackages, findNodeCandidates, findNodePackageManagerCandidates, findPythonCandidates, inspectFnmNodeManager, inspectMiseRuntimeManager, inspectNodeCandidates, inspectNodePackageManagerCandidates, inspectNvmNodeManager, inspectPyenvPythonManager, inspectPythonCandidates, inspectVoltaNodeManager, linkNodeNpmRuntimes, linkPythonPipRuntimes, miseInventoryForRuntime, parseFnmNodeList, parseMiseRuntimeInventory, parsePackageManager, parsePipList, parsePipVersion, parsePyenvVersions, parseVoltaNodeList, summarizePipInspect, summarizePythonPackages } from "../src/package-managers.js";
 import { buildPortableCaseSummary, buildPortableReconciliation, comparePortableReconciliations, isolatedHomeEnvironment, portableEvidenceFingerprint, resolveInspectedHome } from "../src/commands/reconcile.js";
 import { analyzePythonToolEntryPoints, findPythonToolCandidates, inspectPythonToolCandidates } from "../src/package-managers.js";
 import { analyzeCondaRouting, inspectCondaCandidates, parseCondaEnvironmentInfo } from "../src/package-managers.js";
@@ -793,6 +793,22 @@ test("environment clarification asks intent before treating multiple installatio
   assert.equal(clarification.removalAuthorized, false);
   assert.match(clarification.rule, /Do not infer cleanup intent/);
   assert.deepEqual(buildEnvironmentClarification().choices, []);
+});
+
+test("explicit intentional versions suppress repeat questions but not unexpected versions", () => {
+  const node = [{ kind: "node-installation", version: "20.19.0", active: false }, { version: "22.14.0", active: true }];
+  const policy = { intentionalNodeVersions: "20,22" };
+  const acknowledged = buildEnvironmentClarification([{ kind: "node-installation" }], { node }, policy);
+  assert.equal(acknowledged.required, false);
+  assert.equal(acknowledged.status, "intentional-versions-recorded");
+  assert.deepEqual(acknowledged.policyMatchedKinds, ["node-installation"]);
+  const changed = buildEnvironmentClarification([{ kind: "node-installation" }], { node: [...node, { version: "24.1.0" }] }, policy);
+  assert.equal(changed.required, true);
+  assert.deepEqual(changed.policyMatchedKinds, []);
+  const findings = applyIntentionalRuntimePolicy([{ code: "multiple-node-installations", severity: "review", action: "review" }, { code: "active-node-project-mismatch", severity: "review" }], { node }, policy);
+  assert.equal(findings[0].severity, "info");
+  assert.equal(findings[0].intentionalPolicyMatched, true);
+  assert.equal(findings[1].severity, "review");
 });
 
 test("portable reconciliation keeps diagnostic facts and strips local identifiers", () => {

@@ -573,7 +573,7 @@ export function schemaContract() {
         mode: "read-only environment; writes only the report when --write is explicit",
         rootFields: ["schemaName", "schemaVersion", "generatedAt", "platform", "architecture", "mode", "scanMode", "scope", "limitations", "project", "node", "npm", "python", "otherRuntimes", "findings", "decision", "aiDecision", "aiDecisionEnvelope", "written"],
         aiDecisionFields: ["consumer", "decision", "readFirst", "canonicalCandidates", "actionCandidates", "clarification", "consolidationPlan", "runtimeLinkSummary", "pythonInstallerEvidence", "pythonManagerEvidence", "nodeManagerEvidence", "javaManagerEvidence", "safeCommands", "rules"],
-        clarificationFields: ["required", "status", "reason", "question", "choices", "defaultChoice", "affectedKinds", "environmentChangesAuthorized", "removalAuthorized", "rule"],
+        clarificationFields: ["required", "status", "reason", "question", "choices", "defaultChoice", "affectedKinds", "policyMatchedKinds", "environmentChangesAuthorized", "removalAuthorized", "rule"],
         consolidationPlanFields: ["schemaName", "schemaVersion", "mode", "status", "canonicalCandidates", "phases", "candidates", "applyCommand", "rollbackRequirements", "requiresHumanApprovalBefore", "environmentChangesAuthorized", "removalAuthorized", "nextSafeCommand", "rule"],
         runtimeLinkFields: ["managerPath", "managerVersion", "runtimePath", "runtimeVersion", "relationship", "confidence", "evidence", "ownershipProven"],
         installerEvidenceFields: ["collection", "formatVersion", "pipVersion", "packageCount", "installerCounts", "requestedCount", "editableCount", "digest", "metadataSample", "semantics"],

@@ -45,6 +45,17 @@ export function policyWarnings(manifest, policy = {}) {
   return warnings;
 }
 
+export function intentionalRuntimeVersions(policy = {}, runtime) {
+  const key = `intentional${String(runtime || "").replace(/^./, (value) => value.toUpperCase())}Versions`;
+  return [...new Set(String(policy[key] || "").split(",").map((value) => value.trim().replace(/^v/, "")).filter((value) => /^\d+(?:\.\d+){0,2}$/.test(value)))].sort();
+}
+
+export function runtimeVersionsMatchIntentionalPolicy(installations = [], policy = {}, runtime) {
+  const allowed = intentionalRuntimeVersions(policy, runtime);
+  const detected = [...new Set(installations.filter((item) => item.versionVerified !== false).map((item) => String(item.version || "").replace(/^v/, "")).filter(Boolean))].sort();
+  return allowed.length > 1 && detected.length > 1 && detected.every((version) => allowed.some((expected) => version === expected || version.startsWith(`${expected}.`)));
+}
+
 function compareVersionPolicy(warnings, target, expected, actual, source) {
   if (!actual) return;
   const expectedVersion = String(expected).replace(/^v/, "");

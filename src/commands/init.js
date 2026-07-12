@@ -11,6 +11,8 @@ export async function initWorkspace(args) {
     "# node: 24",
     "# python: 3.11",
     "# packageManager: npm",
+    "# intentional-node-versions: 20,22",
+    "# intentional-python-versions: 3.11,3.12",
     "globalInstalls: ask-first",
     "runtimeChanges: ask-first",
     ""
