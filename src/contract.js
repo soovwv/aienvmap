@@ -635,6 +635,7 @@ export function schemaContract() {
       },
       environmentCaseSummary: {
         command: "aienvmap reconcile --case-summary portable.json [--comparison compare.json] --json",
+        markdownCommand: "aienvmap reconcile --case-summary portable.json [--comparison compare.json] --markdown",
         mode: "offline minimal public-submission draft; human review and completion required",
         rootFields: ["schemaName", "schemaVersion", "status", "evidence", "comparison", "humanVerification", "marketEvidence", "privacy", "environmentChangesAuthorized", "removalAuthorized", "rule"],
         excluded: ["paths", "usernames and hostnames", "project and package names", "runtime versions", "evidence fingerprints", "timestamps", "raw inventories"]

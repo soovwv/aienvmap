@@ -196,6 +196,48 @@ export function buildPortableCaseSummary(report = {}, comparison = null) {
   };
 }
 
+export function renderPortableCaseMarkdown(summary = {}) {
+  if (summary?.schemaName !== "aienvmap.environment-case-summary" || summary?.schemaVersion !== 1) throw new Error("case Markdown requires an aienvmap.environment-case-summary v1 artifact");
+  const safeSummary = JSON.stringify(summary, null, 2);
+  return `# Portable environment case
+
+<!-- Public draft. Complete every placeholder, review the embedded summary, and remove any sensitive prose before submitting manually. -->
+
+## Problem observed before aienvmap
+
+<!-- Describe the real problem and user-visible impact. -->
+
+## AI consumer and judgment
+
+- AI host or agent: <!-- required -->
+- aienvmap command used: <!-- required -->
+- What the AI concluded: <!-- required -->
+- Action proposed, if any: <!-- required; state "none" when no change was safest -->
+
+## Minimal evidence summary
+
+\`\`\`json
+${safeSummary}
+\`\`\`
+
+## Human verification
+
+- Was the detected problem real? <!-- yes / partly / no -->
+- Was the AI judgment useful? <!-- 1 / 2 / 3 / 4 / 5 -->
+- False positive, false negative, or missing context: <!-- required -->
+- Outcome verified by: <!-- required; do not include a private identity -->
+- Did aienvmap itself change or remove software? <!-- expected: no -->
+
+## Privacy and evidence checklist
+
+- [ ] This is an independent real environment, not a repository fixture or copied demo.
+- [ ] I reviewed the summary and any comparison before posting.
+- [ ] I did not include raw reconciliation output, paths, usernames, hostnames, project/package names, secrets, tokens, or proprietary details.
+- [ ] I understand this generated draft is not market evidence until a human completes and manually submits it.
+- [ ] I authorize maintainers to cite the public issue as product evidence with a link.
+`;
+}
+
 function safeNamedCounts(value = {}, allowed = []) {
   return Object.fromEntries(allowed.filter((name) => value?.[name]).map((name) => [name, safeCount(value[name].count)]));
 }

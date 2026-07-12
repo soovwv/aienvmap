@@ -137,7 +137,7 @@ Usage:
   aienvmap reconcile --inspect-homes homes.json [--json]
   aienvmap reconcile --home-evidence aggregate.json --alias build-a [--json]
   aienvmap reconcile --portable-compare before.json --against after.json [--owner-verification] [--json]
-  aienvmap reconcile --case-summary portable.json [--comparison compare.json] [--json]
+  aienvmap reconcile --case-summary portable.json [--comparison compare.json] [--json|--markdown]
   aienvmap scorecard [--json]
   aienvmap onboard [codex claude gemini] [--agents codex,claude,gemini,cursor,copilot] [--dry-run|--uninstall] [--no-sync]
   aienvmap demo [conflict] [--json]
