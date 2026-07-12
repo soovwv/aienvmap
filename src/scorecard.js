@@ -4,7 +4,7 @@ const technicalDimensions = [
   dimension("environment-inventory", 19, 20, ["aienvmap reconcile --json --full-packages", "aienvmap reconcile --portable --json", "test/reconcile.test.js"], "Validate portable reports and consolidation plans against external, mixed-manager environments."),
   dimension("multi-ai-coordination", 13, 15, ["aienvmap demo --json", "test/multi-agent-demo.test.js"], "Validate the workflow in an external multi-user case study."),
   dimension("sbom-interoperability", 12, 15, ["aienvmap sbom --json", "test/sbom.test.js"], "Validate imported CycloneDX and SPDX evidence against more generators."),
-  dimension("safety-and-quality", 18, 20, ["npm test", "npm run perf:check", "test/license.test.js", ".github/workflows/ci.yml"], "Add signed release provenance and validate performance budgets with more environments.")
+  dimension("safety-and-quality", 19, 20, ["npm test", "npm run perf:check", "test/reconcile.test.js", ".github/workflows/ci.yml"], "Add signed release provenance and validate performance budgets with more external environments.")
 ];
 
 const marketDimensions = [
@@ -40,16 +40,16 @@ export function productScorecard() {
     marketResearch: {
       report: "MARKET.md",
       observedAt: "2026-07-12",
-      publicSignals: { githubStars: 0, githubForks: 0, independentOutcomeVerifiedCases: 0, npmDownloadsWindow: { requests: 108, start: "2026-06-11", end: "2026-07-10" } },
-      adjacentSignals: { observedAt: "2026-07-12", microsoftApmStars: 3181, devboxStars: 12162, floxStars: 4044 },
+      publicSignals: { githubStars: 0, githubForks: 0, independentOutcomeVerifiedCases: 0, npmDownloadsWindow: { requests: 108, start: "2026-06-12", end: "2026-07-11" } },
+      adjacentSignals: { observedAt: "2026-07-12", microsoftApmStars: 3184, devboxStars: 12162, floxStars: 4044 },
       interpretation: "npm downloads are requests, not unique users, retention, successful setups, or recommendation evidence.",
       scoreImpact: "none until independent outcome-verified evidence exists"
     },
     adjacentAlternatives,
-    strengths: ["zero-runtime-dependency local operation", "AI-readable environment and decision contracts", "read-only multi-install discovery", "light SBOM interoperability", "explicit approval boundaries"],
-    weaknesses: ["limited independent adoption evidence", "few external case studies", "adjacent tools increasingly combine AI context with reproducible environments", "information-only depth for several toolchains", "pre-0.2.0 contract stability"],
+    strengths: ["zero-runtime-dependency local operation", "AI-readable environment and decision contracts", "read-only multi-install discovery", "no-exec evidence for explicit shared-server homes", "light SBOM interoperability", "explicit approval boundaries"],
+    weaknesses: ["limited independent adoption evidence", "few external case studies", "cross-user versions require owning-user verification", "adjacent tools increasingly combine AI context with reproducible environments", "information-only depth for several toolchains", "pre-0.2.0 contract stability"],
     nextPriorities: [
-      { priority: 1, outcome: "external problem evidence", proof: "at least three reproducible user environments and before/after reports" },
+      { priority: 1, outcome: "external problem evidence", proof: "at least three reproducible user environments, including one shared-server owner-verified report" },
       { priority: 2, outcome: "AI-host integration evidence", proof: "verified examples for major coding-agent hosts" },
       { priority: 3, outcome: "release provenance", proof: "signed npm provenance and reproducible release evidence for a meaningful batched version" }
     ],
