@@ -4,7 +4,7 @@ import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { analyzeNodeInstallations, analyzeNodePackageManagers, analyzeNpmInstallations, analyzePythonCommandRouting, analyzePythonInstallations, analyzeRuntimeLinks, attachFnmManagerEvidence, attachMiseNodeEvidence, attachMisePythonEvidence, attachNvmManagerEvidence, attachPyenvManagerEvidence, attachUvManagerEvidence, attachVoltaManagerEvidence, buildAiDecision, buildConsolidationPlan, compareNpmGlobalPackages, comparePythonPackages, findNodeCandidates, findNodePackageManagerCandidates, findPythonCandidates, inspectFnmNodeManager, inspectMiseRuntimeManager, inspectNodePackageManagerCandidates, inspectNvmNodeManager, inspectPyenvPythonManager, inspectVoltaNodeManager, linkNodeNpmRuntimes, linkPythonPipRuntimes, miseInventoryForRuntime, parseFnmNodeList, parseMiseRuntimeInventory, parsePackageManager, parsePipList, parsePipVersion, parsePyenvVersions, parseVoltaNodeList, summarizePipInspect, summarizePythonPackages } from "../src/package-managers.js";
-import { buildPortableReconciliation, comparePortableReconciliations, portableEvidenceFingerprint } from "../src/commands/reconcile.js";
+import { buildPortableReconciliation, comparePortableReconciliations, isolatedHomeEnvironment, portableEvidenceFingerprint, resolveInspectedHome } from "../src/commands/reconcile.js";
 import { analyzePythonToolEntryPoints, findPythonToolCandidates, inspectPythonToolCandidates } from "../src/package-managers.js";
 import { analyzeCondaRouting, inspectCondaCandidates, parseCondaEnvironmentInfo } from "../src/package-managers.js";
 import * as portableReconcile from "../src/portable-reconcile.js";
@@ -14,6 +14,21 @@ test("reconcile command preserves the portable helper compatibility exports", as
   assert.equal(reconcileCommand.buildPortableReconciliation, portableReconcile.buildPortableReconciliation);
   assert.equal(reconcileCommand.comparePortableReconciliations, portableReconcile.comparePortableReconciliations);
   assert.equal(reconcileCommand.portableEvidenceFingerprint, portableReconcile.portableEvidenceFingerprint);
+});
+
+test("explicit home inspection validates the boundary and isolates invoking-user variables", async () => {
+  const home = await fs.mkdtemp(path.join(os.tmpdir(), "aienvmap-inspected-home-"));
+  assert.equal(await resolveInspectedHome(home), path.normalize(home));
+  await assert.rejects(resolveInspectedHome("relative/home"), /absolute existing directory/);
+  await assert.rejects(resolveInspectedHome(path.join(home, "missing")), /absolute existing directory/);
+  const env = isolatedHomeEnvironment(home, { PATH: "session-path", NVM_DIR: "wrong-user", PYENV_ROOT: "wrong-user", CONDA_PREFIX: "secret" });
+  assert.equal(env.HOME, home);
+  assert.equal(env.USERPROFILE, home);
+  assert.equal(env.PATH, "session-path");
+  assert.equal(env.NVM_DIR, undefined);
+  assert.equal(env.PYENV_ROOT, undefined);
+  assert.equal(env.CONDA_PREFIX, undefined);
+  if (process.platform === "win32") assert.equal(env.LOCALAPPDATA, path.join(home, "AppData", "Local"));
 });
 
 test("parsePackageManager separates package manager and pinned version", () => {
