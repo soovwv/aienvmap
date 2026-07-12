@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Made trusted-publisher authentication the token-free default for manual npm releases, with explicit Node/npm floors and a separately selected token fallback.
+- Added privacy-safe Markdown environment-case drafts generated only from the allowlisted public summary, without files, uploads, or automatic submissions.
+- Added validated per-alias extraction from bounded multi-home evidence for the administrator-to-owner verification handoff.
 - Fixed candidate scope and path redaction to honor an explicit inspected-user home across Node, npm, Python, pip, uv, pipx, Conda, and information-only runtimes on shared hosts.
 - Upgraded GitHub checkout/setup-node actions to their Node 24 based v6 majors and explicitly disabled unused automatic package-manager caching in CI and release workflows.
 - Centralized path redaction/source/scope evidence and isolated uv, pipx, and Conda discovery from the main package-manager orchestrator while preserving compatibility exports.
