@@ -52,7 +52,7 @@ export function intentionalRuntimeVersions(policy = {}, runtime) {
 
 export function runtimeVersionsMatchIntentionalPolicy(installations = [], policy = {}, runtime) {
   const allowed = intentionalRuntimeVersions(policy, runtime);
-  const detected = [...new Set(installations.filter((item) => item.versionVerified !== false).map((item) => String(item.version || "").replace(/^v/, "")).filter(Boolean))].sort();
+  const detected = [...new Set(installations.filter((item) => item.versionVerified !== false).map((item) => String(item.runtimeVersion || item.version || "").replace(/^v/, "")).filter(Boolean))].sort();
   return allowed.length > 1 && detected.length > 1 && detected.every((version) => allowed.some((expected) => version === expected || version.startsWith(`${expected}.`)));
 }
 

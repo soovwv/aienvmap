@@ -811,6 +811,19 @@ test("explicit intentional versions suppress repeat questions but not unexpected
   assert.equal(findings[1].severity, "review");
 });
 
+test("multiple Java installations ask intent but never become consolidation candidates", () => {
+  const java = { installations: [{ runtimeVersion: "17.0.12", active: false }, { runtimeVersion: "21.0.4", active: true }], runtimeMetadata: {} };
+  const asked = buildAiDecision({ node: [], npm: [], python: [], java, findings: [] });
+  assert.equal(asked.clarification.required, true);
+  assert.deepEqual(asked.clarification.affectedKinds, ["java-installation"]);
+  assert.deepEqual(asked.consolidationPlan.candidates, []);
+  const remembered = buildAiDecision({ node: [], npm: [], python: [], java, policy: { intentionalJavaVersions: "17,21" }, findings: [] });
+  assert.equal(remembered.clarification.required, false);
+  assert.equal(remembered.clarification.status, "intentional-versions-recorded");
+  assert.deepEqual(remembered.clarification.policyMatchedKinds, ["java-installation"]);
+  assert.deepEqual(remembered.consolidationPlan.candidates, []);
+});
+
 test("portable reconciliation keeps diagnostic facts and strips local identifiers", () => {
   const result = buildPortableReconciliation({
     generatedAt: "2026-07-12T01:02:03Z",
