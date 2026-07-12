@@ -39,7 +39,7 @@ If an approved environment change occurs, capture a second portable report and c
 npx aienvmap reconcile --portable-compare before.json --against after.json --json
 ```
 
-Do not make a change merely to produce a case. A verified “no change was safest” outcome is valid evidence.
+Do not make a change merely to produce a case. A verified "no change was safest" outcome is valid evidence.
 
 ## 4. Create a minimal public draft
 

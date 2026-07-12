@@ -84,7 +84,7 @@ AIENV.md                 # Markdown env map for AI agents
 
 - `schema --json` prints the machine-readable contract without scanning.
 - `start`, `status`, `context`, `reconcile`, and SBOM outputs share `aiDecisionEnvelope`; read it first, while `requiresHumanApprovalBefore` keeps destructive action classes review-only even when clear.
-- `reconcile` also emits a proposal-only `consolidationPlan`: evidence, stop conditions, rollback requirements, and approval gates—never an apply or removal command.
+- `reconcile` also emits a proposal-only `consolidationPlan`: evidence, stop conditions, rollback requirements, and approval gates - never an apply or removal command.
 - `schemaVersion`, `contractVersion`, `stableFrom`, and compatibility rules are explicit.
 - `aiAdoptionDecision`, `recommendation.recommendWhen`, `doNotRecommendWhen`, and `evidenceDocs` tell AI when to use, suggest, or skip this tool.
 - `agentPointers.discovery`, `aiDiscovery.decision`, `sessionUse`, `startupChecklist`, `aiEntry`, and `copyPastePrompt` tell AI whether discovery is `auto-ready` or `fallback-required`.
