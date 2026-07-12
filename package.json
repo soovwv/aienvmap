@@ -40,8 +40,9 @@
     "smoke": "node bin/aienvmap.js --version && node bin/aienvmap.js --help",
     "perf:check": "node scripts/performance-check.mjs",
     "contract:check": "node scripts/contract-check.mjs",
+    "text:check": "node scripts/text-policy-check.mjs",
     "demo:conflict": "node examples/multi-agent-conflict-demo.mjs",
-    "release:check": "npm test && npm run smoke && npm run contract:check && npm run perf:check && npm run demo:conflict && npm run pack:dry"
+    "release:check": "npm run text:check && npm test && npm run smoke && npm run contract:check && npm run perf:check && npm run demo:conflict && npm run pack:dry"
   },
   "keywords": [
     "ai",
