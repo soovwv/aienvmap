@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Extended intentional-version questions and project-local memory to multiple Java runtimes while keeping Java information-only and outside consolidation candidates.
 - Allowed reviewed intentional Node/Python version sets in the project-local policy to suppress repeat consolidation questions while unexpected versions and routing/project mismatches still trigger review.
 - Added an explicit AI clarification contract for intentional multi-version environments and a redacted cross-platform maintainer scenario runner covering first start, reconciliation, light/external SBOM, and case drafting.
 - Reordered the README around the user problem, 10-second trial, and concrete two-agent outcome before advanced environment evidence.

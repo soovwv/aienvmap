@@ -17,6 +17,7 @@ test("cross-platform validation records redacted compatibility evidence without 
   assert.match(validation, /ask before consolidation/);
   assert.match(validation, /Persisted intentional versions/);
   assert.match(validation, /unexpected version restores review/);
+  assert.match(validation, /Java remains outside consolidation candidates/);
   assert.match(validation, /not three independent users or three market cases/);
   assert.match(validation, /Docker backend stopped responding/);
   assert.match(validation, /not reported as a product pass or failure/);

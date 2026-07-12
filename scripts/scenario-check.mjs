@@ -34,11 +34,11 @@ try {
   const importJson = JSON.parse(imported.stdout);
   const mixedDecision = buildAiDecision({
     node: [{ path: "active-node", version: "22", active: true }, { path: "inactive-node", version: "20", active: false, source: "fixture" }],
-    npm: [], python: [], project: {}, findings: [{ code: "multiple-node-installations", severity: "review" }]
+    npm: [], python: [], java: { installations: [{ runtimeVersion: "17.0.12", active: false }, { runtimeVersion: "21.0.4", active: true }], runtimeMetadata: {} }, project: {}, findings: [{ code: "multiple-node-installations", severity: "review" }]
   });
   const acknowledgedDecision = buildAiDecision({
     node: [{ path: "active-node", version: "22.14.0", active: true }, { path: "inactive-node", version: "20.19.0", active: false, source: "fixture" }],
-    npm: [], python: [], project: {}, policy: { intentionalNodeVersions: "20,22" }, findings: []
+    npm: [], python: [], java: { installations: [{ runtimeVersion: "17.0.12", active: false }, { runtimeVersion: "21.0.4", active: true }], runtimeMetadata: {} }, project: {}, policy: { intentionalNodeVersions: "20,22", intentionalJavaVersions: "17,21" }, findings: []
   });
   const summary = {
     schemaName: "aienvmap-maintainer-scenario-result",
@@ -53,7 +53,7 @@ try {
       externalSbom: { pass: true, durationMs: imported.durationMs, decision: importJson.externalEvidenceDecision?.decision || "unknown", format: importJson.externalEvidenceDecision?.format || "unknown" },
       caseDraft: { pass: draft.stdout.startsWith("# Portable environment case") && !draft.stdout.includes(workspace), durationMs: draft.durationMs },
       intentionalComplexity: { pass: mixedDecision.clarification.required && mixedDecision.clarification.defaultChoice === "need-more-evidence" && mixedDecision.clarification.removalAuthorized === false, status: mixedDecision.clarification.status, choices: mixedDecision.clarification.choices },
-      persistedIntent: { pass: !acknowledgedDecision.clarification.required && acknowledgedDecision.clarification.status === "intentional-versions-recorded" && acknowledgedDecision.consolidationPlan.candidates.length === 0, status: acknowledgedDecision.clarification.status, policyMatchedKinds: acknowledgedDecision.clarification.policyMatchedKinds }
+      persistedIntent: { pass: !acknowledgedDecision.clarification.required && acknowledgedDecision.clarification.status === "intentional-versions-recorded" && acknowledgedDecision.clarification.policyMatchedKinds.includes("java-installation") && acknowledgedDecision.consolidationPlan.candidates.length === 0, status: acknowledgedDecision.clarification.status, policyMatchedKinds: acknowledgedDecision.clarification.policyMatchedKinds }
     },
     privacy: { workspacePathIncluded: false, packageNamesIncluded: false, rawEvidenceIncluded: false },
     marketEvidence: false
