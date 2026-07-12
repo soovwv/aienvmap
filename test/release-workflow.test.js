@@ -42,3 +42,9 @@ test("release workflow remains explicit and manually confirmed", async () => {
   assert.match(workflow, /github\.event\.inputs\.confirm_publish == 'publish'/);
   assert.doesNotMatch(workflow, /on:\s*\n\s*push:\s*\n\s*tags:/);
 });
+
+test("pull-request CI enforces the English UTF-8 text policy", async () => {
+  const workflow = await fs.readFile(path.resolve(".github/workflows/ci.yml"), "utf8");
+  assert.match(workflow, /English text and UTF-8 policy/);
+  assert.match(workflow, /npm run text:check/);
+});

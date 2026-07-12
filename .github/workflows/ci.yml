@@ -38,6 +38,9 @@ jobs:
       - name: Test
         run: node --test
 
+      - name: English text and UTF-8 policy
+        run: npm run text:check
+
       - name: Smoke
         run: npm run smoke
 
