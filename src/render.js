@@ -168,11 +168,11 @@ export function renderAgentPointer(target = "agents") {
             : "agent:id";
   return `## aienvmap Environment Map
 
-${label} should use \`aienvmap\` as the workspace environment source of truth.
+${label} should use \`aienvmap\` as observed environment evidence and an explicit change handoff, not as authoritative machine state.
 
 Session start contract:
 
-1. If this file is loaded, treat the aienvmap block as the live env pointer.
+1. If this file is loaded, treat the aienvmap block as the current evidence pointer.
 2. Read \`.aienvmap/status.json\` before environment-affecting work when it exists.
 3. Read \`.aienvmap/reconcile.json\` when it exists; it is the AI-readable Node/npm and Python/pip installation traffic report.
 4. If \`.aienvmap/status.json\` is missing or stale, run \`aienvmap status --json\`, then \`aienvmap sync\` only when refresh is required.
@@ -196,7 +196,7 @@ Before changing runtimes, package managers, Docker settings, global packages, de
 5. Never remove a runtime, package manager, or environment without explicit human approval and a rollback plan.
 6. After accepted environment changes, run \`aienvmap checkpoint --actor ${actor} --summary what-changed --target environment\`.
 
-\`aienvmap\` does not replace this instruction file. It provides the live env map, lightweight runtime SBOM, intent log, timeline, and dashboard.`;
+\`aienvmap\` does not replace this instruction file, the active shell, or owning-user verification. It provides observed environment evidence, a lightweight runtime SBOM, an intent log, a timeline, and a dashboard.`;
 }
 
 export function renderContext(manifest, timeline = [], warnings = [], intents = [], policy = {}, recommendedActions = []) {
