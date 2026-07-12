@@ -112,4 +112,7 @@ test("packaged aienvmap skill points AI agents to current startup contracts", as
   assert.match(skill, /--owner-verification/);
   assert.match(skill, /category coverage only/);
   assert.match(skill, /never proves identity/);
+  assert.match(skill, /--case-summary portable\.json --markdown/);
+  assert.match(skill, /writes nothing and uploads nothing/);
+  assert.match(skill, /never completes human verification/);
 });

@@ -1024,6 +1024,24 @@ test("reconcile --case-summary emits a minimal human-review draft", async () => 
   assert.equal(serialized.includes(file), false);
 });
 
+test("reconcile --case-summary --markdown emits a copyable privacy-review draft", async () => {
+  const dir = await fs.mkdtemp(path.join(os.tmpdir(), "aienvmap-case-markdown-"));
+  const file = path.join(dir, "portable.json");
+  const portable = buildPortableReconciliation({ scanMode: "quick", node: { installations: [{ version: "24.1.0", path: `${dir}/private-node` }], distinctVersions: ["24.1.0"] }, findings: [], decision: "clear" }, { platform: process.platform, arch: process.arch });
+  await fs.writeFile(file, JSON.stringify(portable));
+  const { execFile } = await import("node:child_process");
+  const { promisify } = await import("node:util");
+  const run = promisify(execFile);
+  const result = await run(process.execPath, [path.resolve("bin/aienvmap.js"), "reconcile", "--case-summary", file, "--markdown", "--dir", dir], { cwd: path.resolve(".") });
+  assert.match(result.stdout, /^# Portable environment case/m);
+  assert.match(result.stdout, /AI consumer and judgment/);
+  assert.match(result.stdout, /Human verification/);
+  assert.match(result.stdout, /manually submits it/);
+  assert.equal(result.stdout.includes("24.1.0"), false);
+  assert.equal(result.stdout.includes(dir), false);
+  await assert.rejects(run(process.execPath, [path.resolve("bin/aienvmap.js"), "reconcile", "--case-summary", file, "--markdown", "--json"], { cwd: path.resolve(".") }), /either --markdown or --json/);
+});
+
 test("reconcile --portable-from redacts a reviewed full artifact without rescanning", async () => {
   const dir = await fs.mkdtemp(path.join(os.tmpdir(), "aienvmap-portable-from-"));
   const artifact = path.join(dir, "private-reconcile.json");

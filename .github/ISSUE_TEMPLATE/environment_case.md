@@ -31,6 +31,12 @@ aienvmap reconcile --case-summary portable.json --comparison comparison.json --j
 {}
 ```
 
+To generate this entire copyable issue draft from the same allowlisted summary, run:
+
+```bash
+aienvmap reconcile --case-summary portable.json --comparison comparison.json --markdown
+```
+
 Do not treat the generated draft as evidence until the human verification below is complete. If no comparison exists, omit `--comparison` and explain why no environment change was made.
 
 ## Human verification

@@ -4,7 +4,7 @@ import { writeJson } from "../fsutil.js";
 import { readJson } from "../fsutil.js";
 import { compareReconciliation } from "../reconcile-drift.js";
 import path from "node:path";
-import { buildPortableCaseSummary, buildPortableReconciliation, comparePortableReconciliations, readPortableEvidence } from "../portable-reconcile.js";
+import { buildPortableCaseSummary, buildPortableReconciliation, comparePortableReconciliations, readPortableEvidence, renderPortableCaseMarkdown } from "../portable-reconcile.js";
 import { inspectExplicitHome, inspectHomes, isolatedHomeEnvironment, readHomeEvidence, readHomesManifest, resolveInspectedHome } from "../home-inspection.js";
 
 export { buildPortableCaseSummary, buildPortableReconciliation, comparePortableReconciliations, portableEvidenceFingerprint } from "../portable-reconcile.js";
@@ -16,6 +16,7 @@ export async function reconcileWorkspace(args = {}) {
   if (args.inspect_home && (args.full_packages || args.show_paths)) throw new Error("--inspect-home is privacy-bounded and cannot be combined with --full-packages or --show-paths");
   if (args.owner_verification && !args.portable_compare) throw new Error("--owner-verification requires --portable-compare <admin.json> --against <owner.json>");
   if (args.comparison && !args.case_summary) throw new Error("--comparison requires --case-summary <portable.json>");
+  if (args.markdown && !args.case_summary) throw new Error("--markdown requires --case-summary <portable.json>");
   if (args.portable && (args.write || args.check || args.show_paths || args.full_packages || args.baseline)) throw new Error("--portable is quick, read-only, and cannot be combined with --write, --check, --baseline, --show-paths, or --full-packages");
   const dir = workspaceDir(args);
   const inspectedHome = args.inspect_home ? await resolveInspectedHome(args.inspect_home) : null;
@@ -39,11 +40,13 @@ export async function reconcileWorkspace(args = {}) {
   }
   if (args.case_summary) {
     if (args.case_summary === true) throw new Error("--case-summary requires a portable reconciliation JSON file");
-    if (args.portable || args.portable_from || args.portable_compare || args.write || args.check || args.quick || args.full_packages || args.show_paths || args.inspect_home || args.baseline) throw new Error("--case-summary cannot be combined with scanning, writing, checking, baseline, or path options");
+    if (args.portable || args.portable_from || args.portable_compare || args.home_evidence || args.inspect_homes || args.write || args.check || args.quick || args.full_packages || args.show_paths || args.inspect_home || args.baseline) throw new Error("--case-summary cannot be combined with scanning, writing, checking, baseline, or path options");
     const report = await readPortableEvidence(path.resolve(dir, String(args.case_summary)));
     const comparison = args.comparison ? await readJson(path.resolve(dir, String(args.comparison)), null) : null;
     const summary = buildPortableCaseSummary(report, comparison);
-    if (args.json) console.log(JSON.stringify(summary, null, 2));
+    if (args.markdown && args.json) throw new Error("use either --markdown or --json, not both");
+    if (args.markdown) console.log(renderPortableCaseMarkdown(summary));
+    else if (args.json) console.log(JSON.stringify(summary, null, 2));
     else if (!args.quiet) printCaseSummary(summary);
     return summary;
   }

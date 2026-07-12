@@ -7,6 +7,7 @@ test("external case intake requires portable evidence, human verification, and p
   const template = await fs.readFile(path.resolve(".github/ISSUE_TEMPLATE/environment_case.md"), "utf8");
   for (const required of ["--case-summary", "omits versions", "Human verification", "False positive", "not a repository fixture", "did not paste raw reconcile", "linkable pseudonymous", "authorize maintainers"]) assert.match(template, new RegExp(required, "i"));
   assert.match(template, /Did aienvmap itself change or remove software\? \(expected: no\)/);
+  assert.match(template, /--markdown/);
 });
 
 test("portable case guide separates evidence maturity from feature count", async () => {
@@ -18,4 +19,5 @@ test("portable case guide separates evidence maturity from feature count", async
   assert.match(guide, /never count one case twice/i);
   assert.match(guide, /--case-summary/);
   assert.match(guide, /never market evidence by itself/i);
+  assert.match(guide, /does not create an issue, upload evidence, write a file/i);
 });
