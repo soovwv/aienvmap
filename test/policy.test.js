@@ -16,11 +16,12 @@ test("parseSimplePolicy reads simple version policy", () => {
 });
 
 test("intentional runtime policy requires an explicit bounded version set", () => {
-  const policy = parseSimplePolicy("intentional-node-versions: 20, 22\nintentional-python-versions: 3.11,3.12\n");
+  const policy = parseSimplePolicy("intentional-node-versions: 20, 22\nintentional-python-versions: 3.11,3.12\nintentional-java-versions: 17,21\n");
   assert.deepEqual(intentionalRuntimeVersions(policy, "node"), ["20", "22"]);
   assert.equal(runtimeVersionsMatchIntentionalPolicy([{ version: "20.19.0" }, { version: "22.14.0" }], policy, "node"), true);
   assert.equal(runtimeVersionsMatchIntentionalPolicy([{ version: "20.19.0" }, { version: "22.14.0" }, { version: "24.1.0" }], policy, "node"), false);
   assert.equal(runtimeVersionsMatchIntentionalPolicy([{ version: "22.14.0" }], policy, "node"), false);
+  assert.equal(runtimeVersionsMatchIntentionalPolicy([{ runtimeVersion: "17.0.12" }, { runtimeVersion: "21.0.4" }], policy, "java"), true);
 });
 
 test("policyWarnings reports runtime and lockfile drift", () => {

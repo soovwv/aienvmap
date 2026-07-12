@@ -956,7 +956,7 @@ export function buildAiDecision({ node = [], npm = [], python = [], java = {}, p
     npm: chooseCanonical(npm, project.packageManager?.name === "npm" ? project.packageManager.version : ""),
     python: chooseCanonical(python, project.python?.versionFile || "")
   };
-  const clarification = buildEnvironmentClarification(actionCandidates, { node, python }, policy);
+  const clarification = buildEnvironmentClarification(actionCandidates, { node, python, java: java.installations || [] }, policy);
   const consolidationCandidates = actionCandidates.filter((item) => !clarification.policyMatchedKinds.includes(item.kind));
   return {
     consumer: "AI agent",
@@ -1000,9 +1000,13 @@ export function buildAiDecision({ node = [], npm = [], python = [], java = {}, p
 export function buildEnvironmentClarification(actionCandidates = [], installations = {}, policy = {}) {
   const acknowledged = new Set([
     ...(runtimeVersionsMatchIntentionalPolicy(installations.node, policy, "node") ? ["node-installation"] : []),
-    ...(runtimeVersionsMatchIntentionalPolicy(installations.python, policy, "python") ? ["python-installation"] : [])
+    ...(runtimeVersionsMatchIntentionalPolicy(installations.python, policy, "python") ? ["python-installation"] : []),
+    ...(runtimeVersionsMatchIntentionalPolicy(installations.java, policy, "java") ? ["java-installation"] : [])
   ]);
-  const allKinds = [...new Set(actionCandidates.map((item) => item.kind).filter(Boolean))].sort();
+  const allKinds = [...new Set([
+    ...actionCandidates.map((item) => item.kind).filter(Boolean),
+    ...((installations.java || []).length > 1 ? ["java-installation"] : [])
+  ])].sort();
   const kinds = allKinds.filter((kind) => !acknowledged.has(kind));
   const required = kinds.length > 0;
   return {

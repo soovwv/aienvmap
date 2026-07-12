@@ -16,6 +16,7 @@ test("maintainer scenario runner proves the first-start, SBOM bridge, and clarif
   assert.equal(summary.stages.intentionalComplexity.status, "ask-user-before-consolidation");
   assert.equal(summary.stages.intentionalComplexity.choices.includes("keep-intentional"), true);
   assert.equal(summary.stages.persistedIntent.status, "intentional-versions-recorded");
+  assert.equal(summary.stages.persistedIntent.policyMatchedKinds.includes("java-installation"), true);
   assert.equal(summary.marketEvidence, false);
   assert.deepEqual(summary.privacy, { workspacePathIncluded: false, packageNamesIncluded: false, rawEvidenceIncluded: false });
 });
