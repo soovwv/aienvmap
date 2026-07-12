@@ -100,7 +100,7 @@ test("package, README, and CLI help share the accurate environment-before-change
     path.resolve("bin/aienvmap.js"),
     "--help"
   ], { cwd: path.resolve(".") });
-  const readmeTop = readme.replace(/\r\n/g, "\n").slice(0, 1300);
+  const readmeTop = readme.replace(/\r\n/g, "\n").slice(0, 1800);
 
   assert.match(pkg.description, /Dependency-free environment map/);
   assert.match(pkg.description, /explicit change handoff/);

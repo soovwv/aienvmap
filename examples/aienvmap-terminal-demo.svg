@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="620" viewBox="0 0 1200 620" role="img" aria-labelledby="title description">
+  <title id="title">aienvmap multi-agent conflict demo</title>
+  <desc id="description">Terminal output showing an explicit dependency conflict, review-first coordination, and no automatic software changes.</desc>
+  <rect width="1200" height="620" rx="22" fill="#0d1117"/>
+  <rect x="1" y="1" width="1198" height="618" rx="21" fill="none" stroke="#30363d" stroke-width="2"/>
+  <circle cx="36" cy="34" r="8" fill="#ff5f56"/>
+  <circle cx="62" cy="34" r="8" fill="#ffbd2e"/>
+  <circle cx="88" cy="34" r="8" fill="#27c93f"/>
+  <text x="600" y="41" text-anchor="middle" fill="#8b949e" font-family="Consolas, Menlo, monospace" font-size="17">aienvmap demo</text>
+  <line x1="0" y1="66" x2="1200" y2="66" stroke="#30363d" stroke-width="2"/>
+
+  <g font-family="Consolas, Menlo, monospace" font-size="22">
+    <text x="34" y="108" fill="#7ee787">$</text>
+    <text x="58" y="108" fill="#f0f6fc">npx aienvmap demo</text>
+    <text x="34" y="152" fill="#8b949e">aienvmap multi-agent conflict demo</text>
+
+    <text x="34" y="202" fill="#79c0ff">AI discovery:</text>
+    <text x="230" y="202" fill="#f0f6fc">ready: codex, claude, gemini</text>
+
+    <text x="34" y="244" fill="#79c0ff">collaboration:</text>
+    <text x="230" y="244" fill="#ffa657">review-before-env-change</text>
+
+    <text x="34" y="286" fill="#79c0ff">conflict targets:</text>
+    <text x="260" y="286" fill="#ff7b72">dependency</text>
+
+    <text x="34" y="328" fill="#79c0ff">next command:</text>
+    <text x="230" y="328" fill="#f0f6fc">aienvmap plan --write</text>
+
+    <text x="34" y="370" fill="#79c0ff">AI entry:</text>
+    <text x="230" y="370" fill="#f0f6fc">.aienvmap/discovery.json</text>
+
+    <text x="34" y="420" fill="#8b949e">why:</text>
+    <text x="106" y="420" fill="#f0f6fc">Two agents planned dependency changes in one workspace.</text>
+    <text x="106" y="454" fill="#f0f6fc">The next agent sees the conflict before changing the environment.</text>
+  </g>
+
+  <rect x="34" y="494" width="1132" height="86" rx="12" fill="#161b22" stroke="#238636" stroke-width="2"/>
+  <text x="62" y="531" fill="#7ee787" font-family="Consolas, Menlo, monospace" font-size="21">NO SOFTWARE CHANGED</text>
+  <text x="62" y="560" fill="#c9d1d9" font-family="Consolas, Menlo, monospace" font-size="18">Intent is explicit. Review is required. Install, switch, and removal remain unauthorized.</text>
+</svg>

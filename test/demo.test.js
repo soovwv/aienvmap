@@ -154,3 +154,17 @@ test("multi-agent conflict docs explain the shared AI workspace use case", async
   assert.match(adoptionGuide, /Recommendation Sentence/);
   assert.match(adoptionGuide, /lightweight env map, light SBOM, intent log, and handoff/);
 });
+
+test("terminal demo asset uses verified review-first output without automatic-change claims", async () => {
+  const readme = await fs.readFile(path.resolve("README.md"), "utf8");
+  const svg = await fs.readFile(path.resolve("examples/aienvmap-terminal-demo.svg"), "utf8");
+  assert.match(readme, /examples\/aienvmap-terminal-demo\.svg/);
+  assert.match(svg, /<title id="title">aienvmap multi-agent conflict demo<\/title>/);
+  assert.match(svg, /review-before-env-change/);
+  assert.match(svg, /conflict targets:<\/text>/);
+  assert.match(svg, /dependency<\/text>/);
+  assert.match(svg, /aienvmap plan --write/);
+  assert.match(svg, /NO SOFTWARE CHANGED/);
+  assert.match(svg, /Install, switch, and removal remain unauthorized/);
+  assert.doesNotMatch(svg, /workspace: [A-Z]:|\/home\/|automatic memory/i);
+});
