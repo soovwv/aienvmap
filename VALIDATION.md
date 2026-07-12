@@ -30,6 +30,7 @@ The dependency-free `scripts/scenario-check.mjs` runner was executed on the Wind
 | CycloneDX preview bridge | pass | pass | pass | `read-original-before-claims`; format `cyclonedx-json` |
 | Public case draft | pass | pass | pass | no workspace path in Markdown |
 | Intentional complexity policy | pass | pass | pass | ask before consolidation; choices are keep, review, or gather evidence; removal remains unauthorized |
+| Persisted intentional versions | pass | pass | pass | exact reviewed version sets suppress repeat questions; an unexpected version restores review |
 
 This scenario matrix is maintainer validation, not three independent users or three market cases. The intentional-complexity row is a deterministic policy fixture executed on each platform; independent user confirmation is still required to prove that the question and choices are useful in real workflows.
 

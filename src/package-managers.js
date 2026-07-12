@@ -10,6 +10,7 @@ import { buildAiDecisionEnvelope } from "./ai-decision-envelope.js";
 import { analyzeCondaRouting, analyzeNodePackageManagers, analyzePythonToolEntryPoints } from "./tool-routing.js";
 import { classifyScope, classifySource, displayPath, namedFilesBelow, pathEntries } from "./path-evidence.js";
 import { findCondaCandidates, findPythonToolCandidates, inspectCondaCandidates, inspectPythonToolCandidates, parseCondaEnvironmentInfo } from "./python-tool-discovery.js";
+import { loadPolicy, runtimeVersionsMatchIntentionalPolicy } from "./policy.js";
 
 export { analyzeCondaRouting, analyzeNodePackageManagers, analyzePythonToolEntryPoints } from "./tool-routing.js";
 export { findCondaCandidates, findPythonToolCandidates, inspectCondaCandidates, inspectPythonToolCandidates, parseCondaEnvironmentInfo } from "./python-tool-discovery.js";
@@ -23,7 +24,7 @@ const nodePackageManagerNames = process.platform === "win32"
   : { pnpm: ["pnpm"], yarn: ["yarn"], corepack: ["corepack"] };
 
 export async function inspectPackageManagers(dir, options = {}) {
-  const [candidates, nodePackageManagerCandidates, nodeCandidates, pythonCandidates, pipCandidates, pythonToolCandidates, condaCandidates, commonRuntimes, project, uvPythonManager, pyenvPythonManager, voltaNodeManager, fnmNodeManager, nvmNodeManager, miseRuntimeManager] = await Promise.all([
+  const [candidates, nodePackageManagerCandidates, nodeCandidates, pythonCandidates, pipCandidates, pythonToolCandidates, condaCandidates, commonRuntimes, project, policy, uvPythonManager, pyenvPythonManager, voltaNodeManager, fnmNodeManager, nvmNodeManager, miseRuntimeManager] = await Promise.all([
     findNpmCandidates(options),
     findNodePackageManagerCandidates(options),
     findNodeCandidates(options),
@@ -33,6 +34,7 @@ export async function inspectPackageManagers(dir, options = {}) {
     findCondaCandidates(options),
     inspectCommonRuntimes({ ...options, projectDir: dir }),
     readProjectExpectation(dir),
+    loadPolicy(dir),
     inspectUvPythonManager(options),
     inspectPyenvPythonManager(options),
     inspectVoltaNodeManager({ ...options, projectDir: dir }),
@@ -75,7 +77,7 @@ export async function inspectPackageManagers(dir, options = {}) {
   const nodeInstallations = attachMiseNodeEvidence(attachNvmManagerEvidence(attachFnmManagerEvidence(attachVoltaManagerEvidence(await inspectNodeCandidates(nodeCandidates, options), voltaNodeManager), fnmNodeManager), nvmNodeManager), miseRuntimeManager);
   const npmRuntimeLinks = linkNodeNpmRuntimes(nodeInstallations, installations);
   const pipRuntimeLinks = linkPythonPipRuntimes(pythonInstallations, pipCommands);
-  const findings = [
+  const findings = applyIntentionalRuntimePolicy([
     ...analyzeNodeInstallations(nodeInstallations, project),
     ...analyzeNpmInstallations(installations, project),
     ...analyzeNodePackageManagers(alternativeManagers, project),
@@ -87,8 +89,8 @@ export async function inspectPackageManagers(dir, options = {}) {
     ...analyzeCommonRuntimes(commonRuntimes),
     ...analyzeJavaBuildTools(commonRuntimes.java),
     ...unverifiedExecutableFindings({ nodeInstallations, installations, pythonInstallations, pipCommands, alternativeManagers, toolEntryPoints, conda, commonRuntimes }, options)
-  ];
-  const aiDecision = buildAiDecision({ node: nodeInstallations, npm: installations, python: pythonInstallations, java: commonRuntimes.java, project, findings, runtimeLinks: { npm: npmRuntimeLinks, pip: pipRuntimeLinks } });
+  ], { node: nodeInstallations, python: pythonInstallations }, policy);
+  const aiDecision = buildAiDecision({ node: nodeInstallations, npm: installations, python: pythonInstallations, java: commonRuntimes.java, project, policy, findings, runtimeLinks: { npm: npmRuntimeLinks, pip: pipRuntimeLinks } });
   const aiDecisionEnvelope = buildAiDecisionEnvelope({
     decision: aiDecision.decision,
     reasonCodes: findings.map((item) => item.code),
@@ -917,7 +919,7 @@ export function analyzePythonInstallations(installations, project = {}) {
   return findings;
 }
 
-export function buildAiDecision({ node = [], npm = [], python = [], java = {}, project = {}, findings = [], runtimeLinks = {} }) {
+export function buildAiDecision({ node = [], npm = [], python = [], java = {}, project = {}, policy = {}, findings = [], runtimeLinks = {} }) {
   const actionCandidates = [];
   for (const item of node.filter((entry) => !entry.active)) actionCandidates.push({
     target: item.path,
@@ -954,7 +956,8 @@ export function buildAiDecision({ node = [], npm = [], python = [], java = {}, p
     npm: chooseCanonical(npm, project.packageManager?.name === "npm" ? project.packageManager.version : ""),
     python: chooseCanonical(python, project.python?.versionFile || "")
   };
-  const clarification = buildEnvironmentClarification(actionCandidates);
+  const clarification = buildEnvironmentClarification(actionCandidates, { node, python }, policy);
+  const consolidationCandidates = actionCandidates.filter((item) => !clarification.policyMatchedKinds.includes(item.kind));
   return {
     consumer: "AI agent",
     decision: findings.some((item) => item.severity === "review") ? "review" : "clear",
@@ -962,7 +965,7 @@ export function buildAiDecision({ node = [], npm = [], python = [], java = {}, p
     canonicalCandidates,
     actionCandidates,
     clarification,
-    consolidationPlan: buildConsolidationPlan({ actionCandidates, canonicalCandidates }),
+    consolidationPlan: buildConsolidationPlan({ actionCandidates: consolidationCandidates, canonicalCandidates }),
     runtimeLinkSummary: {
       npm: summarizeRuntimeLinkConfidence(runtimeLinks.npm),
       pip: summarizeRuntimeLinkConfidence(runtimeLinks.pip),
@@ -994,21 +997,35 @@ export function buildAiDecision({ node = [], npm = [], python = [], java = {}, p
   };
 }
 
-export function buildEnvironmentClarification(actionCandidates = []) {
-  const kinds = [...new Set(actionCandidates.map((item) => item.kind).filter(Boolean))].sort();
+export function buildEnvironmentClarification(actionCandidates = [], installations = {}, policy = {}) {
+  const acknowledged = new Set([
+    ...(runtimeVersionsMatchIntentionalPolicy(installations.node, policy, "node") ? ["node-installation"] : []),
+    ...(runtimeVersionsMatchIntentionalPolicy(installations.python, policy, "python") ? ["python-installation"] : [])
+  ]);
+  const allKinds = [...new Set(actionCandidates.map((item) => item.kind).filter(Boolean))].sort();
+  const kinds = allKinds.filter((kind) => !acknowledged.has(kind));
   const required = kinds.length > 0;
   return {
     required,
-    status: required ? "ask-user-before-consolidation" : "not-needed",
-    reason: required ? "Multiple or inactive installations are evidence of complexity, not proof that consolidation is wanted." : "No inactive runtime or package-manager candidate requires an intent question.",
+    status: required ? "ask-user-before-consolidation" : acknowledged.size ? "intentional-versions-recorded" : "not-needed",
+    reason: required ? "Multiple or inactive installations are evidence of complexity, not proof that consolidation is wanted." : acknowledged.size ? "Every detected multi-version runtime is covered by an explicit project-local intentional-version policy." : "No inactive runtime or package-manager candidate requires an intent question.",
     question: required ? "Are these installations intentionally retained for different projects or workflows, or should the AI prepare a reviewed consolidation proposal?" : "",
     choices: required ? ["keep-intentional", "review-consolidation", "need-more-evidence"] : [],
     defaultChoice: required ? "need-more-evidence" : "none",
     affectedKinds: kinds,
+    policyMatchedKinds: [...acknowledged].sort(),
     environmentChangesAuthorized: false,
     removalAuthorized: false,
     rule: "Do not infer cleanup intent from duplicate or inactive installations; ask the user and gather ownership, consumer, and rollback evidence before proposing a change."
   };
+}
+
+export function applyIntentionalRuntimePolicy(findings = [], installations = {}, policy = {}) {
+  const matched = new Set([
+    ...(runtimeVersionsMatchIntentionalPolicy(installations.node, policy, "node") ? ["multiple-node-installations"] : []),
+    ...(runtimeVersionsMatchIntentionalPolicy(installations.python, policy, "python") ? ["multiple-python-installations"] : [])
+  ]);
+  return findings.map((finding) => matched.has(finding.code) ? { ...finding, severity: "info", action: "Keep the explicitly listed intentional versions; review again if a new version or routing mismatch appears.", intentionalPolicyMatched: true } : finding);
 }
 
 export function buildConsolidationPlan({ actionCandidates = [], canonicalCandidates = {} } = {}) {

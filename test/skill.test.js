@@ -119,4 +119,7 @@ test("packaged aienvmap skill points AI agents to current startup contracts", as
   assert.match(skill, /default to `need-more-evidence`/);
   assert.match(skill, /preserve `keep-intentional` as a valid answer/);
   assert.match(skill, /never infer cleanup intent from duplication/);
+  assert.match(skill, /intentional-node-versions: 20,22/);
+  assert.match(skill, /Never write this policy before the user answers/);
+  assert.match(skill, /newly detected version or any routing\/project mismatch still requires review/);
 });

@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { parseSimplePolicy, policyWarnings } from "../src/policy.js";
+import { intentionalRuntimeVersions, parseSimplePolicy, policyWarnings, runtimeVersionsMatchIntentionalPolicy } from "../src/policy.js";
 
 test("parseSimplePolicy reads simple version policy", () => {
   assert.deepEqual(parseSimplePolicy(`
@@ -13,6 +13,14 @@ test("parseSimplePolicy reads simple version policy", () => {
     python: "3.11",
     packageManager: "npm"
   });
+});
+
+test("intentional runtime policy requires an explicit bounded version set", () => {
+  const policy = parseSimplePolicy("intentional-node-versions: 20, 22\nintentional-python-versions: 3.11,3.12\n");
+  assert.deepEqual(intentionalRuntimeVersions(policy, "node"), ["20", "22"]);
+  assert.equal(runtimeVersionsMatchIntentionalPolicy([{ version: "20.19.0" }, { version: "22.14.0" }], policy, "node"), true);
+  assert.equal(runtimeVersionsMatchIntentionalPolicy([{ version: "20.19.0" }, { version: "22.14.0" }, { version: "24.1.0" }], policy, "node"), false);
+  assert.equal(runtimeVersionsMatchIntentionalPolicy([{ version: "22.14.0" }], policy, "node"), false);
 });
 
 test("policyWarnings reports runtime and lockfile drift", () => {
