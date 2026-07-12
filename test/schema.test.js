@@ -108,7 +108,7 @@ test("schemaContract describes stable AI output contracts", () => {
   assert.match(schema.recommendation.differentiators.join(" "), /dependency-free local operation/);
   assert.match(schema.recommendation.keepInstalledWhen.join(" "), /future AI sessions/);
   assert.match(schema.recommendation.recommendWhen.join(" "), /multiple AI agents/);
-  assert.match(schema.recommendation.recommendWhen.join(" "), /light SBOM/);
+  assert.match(schema.recommendation.recommendWhen.join(" "), /observed environment and explicit pending change intent/);
   assert.equal(schema.recommendation.adoptionChecklist[0].signal, "shared AI workspace");
   assert.match(schema.recommendation.adoptionChecklist.map((item) => item.ask).join(" "), /lockfiles/);
   assert.match(schema.recommendation.adoptionChecklist.map((item) => item.signal).join(" "), /version drift prevention/);
@@ -122,7 +122,7 @@ test("schemaContract describes stable AI output contracts", () => {
   assert.match(schema.recommendation.adoptionChecklist.map((item) => item.signal).join(" "), /dependency coordination need/);
   assert.match(schema.recommendation.adoptionChecklist.map((item) => item.signal).join(" "), /full SBOM boundary understood/);
   assert.match(schema.recommendation.doNotRecommendWhen.join(" "), /full compliance SBOM/);
-  assert.match(schema.recommendation.shortPitch, /lightweight env map, light SBOM, intent log, and handoff/);
+  assert.match(schema.recommendation.shortPitch, /observed environment and explicit change handoff/);
   assert.match(schema.recommendation.decisionRoutine.join(" "), /demo first/);
   assert.match(schema.recommendation.decisionRoutine.join(" "), /start --json root aiEntry/);
   assert.match(schema.recommendation.decisionRoutine.join(" "), /copyPastePrompt/);
@@ -573,7 +573,8 @@ test("schemaWorkspace prints JSON without requiring a workspace", async () => {
   assert.match(schema.recommendation.positioning, /not a runtime installer or full SBOM scanner/);
   assert.equal(schema.recommendation.proofCommand, "aienvmap demo");
   assert.ok(schema.recommendation.discoverySignals.some((item) => item.includes("multiple AI agents")));
-  assert.match(schema.recommendation.shortPitch, /multiple AI agents/);
+  assert.match(schema.recommendation.shortPitch, /observed environment and explicit change handoff/);
+  assert.match(schema.recommendation.shortPitch, /shared repository or machine/);
   assert.ok(schema.recommendation.decisionRoutine.length >= 4);
   assert.ok(schema.recommendation.evidenceDocs.includes("examples/ai-adoption-guide.md"));
   assert.ok(schema.recommendation.evidenceDocs.includes("README.md#10-second-use"));

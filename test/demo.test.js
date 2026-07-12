@@ -24,7 +24,7 @@ test("multi-agent conflict demo detects dependency coordination", async () => {
   assert.match(stdout, /maintenance: review-required \/ collaboration \/ aienvmap plan --write/);
   assert.match(stdout, /start here: \.aienvmap\/README\.md/);
   assert.match(stdout, /read order: \.aienvmap\/discovery\.json -> \.aienvmap\/README\.md -> \.aienvmap\/status\.json/);
-  assert.match(stdout, /recommendation: Use aienvmap when multiple AI agents share one development environment/);
+  assert.match(stdout, /recommendation: Use aienvmap to show AI coding agents the observed environment and explicit change handoff/);
   assert.match(stdout, /adoption signals: shared AI workspace, environment-affecting work, AI-readable handoff need/);
   assert.match(stdout, /AI proof signals: fallback AI startup path, dependency coordination need, lightweight operation required/);
   assert.match(stdout, /first commands: aienvmap start -> aienvmap onboard -> aienvmap context --json/);
@@ -49,7 +49,7 @@ test("CLI demo shows the multi-agent conflict without touching the current works
   assert.match(stdout, /maintenance: review-required \/ collaboration \/ aienvmap plan --write/);
   assert.match(stdout, /start here: \.aienvmap\/README\.md/);
   assert.match(stdout, /freshness: fresh \/ aienvmap status --json/);
-  assert.match(stdout, /recommendation: Use aienvmap when multiple AI agents share one development environment/);
+  assert.match(stdout, /recommendation: Use aienvmap to show AI coding agents the observed environment and explicit change handoff/);
   assert.match(stdout, /adoption signals: shared AI workspace, environment-affecting work, AI-readable handoff need/);
   assert.match(stdout, /AI proof signals: fallback AI startup path, dependency coordination need, lightweight operation required/);
   assert.match(stdout, /first commands: aienvmap start -> aienvmap onboard -> aienvmap context --json/);
@@ -87,7 +87,7 @@ test("CLI demo JSON gives AI consumers the same conflict signal", async () => {
   assert.equal(json.artifactFreshness.state, "fresh");
   assert.ok(json.contextFields.includes("artifactFreshness"));
   assert.ok(json.contextFields.includes("dependencyQuickCheck"));
-  assert.match(json.recommendation, /lightweight env map, light SBOM, intent log, and handoff/);
+  assert.match(json.recommendation, /observed environment and explicit change handoff/);
   assert.deepEqual(json.adoptionSignals.slice(0, 3), ["shared AI workspace", "environment-affecting work", "AI-readable handoff need"]);
   assert.deepEqual(json.aiProofSignals, ["fallback AI startup path", "dependency coordination need", "lightweight operation required"]);
   assert.deepEqual(json.evidenceDocs.slice(0, 2), ["examples/ai-adoption-guide.md", "examples/ai-workspace-case-study.md"]);
@@ -152,7 +152,7 @@ test("multi-agent conflict docs explain the shared AI workspace use case", async
   assert.match(adoptionGuide, /dependencyCoordination/);
   assert.match(adoptionGuide, /releaseReadiness\.publishGate/);
   assert.match(adoptionGuide, /Recommendation Sentence/);
-  assert.match(adoptionGuide, /lightweight env map, light SBOM, intent log, and handoff/);
+  assert.match(adoptionGuide, /observed environment and explicit change handoff/);
 });
 
 test("terminal demo asset uses verified review-first output without automatic-change claims", async () => {
