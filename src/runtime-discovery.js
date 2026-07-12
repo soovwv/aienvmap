@@ -9,9 +9,9 @@ export async function inspectCommonRuntimes(options = {}) {
   const entries = await Promise.all(definitions.map(async (definition) => {
     const candidates = await findRuntimeCandidates(definition, options);
     const installations = (await Promise.all(candidates.map((candidate) => inspectRuntimeCandidate(definition, candidate, options)))).filter(Boolean);
-    installations.forEach((item, index) => { item.active = index === 0; });
+    installations.forEach((item, index) => { item.active = options.executeCandidates === false ? false : index === 0; });
     const runtimeMetadata = definition.id === "java" ? summarizeJavaMetadata(installations) : null;
-    const buildTools = definition.id === "java" ? await inspectJavaBuildTools(installations, options) : null;
+    const buildTools = definition.id === "java" ? (options.executeCandidates === false ? { bindings: [], collection: "skipped-no-exec", rule: "Build tools are not invoked during explicit-home inspection." } : await inspectJavaBuildTools(installations, options)) : null;
     return [definition.id, {
       label: definition.label,
       detailLevel: "path-and-version-only",
@@ -244,6 +244,11 @@ export function analyzeJavaBuildTools(java = {}) {
 }
 
 async function inspectRuntimeCandidate(definition, candidate, options) {
+  if (options.executeCandidates === false) return {
+    runtime: definition.id, version: "unverified-no-exec", versionVerified: false, versions: [], path: displayPath(candidate.path, options),
+    source: candidate.source, scope: candidate.scope, discovery: candidate.discovery, evidence: "file-presence-only",
+    ...(definition.id === "java" ? { managerEvidence: javaManagerEvidence(candidate, {}, options) } : {})
+  };
   const version = await commandVersion(candidate.path, definition.versionArgs);
   if (!version) return null;
   const versions = definition.listArgs

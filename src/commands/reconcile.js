@@ -71,7 +71,8 @@ export async function reconcileWorkspace(args = {}) {
     home: inspectedHome || undefined,
     env: inspectedHome ? isolatedHomeEnvironment(inspectedHome) : undefined,
     pathValue: inspectedHome ? "" : undefined,
-    inspectedHome: Boolean(inspectedHome)
+    inspectedHome: Boolean(inspectedHome),
+    executeCandidates: !inspectedHome
   });
   if (args.portable) {
     const portable = buildPortableReconciliation(result, { sourceMode: "live-quick" });
