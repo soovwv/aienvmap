@@ -4,31 +4,11 @@ import { writeJson } from "../fsutil.js";
 import { readJson } from "../fsutil.js";
 import { compareReconciliation } from "../reconcile-drift.js";
 import path from "node:path";
-import fs from "node:fs/promises";
 import { buildPortableCaseSummary, buildPortableReconciliation, comparePortableReconciliations, readPortableEvidence } from "../portable-reconcile.js";
+import { inspectExplicitHome, inspectHomes, isolatedHomeEnvironment, readHomesManifest, resolveInspectedHome } from "../home-inspection.js";
 
 export { buildPortableCaseSummary, buildPortableReconciliation, comparePortableReconciliations, portableEvidenceFingerprint } from "../portable-reconcile.js";
-
-export async function resolveInspectedHome(value) {
-  if (!value) return null;
-  if (value === true) throw new Error("--inspect-home requires an absolute existing directory");
-  const home = path.normalize(String(value));
-  if (!path.isAbsolute(home)) throw new Error("--inspect-home requires an absolute existing directory");
-  let stat;
-  try { stat = await fs.stat(home); } catch { throw new Error("--inspect-home requires an absolute existing directory"); }
-  if (!stat.isDirectory()) throw new Error("--inspect-home requires an absolute existing directory");
-  return home;
-}
-
-export function isolatedHomeEnvironment(home, env = process.env) {
-  const next = { ...env, HOME: home, USERPROFILE: home };
-  for (const key of ["NVM_HOME", "NVM_SYMLINK", "NVM_DIR", "FNM_DIR", "MISE_INSTALLS_DIR", "PYENV_ROOT", "CONDA_EXE", "CONDA_PREFIX", "SDKMAN_DIR", "JENV_ROOT", "UV_PYTHON_INSTALL_DIR", "XDG_CONFIG_HOME", "XDG_DATA_HOME", "XDG_CACHE_HOME"]) delete next[key];
-  if (process.platform === "win32") {
-    next.APPDATA = path.join(home, "AppData", "Roaming");
-    next.LOCALAPPDATA = path.join(home, "AppData", "Local");
-  }
-  return next;
-}
+export { isolatedHomeEnvironment, resolveInspectedHome } from "../home-inspection.js";
 
 export async function reconcileWorkspace(args = {}) {
   if (args.quick && args.full_packages) throw new Error("use either --quick or --full-packages, not both");
@@ -38,7 +18,16 @@ export async function reconcileWorkspace(args = {}) {
   if (args.comparison && !args.case_summary) throw new Error("--comparison requires --case-summary <portable.json>");
   if (args.portable && (args.write || args.check || args.show_paths || args.full_packages || args.baseline)) throw new Error("--portable is quick, read-only, and cannot be combined with --write, --check, --baseline, --show-paths, or --full-packages");
   const dir = workspaceDir(args);
-  const inspectedHome = await resolveInspectedHome(args.inspect_home);
+  const inspectedHome = args.inspect_home ? await resolveInspectedHome(args.inspect_home) : null;
+  if (args.inspect_homes) {
+    if (args.inspect_homes === true) throw new Error("--inspect-homes requires an aienvmap.inspect-homes v1 JSON manifest");
+    if (args.inspect_home || args.portable || args.portable_from || args.portable_compare || args.case_summary || args.write || args.check || args.quick || args.full_packages || args.show_paths || args.baseline) throw new Error("--inspect-homes cannot be combined with other reconciliation modes or path options");
+    const homes = await readHomesManifest(path.resolve(dir, String(args.inspect_homes)));
+    const result = await inspectHomes(dir, homes);
+    if (args.json) console.log(JSON.stringify(result, null, 2));
+    else if (!args.quiet) printHomes(result);
+    return result;
+  }
   if (args.case_summary) {
     if (args.case_summary === true) throw new Error("--case-summary requires a portable reconciliation JSON file");
     if (args.portable || args.portable_from || args.portable_compare || args.write || args.check || args.quick || args.full_packages || args.show_paths || args.inspect_home || args.baseline) throw new Error("--case-summary cannot be combined with scanning, writing, checking, baseline, or path options");
@@ -76,7 +65,7 @@ export async function reconcileWorkspace(args = {}) {
   if (args.check && !baseline) throw new Error(`missing reconciliation baseline at ${baselinePath}; run \`aienvmap reconcile --write\` first`);
   const scanMode = args.quick || args.full_packages ? null : baseline?.scanMode;
   if (inspectedHome && scanMode === "full-packages") throw new Error("--inspect-home cannot check a full-packages baseline; create a standard or quick baseline for the inspected home");
-  const result = await inspectPackageManagers(dir, {
+  const result = inspectedHome ? await inspectExplicitHome(dir, inspectedHome) : await inspectPackageManagers(dir, {
     showPaths: args.show_paths,
     fullPackages: args.full_packages || scanMode === "full-packages",
     quick: args.portable || args.quick || scanMode === "quick",
@@ -84,7 +73,7 @@ export async function reconcileWorkspace(args = {}) {
     env: inspectedHome ? isolatedHomeEnvironment(inspectedHome) : undefined,
     pathValue: inspectedHome ? "" : undefined,
     inspectedHome: Boolean(inspectedHome),
-    executeCandidates: !inspectedHome
+    executeCandidates: true
   });
   if (args.portable) {
     const portable = buildPortableReconciliation(result, { sourceMode: "live-quick" });
@@ -185,6 +174,16 @@ function printCaseSummary(value) {
   console.log(`comparison: ${value.comparison.present ? value.comparison.decision : "not provided"}`);
   console.log(`market evidence eligible: ${value.marketEvidence.eligible}`);
   console.log(`privacy review: required; excluded: ${value.privacy.excluded.join(", ")}`);
+  console.log(`rule: ${value.rule}`);
+}
+
+function printHomes(value) {
+  console.log(`reconcile homes: ${value.entryCount} explicit homes (read-only/no-exec)`);
+  for (const item of value.entries) {
+    const inventory = item.evidence.inventory;
+    console.log(`- ${item.alias}: ${item.evidence.decision}; node=${inventory.node.count}, npm=${inventory.npm.count}, python=${inventory.python.count}, java=${inventory.otherRuntimes.java?.count || 0}`);
+  }
+  console.log(`next: ${value.nextSafeAction}`);
   console.log(`rule: ${value.rule}`);
 }
 

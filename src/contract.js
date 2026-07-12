@@ -619,6 +619,13 @@ export function schemaContract() {
         excluded: ["paths", "workspace and project names", "package names", "package digests", "timestamps", "raw manager inventories"],
         rule: "Review before sharing because runtime versions, platform, architecture, sources, and finding codes remain visible."
       },
+      reconcileHomes: {
+        command: "aienvmap reconcile --inspect-homes homes.json --json",
+        manifestSchema: "aienvmap.inspect-homes v1",
+        mode: "sequential read-only no-exec inspection of up to eight explicit homes",
+        rootFields: ["schemaName", "schemaVersion", "mode", "scope", "entryCount", "entries", "privacy", "environmentChangesAuthorized", "removalAuthorized", "nextSafeAction", "rule"],
+        privacyRule: "Aliases are operator-provided and should be non-identifying; manifest paths and home paths are excluded, system users are never enumerated, and each entry is portable evidence."
+      },
       reconcilePortableCompare: {
         command: "aienvmap reconcile --portable-compare before.json --against after.json [--owner-verification] --json",
         mode: "offline comparison of validated redacted evidence; raw inputs are converted before diffing",

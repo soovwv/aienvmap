@@ -8,6 +8,7 @@ import { buildPortableCaseSummary, buildPortableReconciliation, comparePortableR
 import { analyzePythonToolEntryPoints, findPythonToolCandidates, inspectPythonToolCandidates } from "../src/package-managers.js";
 import { analyzeCondaRouting, inspectCondaCandidates, parseCondaEnvironmentInfo } from "../src/package-managers.js";
 import * as portableReconcile from "../src/portable-reconcile.js";
+import { inspectHomes, maximumInspectedHomes, readHomesManifest } from "../src/home-inspection.js";
 
 test("reconcile command preserves the portable helper compatibility exports", async () => {
   const reconcileCommand = await import("../src/commands/reconcile.js");
@@ -18,7 +19,7 @@ test("reconcile command preserves the portable helper compatibility exports", as
 
 test("explicit home inspection validates the boundary and isolates invoking-user variables", async () => {
   const home = await fs.mkdtemp(path.join(os.tmpdir(), "aienvmap-inspected-home-"));
-  assert.equal(await resolveInspectedHome(home), path.normalize(home));
+  assert.equal(await resolveInspectedHome(home), path.normalize(await fs.realpath(home)));
   await assert.rejects(resolveInspectedHome("relative/home"), /absolute existing directory/);
   await assert.rejects(resolveInspectedHome(path.join(home, "missing")), /absolute existing directory/);
   const env = isolatedHomeEnvironment(home, { PATH: "session-path", NVM_DIR: "wrong-user", PYENV_ROOT: "wrong-user", CONDA_PREFIX: "secret" });
@@ -29,6 +30,60 @@ test("explicit home inspection validates the boundary and isolates invoking-user
   assert.equal(env.PYENV_ROOT, undefined);
   assert.equal(env.CONDA_PREFIX, undefined);
   if (process.platform === "win32") assert.equal(env.LOCALAPPDATA, path.join(home, "AppData", "Local"));
+});
+
+test("multi-home manifest requires bounded unique aliases and canonical homes", async () => {
+  const dir = await fs.mkdtemp(path.join(os.tmpdir(), "aienvmap-homes-manifest-"));
+  const first = path.join(dir, "first");
+  const second = path.join(dir, "second");
+  await Promise.all([fs.mkdir(first), fs.mkdir(second)]);
+  const write = async (value) => {
+    const file = path.join(dir, `manifest-${Math.random()}.json`);
+    await fs.writeFile(file, JSON.stringify(value));
+    return file;
+  };
+  const valid = await readHomesManifest(await write({ schemaName: "aienvmap.inspect-homes", schemaVersion: 1, homes: [{ alias: "build-a", home: first }, { alias: "build-b", home: second }] }));
+  assert.deepEqual(valid.map((item) => item.alias), ["build-a", "build-b"]);
+  await assert.rejects(readHomesManifest(await write({ schemaName: "aienvmap.inspect-homes", schemaVersion: 1, homes: [{ alias: "User Name", home: first }] })), /alias must match/);
+  await assert.rejects(readHomesManifest(await write({ schemaName: "aienvmap.inspect-homes", schemaVersion: 1, homes: [{ alias: "same", home: first }, { alias: "same", home: second }] })), /duplicate inspected home alias/);
+  await assert.rejects(readHomesManifest(await write({ schemaName: "aienvmap.inspect-homes", schemaVersion: 1, homes: [{ alias: "one", home: first }, { alias: "two", home: first }] })), /duplicate canonical home/);
+  const tooMany = Array.from({ length: maximumInspectedHomes + 1 }, (_, index) => ({ alias: `home-${index}`, home: first }));
+  await assert.rejects(readHomesManifest(await write({ schemaName: "aienvmap.inspect-homes", schemaVersion: 1, homes: tooMany })), /1 to 8/);
+});
+
+test("multi-home aggregation stays no-exec, portable, sequential, and path-free", async () => {
+  const project = await fs.mkdtemp(path.join(os.tmpdir(), "aienvmap-homes-project-"));
+  const first = await fs.mkdtemp(path.join(os.tmpdir(), "aienvmap-home-first-"));
+  const second = await fs.mkdtemp(path.join(os.tmpdir(), "aienvmap-home-second-"));
+  const result = await inspectHomes(project, [{ alias: "build-a", home: first }, { alias: "build-b", home: second }]);
+  const serialized = JSON.stringify(result);
+  assert.equal(result.schemaName, "aienvmap.reconcile-homes");
+  assert.equal(result.mode, "sequential-read-only-no-exec");
+  assert.equal(result.entryCount, 2);
+  assert.deepEqual(result.entries.map((item) => item.alias), ["build-a", "build-b"]);
+  assert.ok(result.entries.every((item) => item.evidence.schemaName === "aienvmap.reconcile-portable"));
+  assert.ok(result.entries.every((item) => item.evidence.source.evidenceRole === "administrator-no-exec"));
+  assert.equal(result.environmentChangesAuthorized, false);
+  assert.equal(result.removalAuthorized, false);
+  for (const privatePath of [project, first, second]) assert.equal(serialized.includes(privatePath), false);
+});
+
+test("reconcile --inspect-homes emits path-free aggregate evidence", async () => {
+  const project = await fs.mkdtemp(path.join(os.tmpdir(), "aienvmap-homes-cli-project-"));
+  const first = await fs.mkdtemp(path.join(os.tmpdir(), "aienvmap-homes-cli-first-"));
+  const second = await fs.mkdtemp(path.join(os.tmpdir(), "aienvmap-homes-cli-second-"));
+  const manifest = path.join(project, "homes.json");
+  await fs.writeFile(manifest, JSON.stringify({ schemaName: "aienvmap.inspect-homes", schemaVersion: 1, homes: [{ alias: "build-a", home: first }, { alias: "build-b", home: second }] }));
+  const { execFile } = await import("node:child_process");
+  const { promisify } = await import("node:util");
+  const result = await promisify(execFile)(process.execPath, [path.resolve("bin/aienvmap.js"), "reconcile", "--inspect-homes", manifest, "--json", "--dir", project], { cwd: path.resolve(".") });
+  const json = JSON.parse(result.stdout);
+  const serialized = JSON.stringify(json);
+  assert.equal(json.schemaName, "aienvmap.reconcile-homes");
+  assert.equal(json.entryCount, 2);
+  assert.deepEqual(json.entries.map((item) => item.alias), ["build-a", "build-b"]);
+  assert.equal(json.privacy.manifestPathIncluded, false);
+  for (const privatePath of [project, first, second, manifest]) assert.equal(serialized.includes(privatePath), false);
 });
 
 test("explicit-home candidate inspection never executes discovered Node or Python files", async () => {

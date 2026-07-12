@@ -1,0 +1,14 @@
+{
+  "schemaName": "aienvmap.inspect-homes",
+  "schemaVersion": 1,
+  "homes": [
+    {
+      "alias": "build-a",
+      "home": "/srv/dev/build-a"
+    },
+    {
+      "alias": "build-b",
+      "home": "/srv/dev/build-b"
+    }
+  ]
+}
