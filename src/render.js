@@ -10,7 +10,7 @@ export function renderAIEnv(manifest, timeline = [], warnings = [], intents = []
   const lines = [];
   lines.push("# AI Environment Protocol", "");
   lines.push("This workspace uses `aienvmap`.");
-  lines.push("Multiple AI agents should use this AI-first env map and light SBOM before changing shared development environment state.", "");
+  lines.push("AI coding agents should read this environment map and explicit change handoff before changing shared development environment state.", "");
   lines.push("## Read Me First", "");
   lines.push("Before changing runtimes, dependencies, package managers, Docker settings, or global packages:");
   lines.push("1. Read `.aienvmap/discovery.json` and `.aienvmap/status.json`.");

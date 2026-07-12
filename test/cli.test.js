@@ -93,7 +93,7 @@ test("CLI scorecard keeps technical and market evidence separate", async () => {
   assert.match(json.rule, /not use overall score alone/);
 });
 
-test("package, README, and CLI help share the AI workspace coordination positioning", async () => {
+test("package, README, and CLI help share the accurate environment-before-change positioning", async () => {
   const pkg = JSON.parse(await fs.readFile(path.resolve("package.json"), "utf8"));
   const readme = await fs.readFile(path.resolve("README.md"), "utf8");
   const { stdout } = await execFileAsync(process.execPath, [
@@ -102,8 +102,8 @@ test("package, README, and CLI help share the AI workspace coordination position
   ], { cwd: path.resolve(".") });
   const readmeTop = readme.replace(/\r\n/g, "\n").slice(0, 1300);
 
-  assert.match(pkg.description, /AI workspace coordination tool/);
-  assert.match(pkg.description, /multiple AI agents sharing one development environment/);
+  assert.match(pkg.description, /Dependency-free environment map/);
+  assert.match(pkg.description, /explicit change handoff/);
   assert.ok(pkg.keywords.includes("ai-workspace"));
   assert.ok(pkg.keywords.includes("ai-agents"));
   assert.ok(pkg.keywords.includes("ai-coding"));
@@ -115,15 +115,14 @@ test("package, README, and CLI help share the AI workspace coordination position
   assert.ok(pkg.keywords.includes("version-drift"));
   assert.ok(pkg.keywords.includes("light-sbom"));
   assert.ok(pkg.keywords.includes("dependency-coordination"));
-  assert.match(readmeTop, /AI-first env map \+ light SBOM coordination/);
-  assert.match(readmeTop, /multiple AI agents safely share one development environment/);
+  assert.match(readmeTop, /Know the development environment before an AI changes it/);
+  assert.match(readmeTop, /environment map and explicit change handoff/);
   assert.match(readmeTop, /dependency-free/);
-  assert.match(readmeTop, /without heavy locks/);
-  assert.match(readmeTop, /Use: AI agents share environment-affecting work/);
-  assert.match(readmeTop, /Prevent: different AI agents silently installing or assuming different software versions/);
+  assert.match(readmeTop, /without silently installing, switching, or removing software/);
+  assert.match(readmeTop, /Use: several AI agents or sessions share environment-affecting work/);
+  assert.match(readmeTop, /Prevent: the next AI silently assuming a different Node, Python, Java/);
   assert.match(readmeTop, /Skip: you only need a full compliance SBOM scanner/);
-  assert.match(readmeTop, /AI signal: shared Codex\/Claude\/Gemini work/);
-  assert.match(readmeTop, /Start: run `npx aienvmap start`/);
+  assert.match(readmeTop, /npx aienvmap reconcile --quick/);
   assert.ok(readme.split(/\r?\n/).length <= 155);
   assert.match(readme, /AI adoption guide/);
   assert.match(readme, /Automatic discovery is best-effort/);
@@ -137,7 +136,7 @@ test("package, README, and CLI help share the AI workspace coordination position
   assert.match(readme, /nextStabilizationTasks/);
   assert.match(readme, /releaseReadiness\.currentBatch` is reviewed/);
   assert.match(readme, /several meaningful changes are batched/);
-  assert.match(stdout, /AI-first env map \+ light SBOM coordination for shared AI workspaces/);
+  assert.match(stdout, /know the development environment before an AI changes it/);
   assert.match(stdout, /aienvmap start    one-command AI startup with a copy-paste fallback prompt/);
   assert.match(stdout, /aienvmap discover  read-only detection plus aiDiscovery\.decision and copy-paste prompt/);
 });

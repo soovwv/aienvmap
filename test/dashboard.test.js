@@ -24,7 +24,7 @@ test("dashboardPayload centralizes schema-backed dashboard data", () => {
   assert.equal(payload.releaseReadiness.target, "0.2.0");
   assert.equal(payload.schemaQualitySignals.status, "prototype-hardening");
   assert.equal(payload.schemaAiAdoptionDecision.proofCommand, "aienvmap demo --json");
-  assert.match(payload.schemaAiAdoptionDecision.position, /AI workspace coordination tool/);
+  assert.match(payload.schemaAiAdoptionDecision.position, /Environment map and explicit change handoff/);
   assert.equal(payload.schemaAgentDiscovery.sessionUse.decisionField, "aiDiscovery.decision");
   assert.equal(payload.schemaAgentDiscovery.sessionUse.fallbackPromptField, "copyPastePrompt");
 });

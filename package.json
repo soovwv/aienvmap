@@ -1,7 +1,7 @@
 {
   "name": "aienvmap",
   "version": "0.1.0",
-  "description": "AI workspace coordination tool with an env map and light SBOM for multiple AI agents sharing one development environment.",
+  "description": "Dependency-free environment map and explicit change handoff for AI coding agents sharing a repository or machine.",
   "type": "module",
   "bin": {
     "aienvmap": "bin/aienvmap.js"
