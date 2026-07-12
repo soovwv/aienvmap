@@ -64,6 +64,10 @@ export function reconcileJsonPath(dir) {
   return path.join(stateDir(dir), "reconcile.json");
 }
 
+export function trialDir(dir) {
+  return path.join(stateDir(dir), "trial");
+}
+
 export function stateReadmePath(dir) {
   return path.join(stateDir(dir), "README.md");
 }

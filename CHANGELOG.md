@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.1.1
+
+- Added a one-command, read-only `trial` flow that writes a privacy-reviewed tester bundle locally without telemetry or automatic upload.
+- Added external tester and AI-assisted testing guides with explicit human consent, redaction, and no-cleanup rules.
+
 ## Unreleased
 
 - Extended intentional-version questions and project-local memory to multiple Java runtimes while keeping Java information-only and outside consolidation candidates.
