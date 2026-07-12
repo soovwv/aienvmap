@@ -18,6 +18,23 @@ Observed 2026-07-12. This record contains redacted maintainer-run compatibility 
 
 Counts are visible-command evidence from quick read-only scans, not proof of complete machine inventory or installation ownership.
 
+## Maintainer scenario validation
+
+The dependency-free `scripts/scenario-check.mjs` runner was executed on the Windows host, Ubuntu WSL2 with a checksum-verified temporary official Node 20.20.2 archive, and the guarded macOS host with the same verified temporary runtime approach. It creates an isolated workspace, runs first-start artifact generation, portable reconciliation, light SBOM generation, CycloneDX preview import, privacy-safe case-draft rendering, and then deletes the workspace.
+
+| Scenario | Windows | Linux | macOS | Expected safety result |
+| --- | --- | --- | --- | --- |
+| First start | pass | pass | pass | ten workspace artifacts; missing pointers remain `fallback-required` |
+| Real-host portable reconciliation | pass; mixed Python produced `review` | pass; `clear` | pass; `clear` | `consolidation.removalAuthorized` is false |
+| Light SBOM fixture | pass | pass | pass | one manifest dependency; no scanner is installed or run |
+| CycloneDX preview bridge | pass | pass | pass | `read-original-before-claims`; format `cyclonedx-json` |
+| Public case draft | pass | pass | pass | no workspace path in Markdown |
+| Intentional complexity policy | pass | pass | pass | ask before consolidation; choices are keep, review, or gather evidence; removal remains unauthorized |
+
+This scenario matrix is maintainer validation, not three independent users or three market cases. The intentional-complexity row is a deterministic policy fixture executed on each platform; independent user confirmation is still required to prove that the question and choices are useful in real workflows.
+
+An attempted rerun in an ephemeral Docker Desktop Alpine container was inconclusive because the local Docker backend stopped responding and exceeded the harness timeout. The container/repository setup was read-only and was terminated; the successful earlier Alpine compatibility run remains recorded above. This infrastructure failure is not reported as a product pass or failure.
+
 ## Safety and cleanup
 
 - The Linux container used a read-only repository mount and was removed automatically.
@@ -25,3 +42,4 @@ Counts are visible-command evidence from quick read-only scans, not proof of com
 - Temporary macOS repository, runtime, and log paths were deleted and cleanup was verified.
 - Host addresses, account names, home paths, credentials, and raw reconciliation artifacts are intentionally excluded.
 - No test authorized package installation, runtime switching, PATH edits, or software removal.
+- The scenario runner contains no telemetry or external submission and emits only a redacted summary; raw temporary artifacts are deleted.
