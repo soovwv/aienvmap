@@ -136,7 +136,8 @@ test("multi-agent conflict docs explain the shared AI workspace use case", async
   assert.match(adoptionGuide, /different software versions/);
   assert.match(adoptionGuide, /Positioning/);
   assert.match(adoptionGuide, /environment map and explicit change handoff for AI coding agents/i);
-  assert.match(adoptionGuide, /future AI sessions need the same observed environment truth/);
+  assert.doesNotMatch(adoptionGuide, /environment source of truth|observed environment truth/i);
+  assert.match(adoptionGuide, /future AI sessions need the same observed environment evidence/);
   assert.match(adoptionGuide, /Do Not Recommend When/);
   assert.match(adoptionGuide, /Discovery Signals/);
   assert.match(adoptionGuide, /\.aienvmap\/README\.md/);
