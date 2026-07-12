@@ -41,6 +41,16 @@ npx aienvmap reconcile --portable-compare before.json --against after.json --jso
 
 Do not make a change merely to produce a case. A verified “no change was safest” outcome is valid evidence.
 
+## 4. Create a minimal public draft
+
+After reviewing the portable report locally, create a smaller submission draft that excludes versions and the linkable evidence fingerprint:
+
+```bash
+npx aienvmap reconcile --case-summary portable.json --comparison comparison.json --json
+```
+
+`--comparison` is optional. The generated draft is never market evidence by itself: a human must complete the problem, AI judgment, outcome, independence, and privacy fields before manually submitting it.
+
 ## Evidence levels
 
 | Level | Required proof | Market-score use |

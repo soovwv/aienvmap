@@ -53,6 +53,8 @@ test("schemaContract describes stable AI output contracts", () => {
   assert.ok(schema.outputs.reconcilePortableCompare.rootFields.includes("changes"));
   assert.ok(schema.outputs.reconcilePortableCompare.rootFields.includes("ownerVerification"));
   assert.ok(schema.outputs.reconcilePortableCompare.ownerVerificationFields.includes("identityProven"));
+  assert.match(schema.outputs.environmentCaseSummary.command, /--case-summary/);
+  assert.ok(schema.outputs.environmentCaseSummary.excluded.includes("runtime versions"));
   assert.deepEqual(schema.outputs.reconcile.detailedToolchains, ["node/npm/pnpm/yarn/corepack", "python/pip/uv/pipx/conda"]);
   assert.ok(schema.outputs.reconcile.condaEnvironmentEvidenceFields.includes("truncated"));
   assert.ok(schema.outputs.reconcile.pythonToolEntryPointFields.includes("routingEvidence"));

@@ -19,22 +19,19 @@ Describe the real runtime/version/AI-coordination problem and its user-visible i
 - What the AI concluded from the portable evidence:
 - What action it proposed, if any:
 
-## Portable evidence
+## Minimal evidence summary
 
-Paste only reviewed output from one of these commands:
+Prefer reviewed output from this command; it omits versions and the linkable fingerprint:
 
 ```bash
-aienvmap reconcile --portable --json
-aienvmap reconcile --portable-from .aienvmap/reconcile.json --json
+aienvmap reconcile --case-summary portable.json --comparison comparison.json --json
 ```
 
 ```json
 {}
 ```
 
-## Before/after comparison (optional)
-
-Paste the reviewed result of `aienvmap reconcile --portable-compare before.json --against after.json --json`, or explain why no environment change was made.
+Do not treat the generated draft as evidence until the human verification below is complete. If no comparison exists, omit `--comparison` and explain why no environment change was made.
 
 ## Human verification
 
