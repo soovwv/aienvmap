@@ -51,6 +51,14 @@ npx aienvmap reconcile --case-summary portable.json --comparison comparison.json
 
 `--comparison` is optional. The generated draft is never market evidence by itself: a human must complete the problem, AI judgment, outcome, independence, and privacy fields before manually submitting it.
 
+For a copyable GitHub issue draft generated only from the allowlisted summary, use:
+
+```bash
+npx aienvmap reconcile --case-summary portable.json --comparison comparison.json --markdown
+```
+
+The command prints Markdown to standard output. It does not create an issue, upload evidence, write a file, or complete the required human verification.
+
 ## Evidence levels
 
 | Level | Required proof | Market-score use |
