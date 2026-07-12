@@ -37,6 +37,10 @@ export async function findPythonToolCandidates(options = {}) {
 
 export async function inspectPythonToolCandidates(candidates = [], pipCommands = [], options = {}) {
   const inspected = await Promise.all(candidates.map(async (candidate) => {
+    if (options.executeCandidates === false) {
+      const shown = displayPath(candidate.path, options);
+      return { tool: candidate.tool, version: "unverified-no-exec", versionVerified: false, path: shown, source: candidate.source, scope: candidate.scope, discovery: candidate.discovery, routingEvidence: "unverified-no-exec", ownershipProven: false, removalAuthorized: false, evidence: "file-presence-only" };
+    }
     const result = await portableCommandResult(candidate.path, ["--version"], { timeout: 3500, platform: options.platform || process.platform });
     const version = result.ok ? firstVersion(`${result.stdout}\n${result.stderr}`) : null;
     if (!version) return null;
@@ -45,7 +49,7 @@ export async function inspectPythonToolCandidates(candidates = [], pipCommands =
     return { tool: candidate.tool, version, path: shown, source: candidate.source, scope: candidate.scope, discovery: candidate.discovery, routingEvidence: pipDirs.has(path.dirname(shown).toLowerCase()) ? "co-located-with-pip" : "standalone-or-unknown", ownershipProven: false, removalAuthorized: false };
   }));
   return Object.fromEntries(["uv", "pipx"].map((tool) => {
-    const installations = inspected.filter((item) => item?.tool === tool).map((item, index) => ({ ...item, active: index === 0 }));
+    const installations = inspected.filter((item) => item?.tool === tool).map((item, index) => ({ ...item, active: options.executeCandidates === false ? false : index === 0 }));
     return [tool, { installations, active: installations[0] || null, distinctVersions: [...new Set(installations.map((item) => item.version))] }];
   }));
 }
@@ -78,6 +82,10 @@ export async function findCondaCandidates(options = {}) {
 export async function inspectCondaCandidates(candidates = [], options = {}) {
   const installations = [];
   for (const candidate of candidates.slice(0, 20)) {
+    if (options.executeCandidates === false) {
+      installations.push({ manager: "conda", version: "unverified-no-exec", versionVerified: false, path: displayPath(candidate.path, options), source: candidate.source, scope: candidate.scope, discovery: candidate.discovery, environmentEvidence: { collection: "not-requested", count: 0, activePrefix: "", prefixes: [], truncated: false }, ownershipProven: false, removalAuthorized: false, active: false, evidence: "file-presence-only" });
+      continue;
+    }
     const versionResult = await portableCommandResult(candidate.path, ["--version"], { timeout: 4000, platform: options.platform || process.platform });
     const version = versionResult.ok ? firstVersion(`${versionResult.stdout}\n${versionResult.stderr}`) : null;
     if (!version) continue;

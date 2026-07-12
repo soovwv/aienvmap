@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
-import { analyzeNodeInstallations, analyzeNodePackageManagers, analyzeNpmInstallations, analyzePythonCommandRouting, analyzePythonInstallations, analyzeRuntimeLinks, attachFnmManagerEvidence, attachMiseNodeEvidence, attachMisePythonEvidence, attachNvmManagerEvidence, attachPyenvManagerEvidence, attachUvManagerEvidence, attachVoltaManagerEvidence, buildAiDecision, buildConsolidationPlan, compareNpmGlobalPackages, comparePythonPackages, findNodeCandidates, findNodePackageManagerCandidates, findPythonCandidates, inspectFnmNodeManager, inspectMiseRuntimeManager, inspectNodePackageManagerCandidates, inspectNvmNodeManager, inspectPyenvPythonManager, inspectVoltaNodeManager, linkNodeNpmRuntimes, linkPythonPipRuntimes, miseInventoryForRuntime, parseFnmNodeList, parseMiseRuntimeInventory, parsePackageManager, parsePipList, parsePipVersion, parsePyenvVersions, parseVoltaNodeList, summarizePipInspect, summarizePythonPackages } from "../src/package-managers.js";
+import { analyzeNodeInstallations, analyzeNodePackageManagers, analyzeNpmInstallations, analyzePythonCommandRouting, analyzePythonInstallations, analyzeRuntimeLinks, attachFnmManagerEvidence, attachMiseNodeEvidence, attachMisePythonEvidence, attachNvmManagerEvidence, attachPyenvManagerEvidence, attachUvManagerEvidence, attachVoltaManagerEvidence, buildAiDecision, buildConsolidationPlan, compareNpmGlobalPackages, comparePythonPackages, findNodeCandidates, findNodePackageManagerCandidates, findPythonCandidates, inspectFnmNodeManager, inspectMiseRuntimeManager, inspectNodeCandidates, inspectNodePackageManagerCandidates, inspectNvmNodeManager, inspectPyenvPythonManager, inspectPythonCandidates, inspectVoltaNodeManager, linkNodeNpmRuntimes, linkPythonPipRuntimes, miseInventoryForRuntime, parseFnmNodeList, parseMiseRuntimeInventory, parsePackageManager, parsePipList, parsePipVersion, parsePyenvVersions, parseVoltaNodeList, summarizePipInspect, summarizePythonPackages } from "../src/package-managers.js";
 import { buildPortableReconciliation, comparePortableReconciliations, isolatedHomeEnvironment, portableEvidenceFingerprint, resolveInspectedHome } from "../src/commands/reconcile.js";
 import { analyzePythonToolEntryPoints, findPythonToolCandidates, inspectPythonToolCandidates } from "../src/package-managers.js";
 import { analyzeCondaRouting, inspectCondaCandidates, parseCondaEnvironmentInfo } from "../src/package-managers.js";
@@ -29,6 +29,24 @@ test("explicit home inspection validates the boundary and isolates invoking-user
   assert.equal(env.PYENV_ROOT, undefined);
   assert.equal(env.CONDA_PREFIX, undefined);
   if (process.platform === "win32") assert.equal(env.LOCALAPPDATA, path.join(home, "AppData", "Local"));
+});
+
+test("explicit-home candidate inspection never executes discovered Node or Python files", async () => {
+  const dir = await fs.mkdtemp(path.join(os.tmpdir(), "aienvmap-no-exec-"));
+  const marker = path.join(dir, "executed.txt");
+  const nodeFile = path.join(dir, process.platform === "win32" ? "node.cmd" : "node");
+  const pythonFile = path.join(dir, process.platform === "win32" ? "python.cmd" : "python");
+  const payload = process.platform === "win32" ? `@echo touched>${marker}\r\n` : `#!/bin/sh\nprintf touched > '${marker}'\n`;
+  await Promise.all([fs.writeFile(nodeFile, payload), fs.writeFile(pythonFile, payload)]);
+  if (process.platform !== "win32") await Promise.all([fs.chmod(nodeFile, 0o755), fs.chmod(pythonFile, 0o755)]);
+  const candidate = (file) => ({ path: file, source: "known-root", scope: "user", discovery: "known-root" });
+  const [nodes, pythons] = await Promise.all([
+    inspectNodeCandidates([candidate(nodeFile)], { executeCandidates: false, home: dir }),
+    inspectPythonCandidates([candidate(pythonFile)], { executeCandidates: false, home: dir })
+  ]);
+  assert.equal(nodes[0].version, "unverified-no-exec");
+  assert.equal(pythons[0].packageCollection, "skipped-no-exec");
+  await assert.rejects(fs.stat(marker), { code: "ENOENT" });
 });
 
 test("parsePackageManager separates package manager and pinned version", () => {
