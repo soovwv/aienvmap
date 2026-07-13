@@ -6,7 +6,7 @@ Thank you for testing aienvmap on a real development machine. The test takes abo
 
 - Read-only environment inspection; no software removal or PATH modification.
 - No telemetry and no automatic upload.
-- Trial-generated project files stay under `.aienvmap/` in the current directory. The `npx` launcher may cache the aienvmap package itself.
+- Trial-generated project files stay under `.aienvmap/trial/` in the current directory. Existing aienvmap state and agent instruction files remain unchanged. The `npx` launcher may cache the aienvmap package itself.
 - A human reviews the exact public draft before submitting anything.
 
 ## Run the trial

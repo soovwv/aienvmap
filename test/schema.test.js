@@ -68,7 +68,8 @@ test("schemaContract describes stable AI output contracts", () => {
   assert.equal(schema.outputs.trial.availability.npmLatestVersion, "0.1.1");
   assert.equal(schema.outputs.trial.availability.availableInNpmLatest, false);
   assert.match(schema.outputs.trial.availability.compatibility, /does not expose outputs\.trial/);
-  assert.match(schema.outputs.trial.writeScope, /\.aienvmap only/);
+  assert.match(schema.outputs.trial.writeScope, /\.aienvmap\/trial only/);
+  assert.match(schema.outputs.trial.writeScope, /existing manifest, timeline, status, SBOM, AIENV\.md, and agent instruction files remain unchanged/);
   assert.ok(schema.outputs.trial.rootFields.includes("privacy"));
   assert.ok(schema.outputs.trial.rootFields.includes("safety"));
   assert.ok(schema.outputs.trial.privacyFields.includes("automaticUpload"));

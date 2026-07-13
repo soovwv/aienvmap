@@ -6,7 +6,7 @@ There is no automatic upload. Any public submission requires a separate human de
 
 ## AI task
 
-1. Explain that the trial performs read-only discovery and writes project files only under `.aienvmap`. The `npx` launcher may cache aienvmap itself. The trial must not remove software, install development tools, consolidate versions, modify PATH, or upload data.
+1. Explain that the trial performs read-only discovery and writes project files only under `.aienvmap/trial`. Existing aienvmap state and agent instruction files remain unchanged. The `npx` launcher may cache aienvmap itself. The trial must not remove software, install development tools, consolidate versions, modify PATH, or upload data.
 2. Ask the human for approval before running the exact trial command supplied by the maintainer.
 3. For the published 0.1.1 release, run `npx aienvmap@0.1.1 trial` directly in the human-approved project directory. Its `schema --json` predates `outputs.trial`. When testing a later exact version, read `outputs.trial` only if that version's schema exposes it.
 4. Read `.aienvmap/trial/NEXT.md`, `case-summary.json`, and `case-draft.md`. Do not expose or submit `portable.json`.

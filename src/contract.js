@@ -651,7 +651,7 @@ export function schemaContract() {
           compatibility: "aienvmap 0.1.1 supports the trial command but does not expose outputs.trial from schema --json"
         },
         mode: "read-only discovery with project-local reports and human-reviewed manual submission",
-        writeScope: ".aienvmap only; the npx launcher may cache the aienvmap package outside the project",
+        writeScope: ".aienvmap/trial only; existing manifest, timeline, status, SBOM, AIENV.md, and agent instruction files remain unchanged; the npx launcher may cache the aienvmap package outside the project",
         rootFields: ["schemaName", "schemaVersion", "status", "decision", "inventoryCounts", "lightSbom", "artifacts", "next", "feedbackUrl", "privacy", "safety", "marketEvidence", "rule"],
         privacyFields: ["automaticUpload", "telemetry", "pathsInCaseDraft", "reviewRequired"],
         safetyFields: ["environmentChanged", "softwareRemoved", "pathModified"],

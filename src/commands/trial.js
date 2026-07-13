@@ -1,7 +1,7 @@
 import path from "node:path";
 import { reconcileWorkspace } from "./reconcile.js";
-import { sbomWorkspace } from "./sbom.js";
-import { scanWorkspace } from "./scan.js";
+import { buildSbomArtifact } from "./sbom.js";
+import { buildManifest } from "../manifest.js";
 import { buildPortableCaseSummary, renderPortableCaseMarkdown } from "../portable-reconcile.js";
 import { writeJson, writeTextAtomic } from "../fsutil.js";
 import { trialDir, workspaceDir } from "../paths.js";
@@ -11,9 +11,9 @@ const issueUrl = "https://github.com/soovwv/aienvmap/issues/new?template=environ
 export async function trialWorkspace(args = {}) {
   const dir = workspaceDir(args);
   const outputDir = trialDir(dir);
-  await scanWorkspace({ ...args, dir, quiet: true, deep: false, security: false });
+  const manifest = await buildManifest(dir, { deep: false, security: false });
   const portable = await reconcileWorkspace({ ...args, dir, portable: true, quick: true, quiet: true, json: false, write: false, show_paths: false, full_packages: false });
-  const lightSbom = await sbomWorkspace({ ...args, dir, quiet: true, json: false, write: false, security: false });
+  const lightSbom = buildSbomArtifact(manifest);
   const summary = buildPortableCaseSummary(portable);
   const draft = renderPortableCaseMarkdown(summary);
   const portableFile = path.join(outputDir, "portable.json");
