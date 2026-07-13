@@ -7,6 +7,7 @@ test("market snapshot separates public requests from verified users", async () =
   const market = await fs.readFile(path.resolve("MARKET.md"), "utf8");
   assert.match(market, /Observed 2026-07-14/);
   assert.match(market, /116/);
+  assert.match(market, /2026-06-14 through 2026-07-13/);
   assert.match(market, /Published npm versions \| 2/);
   assert.match(market, /signed-provenance 0\.1\.1/);
   assert.match(market, /requests, not unique people/);
@@ -17,4 +18,6 @@ test("market snapshot separates public requests from verified users", async () =
   assert.match(market, /Devbox/);
   assert.match(market, /Flox/);
   assert.match(market, /AI runtime CLI setup/);
+  assert.match(market, /mise v2026\.7\.5 release/);
+  assert.match(market, /AI-agent worktrees/);
 });
