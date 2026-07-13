@@ -46,6 +46,7 @@ test("tester guides keep human consent and AI safety explicit", async () => {
   const ai = await fs.readFile(path.resolve("AI_TESTING.md"), "utf8");
   const invite = await fs.readFile(path.resolve("TESTER_INVITE.md"), "utf8");
   const release = await fs.readFile(path.resolve("RELEASE_NOTES_0.1.1.md"), "utf8");
+  const readme = await fs.readFile(path.resolve("README.md"), "utf8");
   for (const text of [testing, ai]) {
     assert.match(text, /0\.1\.1 trial/);
     assert.match(text, /no automatic upload/i);
@@ -63,6 +64,11 @@ test("tester guides keep human consent and AI safety explicit", async () => {
   assert.match(testing, /Current unreleased code isolates generated trial files under `.aienvmap\/trial\/`/);
   assert.match(invite, /Do not request positive reviews/);
   assert.match(invite, /npx aienvmap@0\.1\.1 trial/);
+  assert.match(invite, /disposable directory or disposable project copy/);
+  assert.match(invite, /may refresh existing `.aienvmap` manifest and timeline state/);
   assert.match(release, /signed npm provenance/);
   assert.match(release, /```bash\s+npx aienvmap@0\.1\.1 trial\s+```/);
+  assert.match(release, /Run it in a disposable directory or disposable project copy/);
+  assert.match(readme, /Run `npx aienvmap@0\.1\.1 trial` only in a disposable directory or disposable project copy/);
+  assert.match(readme, /Current unreleased code isolates trial writes to `.aienvmap\/trial\/`/);
 });

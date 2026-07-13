@@ -8,7 +8,7 @@ This release adds a one-command, read-only trial for real development environmen
 npx aienvmap@0.1.1 trial
 ```
 
-The trial maps observed Node, Python, Java, package-manager, and light SBOM state. It writes project files under `.aienvmap/`, does not remove development tools or modify PATH, and never uploads feedback automatically.
+The trial maps observed Node, Python, Java, package-manager, and light SBOM state. Run it in a disposable directory or disposable project copy: published 0.1.1 writes under `.aienvmap/` and may refresh existing manifest and timeline state. It does not remove development tools or modify PATH, and never uploads feedback automatically.
 
 - [Human testing guide](https://github.com/soovwv/aienvmap/blob/v0.1.1/TESTING.md)
 - [AI-assisted testing guide](https://github.com/soovwv/aienvmap/blob/v0.1.1/AI_TESTING.md)
