@@ -57,12 +57,13 @@ Acceptance gates: cross-platform fixtures for every manager, no writes in defaul
 ## Near Term
 
 - Prepare `0.2.0` as one stabilized AI workspace contract release, not a per-commit npm stream
-- Keep the reviewed 13-surface JSON root-field freeze candidate guarded by `npm run contract:check` until `0.2.0`
+- Keep the reviewed 14-surface JSON root-field freeze candidate guarded by `npm run contract:check` until `0.2.0`
 - Use `releaseReadiness.contractReview` as the AI-readable checklist for root-field compatibility review
 - Keep `releaseReadiness.nextStabilizationTasks` current so AI agents can choose the next hardening step
 - Keep `releaseReadiness.evidenceCommands` current so AI/CI can prove the release gate before npm publish
 - Keep README, examples, schema, dashboard, and packaged skill aligned on AI workspace coordination
-- Validate start/onboard/discover fallback behavior across Codex, Claude, Gemini, Cursor, and Copilot surfaces
+- Treat `onboard.verification` as marker-file integrity only; it never proves that an AI host loaded the pointer
+- Validate actual start/onboard/discover fallback pickup across Codex, Claude, Gemini, Cursor, and Copilot surfaces
 - Keep JSON contracts additive after `0.2.0`; breaking changes require a contract version bump and migration notes
 - Keep release provenance fail-closed: current main, matching version tag, unpublished version, explicit confirmation, compatible Node/npm floors, OIDC attestation, and post-publish registry verification; trusted publishing receives no token and the token fallback remains an explicit security exception until trusted publisher configuration is verified
 - Deprecate `0.1.x` prototype versions after `0.2.0` is published
