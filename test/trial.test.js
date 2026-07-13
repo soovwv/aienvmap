@@ -12,13 +12,22 @@ test("trial creates a local human-review bundle without uploading or changing th
   const dir = await fs.mkdtemp(path.join(os.tmpdir(), "aienvmap-trial-"));
   try {
     await fs.writeFile(path.join(dir, "package.json"), JSON.stringify({ name: "private-fixture", private: true }));
+    await fs.mkdir(path.join(dir, ".aienvmap"));
+    const manifestSentinel = "existing manifest must remain unchanged\n";
+    const timelineSentinel = "existing timeline must remain unchanged\n";
+    await fs.writeFile(path.join(dir, ".aienvmap", "manifest.json"), manifestSentinel);
+    await fs.writeFile(path.join(dir, ".aienvmap", "timeline.jsonl"), timelineSentinel);
     const { stdout } = await run(process.execPath, [path.resolve("bin/aienvmap.js"), "trial", "--json", "--dir", dir], { cwd: path.resolve("."), timeout: 60_000 });
     const result = JSON.parse(stdout);
     assert.equal(result.schemaName, "aienvmap.trial-result");
     assert.equal(result.privacy.automaticUpload, false);
     assert.equal(result.safety.environmentChanged, false);
     assert.equal(result.marketEvidence, false);
+    assert.deepEqual(result.artifacts, [".aienvmap/trial/portable.json", ".aienvmap/trial/case-summary.json", ".aienvmap/trial/case-draft.md", ".aienvmap/trial/NEXT.md"]);
     assert.equal(await fs.stat(path.join(dir, "AIENV.md")).then(() => true, () => false), false);
+    assert.equal(await fs.readFile(path.join(dir, ".aienvmap", "manifest.json"), "utf8"), manifestSentinel);
+    assert.equal(await fs.readFile(path.join(dir, ".aienvmap", "timeline.jsonl"), "utf8"), timelineSentinel);
+    assert.deepEqual((await fs.readdir(path.join(dir, ".aienvmap"))).sort(), ["manifest.json", "timeline.jsonl", "trial"]);
     const draft = await fs.readFile(path.join(dir, ".aienvmap", "trial", "case-draft.md"), "utf8");
     const next = await fs.readFile(path.join(dir, ".aienvmap", "trial", "NEXT.md"), "utf8");
     assert.match(draft, /Human verification/);
@@ -48,7 +57,8 @@ test("tester guides keep human consent and AI safety explicit", async () => {
   assert.match(ai, /published 0\.1\.1 release/);
   assert.doesNotMatch(ai, /aienvmap@0\.1\.1 schema --json/);
   assert.match(ai, /read `outputs\.trial` only if/);
-  assert.match(testing, /stay under `.aienvmap\/`/);
+  assert.match(testing, /stay under `.aienvmap\/trial\/`/);
+  assert.match(testing, /Existing aienvmap state and agent instruction files remain unchanged/);
   assert.match(invite, /Do not request positive reviews/);
   assert.match(invite, /npx aienvmap@0\.1\.1 trial/);
   assert.match(release, /signed npm provenance/);
