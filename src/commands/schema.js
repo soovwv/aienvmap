@@ -10,6 +10,7 @@ export async function schemaWorkspace(args = {}) {
     console.log(`status: ${schema.outputs.status.command}`);
     console.log(`context: ${schema.outputs.context.command}`);
     console.log(`handoff: ${schema.outputs.handoff.command}`);
+    console.log(`trial: ${schema.outputs.trial.command}`);
     console.log(`loop: ${schema.aiLoop.steps.map((item) => item.command).join(" -> ")}`);
     console.log(`rule: ${schema.compatibility.consumerRule}`);
   }
