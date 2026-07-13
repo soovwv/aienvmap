@@ -15,13 +15,7 @@ Use it if several AI agents or sessions share environment-affecting work in one 
 
 ## External Trial
 
-Test the published read-only workflow on a real development environment:
-
-```bash
-npx aienvmap@0.1.1 trial
-```
-
-It writes a local, privacy-reviewed feedback bundle under `.aienvmap/trial/`; nothing is uploaded automatically. Follow [TESTING.md](TESTING.md), or give [AI_TESTING.md](AI_TESTING.md) to an AI agent. The human always reviews and decides whether to submit the draft. Community maintainers can reuse [TESTER_INVITE.md](TESTER_INVITE.md).
+Run `npx aienvmap@0.1.1 trial` on a real development environment. It writes a local, privacy-reviewed feedback bundle under `.aienvmap/trial/`; nothing is uploaded automatically. Follow [TESTING.md](TESTING.md), or give [AI_TESTING.md](AI_TESTING.md) to an AI agent. The human always reviews and decides whether to submit the draft. Community maintainers can reuse [TESTER_INVITE.md](TESTER_INVITE.md).
 
 ## 10-Second Use
 
