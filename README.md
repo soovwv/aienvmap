@@ -86,7 +86,7 @@ AIENV.md                 # Markdown env map for AI agents
 
 ## AI Contract
 
-- `schema --json` prints the machine-readable contract without scanning.
+- `schema --json` prints the machine-readable contract without scanning, including the read-only external-trial write, privacy, safety, and manual-submission boundaries.
 - `start`, `status`, `context`, `reconcile`, and SBOM outputs share `aiDecisionEnvelope`; read it first, while `requiresHumanApprovalBefore` keeps destructive action classes review-only even when clear.
 - `reconcile` also emits a proposal-only `consolidationPlan`: evidence, stop conditions, rollback requirements, and approval gates - never an apply or removal command.
 - `schemaVersion`, `contractVersion`, `stableFrom`, and compatibility rules are explicit.
@@ -139,7 +139,7 @@ The GitHub Action writes discovery, status, summary, schema, doctor, plan, SBOM,
 - `0.2.x` starts the stabilized AI workspace contract.
 - npm releases are manually gated and batched; the workflow requires current main, a matching `v<version>` tag, an unpublished version, OIDC provenance, and post-publish registry integrity verification.
 - Default publish decision is `hold`; publish only after several meaningful changes are batched, `npm run release:check` passes, and `schema --json` `releaseReadiness.currentBatch` is reviewed.
-- `schema --json` exposes `releaseGate`, `releaseReadiness.currentBatch`, `contractReview`, `nextStabilizationTasks`, `requiredBeforeStable`, and `evidenceCommands`. `npm run contract:check` fail-closes on an unreviewed change to the 13 documented AI JSON root-field surfaces.
+- `schema --json` exposes `releaseGate`, `releaseReadiness.currentBatch`, `contractReview`, `nextStabilizationTasks`, `requiredBeforeStable`, and `evidenceCommands`. `npm run contract:check` fail-closes on an unreviewed change to the 14 documented AI JSON root-field surfaces, including `trial`.
 - Broken or superseded versions are deprecated instead of unpublished.
 
 ## Development

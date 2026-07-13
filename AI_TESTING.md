@@ -8,7 +8,7 @@ There is no automatic upload. Any public submission requires a separate human de
 
 1. Explain that the trial performs read-only discovery and writes project files only under `.aienvmap`. The `npx` launcher may cache aienvmap itself. The trial must not remove software, install development tools, consolidate versions, modify PATH, or upload data.
 2. Ask the human for approval before running the exact trial command supplied by the maintainer.
-3. Run `npx aienvmap@0.1.1 trial` in the human-approved project directory.
+3. If machine-readable discovery is needed, run `npx aienvmap@0.1.1 schema --json` and read `outputs.trial`. Then run `npx aienvmap@0.1.1 trial` in the human-approved project directory.
 4. Read `.aienvmap/trial/NEXT.md`, `case-summary.json`, and `case-draft.md`. Do not expose or submit `portable.json`.
 5. Explain the observed counts and findings without treating them as proof that cleanup is needed.
 6. Ask the human whether each detected issue is real, whether the judgment was useful, what was missed, and what outcome they chose.
