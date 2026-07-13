@@ -219,6 +219,9 @@ test("schemaContract describes stable AI output contracts", () => {
   assert.equal(schema.agentDiscovery.automaticDiscovery, "best-effort");
   assert.deepEqual(schema.agentDiscovery.decisionValues, ["auto-ready", "fallback-required"]);
   assert.match(schema.agentDiscovery.nextSetupCommand, /aienvmap onboard/);
+  assert.equal(schema.agentDiscovery.onboardVerification.proofCommand, "aienvmap discover --json");
+  assert.ok(schema.agentDiscovery.onboardVerification.fields.includes("hostAutomaticPickupVerified"));
+  assert.match(schema.agentDiscovery.onboardVerification.rule, /never proves/);
   assert.match(schema.agentDiscovery.automaticDiscoveryLimit, /AI hosts only auto-read/);
   assert.equal(schema.agentDiscovery.fallbackCommand, "aienvmap start --json");
   assert.equal(schema.agentDiscovery.discoveryArtifact, ".aienvmap/discovery.json");

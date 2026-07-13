@@ -42,7 +42,7 @@ Try `npx aienvmap demo` for an isolated conflict example. It shows one agent's d
 
 `start` creates the env map, light SBOM, AI status, discovery entry, and human dashboard when missing or stale. `reconcile` is read-only by default. Removal, PATH edits, runtime switching, global installs, and lockfile rewrites always require review.
 
-`discover` is read-only and reports `aiDiscovery.decision`: `auto-ready` or `fallback-required`. `onboard --dry-run` previews tiny marker-scoped pointers before `onboard` writes `AGENTS.md`, `CLAUDE.md`, or `GEMINI.md`; `onboard --uninstall` removes only those markers. Automatic discovery is best-effort; if pointers are missing, paste `copyPastePrompt` from `start --json` or `.aienvmap/discovery.json`, then follow `sessionUse` and `aiEntry`.
+`discover` is read-only and reports `aiDiscovery.decision`: `auto-ready` or `fallback-required`. `onboard --dry-run` previews tiny marker-scoped pointers before `onboard` writes `AGENTS.md`, `CLAUDE.md`, or `GEMINI.md`; `onboard --uninstall` removes only those markers. `onboard` then re-reads the current files and returns `verification`, which proves marker integrity but never claims the AI host loaded the file. Automatic discovery is best-effort; if host pickup is uncertain, paste `copyPastePrompt` from `start --json` or `.aienvmap/discovery.json`, then follow `sessionUse` and `aiEntry`.
 
 Formerly published as `aienvmp`. Use `aienvmap` going forward; new workspaces write `.aienvmap/` artifacts.
 
