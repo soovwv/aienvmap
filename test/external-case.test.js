@@ -21,3 +21,10 @@ test("portable case guide separates evidence maturity from feature count", async
   assert.match(guide, /never market evidence by itself/i);
   assert.match(guide, /does not create an issue, upload evidence, write a file/i);
 });
+
+test("maintainer case review prevents double counting and weak outcome claims", async () => {
+  const review = await fs.readFile(path.resolve("CASE_REVIEW.md"), "utf8");
+  for (const required of ["submitted", "reproducible", "outcome-verified", "longitudinal", "Never count", "raw `portable.json`", "no-change decision", "Never request a positive review"]) assert.match(review, new RegExp(required, "i"));
+  assert.match(review, /downloads, stars, repository fixtures/);
+  assert.match(review, /Count one external environment once at its highest verified maturity/);
+});
