@@ -7,6 +7,7 @@
 
 ## Unreleased
 
+- Documented `trial --json` privacy, safety, artifact, and manual-submission boundaries in `schema --json` and added trial to the reviewed 0.2.0 root-field freeze candidate.
 - Extended intentional-version questions and project-local memory to multiple Java runtimes while keeping Java information-only and outside consolidation candidates.
 - Allowed reviewed intentional Node/Python version sets in the project-local policy to suppress repeat consolidation questions while unexpected versions and routing/project mismatches still trigger review.
 - Added an explicit AI clarification contract for intentional multi-version environments and a redacted cross-platform maintainer scenario runner covering first start, reconciliation, light/external SBOM, and case drafting.

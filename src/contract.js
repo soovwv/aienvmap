@@ -477,7 +477,7 @@ export function schemaContract() {
         command: "npm run contract:check",
         baseline: "contracts/ai-json-root-fields.v1.json",
         digestAlgorithm: "sha256(JSON.stringify(ordered surface-to-rootFields map))",
-        surfaces: ["discover", "start", "discovery", "status", "context", "handoff", "plan", "manifest", "reconcile", "reconcileCheck", "sbom", "cyclonedxLite", "demo"],
+        surfaces: ["discover", "start", "discovery", "status", "context", "handoff", "plan", "manifest", "reconcile", "reconcileCheck", "trial", "sbom", "cyclonedxLite", "demo"],
         reviewFields: ["outputs.*.rootFields", "outputs.*Fields", "compatibility.additiveRule", "stableContractRule"],
         rule: "Before 0.2.0, review documented rootFields as the compatibility floor; after 0.2.0, add fields only additively unless contractVersion changes."
       },
@@ -640,6 +640,18 @@ export function schemaContract() {
         mode: "offline minimal public-submission draft; human review and completion required",
         rootFields: ["schemaName", "schemaVersion", "status", "evidence", "comparison", "humanVerification", "marketEvidence", "privacy", "environmentChangesAuthorized", "removalAuthorized", "rule"],
         excluded: ["paths", "usernames and hostnames", "project and package names", "runtime versions", "evidence fingerprints", "timestamps", "raw inventories"]
+      },
+      trial: {
+        command: "aienvmap trial --json",
+        mode: "read-only discovery with project-local reports and human-reviewed manual submission",
+        writeScope: ".aienvmap only; the npx launcher may cache the aienvmap package outside the project",
+        rootFields: ["schemaName", "schemaVersion", "status", "decision", "inventoryCounts", "lightSbom", "artifacts", "next", "feedbackUrl", "privacy", "safety", "marketEvidence", "rule"],
+        privacyFields: ["automaticUpload", "telemetry", "pathsInCaseDraft", "reviewRequired"],
+        safetyFields: ["environmentChanged", "softwareRemoved", "pathModified"],
+        artifactFiles: [".aienvmap/trial/portable.json", ".aienvmap/trial/case-summary.json", ".aienvmap/trial/case-draft.md", ".aienvmap/trial/NEXT.md"],
+        shareOnly: ["case-summary.json", "case-draft.md after human review"],
+        doNotShare: ["portable.json", "raw reconciliation output", "paths", "identities", "secrets", "private project or package names"],
+        rule: "A generated trial is not market evidence; an independent human must review, complete, consent to, and manually submit the draft."
       },
       reconcileCheck: {
         command: "aienvmap reconcile --check --json",

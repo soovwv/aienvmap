@@ -64,6 +64,14 @@ test("schemaContract describes stable AI output contracts", () => {
   assert.match(schema.outputs.environmentCaseSummary.command, /--case-summary/);
   assert.match(schema.outputs.environmentCaseSummary.markdownCommand, /--markdown/);
   assert.ok(schema.outputs.environmentCaseSummary.excluded.includes("runtime versions"));
+  assert.equal(schema.outputs.trial.command, "aienvmap trial --json");
+  assert.match(schema.outputs.trial.writeScope, /\.aienvmap only/);
+  assert.ok(schema.outputs.trial.rootFields.includes("privacy"));
+  assert.ok(schema.outputs.trial.rootFields.includes("safety"));
+  assert.ok(schema.outputs.trial.privacyFields.includes("automaticUpload"));
+  assert.ok(schema.outputs.trial.safetyFields.includes("pathModified"));
+  assert.ok(schema.outputs.trial.doNotShare.includes("portable.json"));
+  assert.match(schema.outputs.trial.rule, /not market evidence/);
   assert.deepEqual(schema.outputs.reconcile.detailedToolchains, ["node/npm/pnpm/yarn/corepack", "python/pip/uv/pipx/conda"]);
   assert.ok(schema.outputs.reconcile.condaEnvironmentEvidenceFields.includes("truncated"));
   assert.ok(schema.outputs.reconcile.pythonToolEntryPointFields.includes("routingEvidence"));
@@ -94,6 +102,7 @@ test("schemaContract describes stable AI output contracts", () => {
   assert.ok(schema.outputs.reconcile.nodePackageManagerFields.includes("deliveryEvidence"));
   assert.ok(schema.outputs.reconcile.nodePackageManagerDeliveryEvidence.includes("co-located-with-corepack"));
   assert.ok(schema.releaseReadiness.contractReview.surfaces.includes("reconcileCheck"));
+  assert.ok(schema.releaseReadiness.contractReview.surfaces.includes("trial"));
   assert.ok(schema.outputs.status.rootFields.includes("coordinationRevision"));
   assert.match(schema.outputs.status.compareAndSwap, /--if-revision/);
   assert.ok(schema.outputs.status.intentLeaseFields.includes("lease.state"));
@@ -627,5 +636,6 @@ test("schemaWorkspace text prints the AI loop", async () => {
   }
 
   assert.match(output.join("\n"), /loop: aienvmap sync -> aienvmap status -> aienvmap context --json/);
+  assert.match(output.join("\n"), /trial: aienvmap trial --json/);
   assert.match(output.join("\n"), /aienvmap handoff/);
 });

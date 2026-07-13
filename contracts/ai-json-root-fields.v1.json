@@ -3,7 +3,7 @@
   "schemaVersion": 1,
   "targetRelease": "0.2.0",
   "algorithm": "sha256(JSON.stringify(ordered surface-to-rootFields map))",
-  "digest": "e329ccc68444d378f8c1f84bf38a35fa05c30bff0476100211e94dd5c944f1a5",
+  "digest": "553d5cda2e9fb5189972b5441fbf299eb7fcdceb241dd22b744d3201d692bceb",
   "surfaceFieldCounts": {
     "discover": 10,
     "start": 24,
@@ -15,6 +15,7 @@
     "manifest": 8,
     "reconcile": 19,
     "reconcileCheck": 10,
+    "trial": 13,
     "sbom": 21,
     "cyclonedxLite": 6,
     "demo": 20
