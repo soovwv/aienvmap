@@ -5,8 +5,8 @@ import path from "node:path";
 
 test("market snapshot separates public requests from verified users", async () => {
   const market = await fs.readFile(path.resolve("MARKET.md"), "utf8");
-  assert.match(market, /Observed 2026-07-12/);
-  assert.match(market, /108/);
+  assert.match(market, /Observed 2026-07-14/);
+  assert.match(market, /116/);
   assert.match(market, /requests, not unique people/);
   assert.match(market, /zero public stars, forks, and independent verified cases/);
   assert.match(market, /manual bundle/);
@@ -14,4 +14,5 @@ test("market snapshot separates public requests from verified users", async () =
   assert.match(market, /Microsoft APM/);
   assert.match(market, /Devbox/);
   assert.match(market, /Flox/);
+  assert.match(market, /AI runtime CLI setup/);
 });
