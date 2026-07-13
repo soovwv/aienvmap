@@ -368,9 +368,10 @@ export function schemaContract() {
       currentBatch: {
         status: "accumulating",
         releaseType: "stability-batch",
-        themes: ["AI discovery", "dependency quick check", "dashboard parity", "dashboard maintainability", "AI quality signals", "SBOM interoperability", "recommendation positioning", "shared contract constants", "release gating"],
+        themes: ["AI discovery", "verified AI onboarding", "dependency quick check", "dashboard parity", "dashboard maintainability", "AI quality signals", "SBOM interoperability", "recommendation positioning", "shared contract constants", "release gating"],
         changes: [
           "best-effort AI discovery with aiDiscovery.decision, discovery.json, startupChecklist, and fallback prompt contract",
+          "onboard re-reads requested marker files and reports fail-closed verification without claiming AI-host automatic pickup",
           "copyPastePrompt, promptUse, and aiEntry recovery fields for AI hosts that miss instruction-file automatic discovery",
           "plain start and discover output expose aiEntry so fallback recovery is visible without opening JSON",
           "aiEntry and copyPastePrompt guidance aligned across README, schema, packaged AI skill, adoption guide, and example evidence docs",
@@ -429,6 +430,7 @@ export function schemaContract() {
           "shared AI discovery/read-order constants are covered by release:check",
           "README, examples, schema, CHANGELOG, dashboard, and packaged AI skill describe the same AI workspace coordination contract",
           "aiEntry, generated artifact hints, dashboard fallback fields, copyPastePrompt, promptUse, dashboard helper lists, and release notes are covered by release:check",
+          "onboard verification distinguishes marker-file integrity from unverified AI-host automatic pickup",
           "package.json version is intentionally bumped for 0.2.0 or the chosen release"
         ],
         holdWhen: [
@@ -473,7 +475,7 @@ export function schemaContract() {
         "keep demo --json and packaged skill aligned with aiAdoptionDecision",
         "keep dashboard Quality Signals aligned with aiAdoptionDecision",
         "keep sessionUse aligned across discover, start, discovery.json, schema, and generated start-here artifacts",
-        "validate start/onboard/discover fallback behavior across Codex, Claude, Gemini, Cursor, and Copilot surfaces",
+        "validate actual start/onboard/discover host pickup across Codex, Claude, Gemini, Cursor, and Copilot; marker verification alone is not host evidence",
         "keep light SBOM coordination separate from optional full scanner evidence",
         "review CHANGELOG as one 0.2.0 release-note group before any npm publish"
       ],
@@ -491,6 +493,7 @@ export function schemaContract() {
         "aiDiscovery.decision and fallback startup contract",
         "aiEntry and copyPastePrompt recovery contract across JSON, docs, examples, and packaged skill",
         "aiEntry recovery visibility across generated artifacts and dashboard fallback surfaces",
+        "fail-closed onboard marker verification without automatic host-pickup claims",
         "light SBOM and dependency-change review loop",
         "SBOM aiUse safety summary across JSON, summary, dashboard, and schema surfaces",
         "dependencyQuickCheck across AI and human surfaces",
