@@ -7,6 +7,7 @@
 
 ## Unreleased
 
+- Distinguished the published 0.1.1 trial write behavior from the current unreleased isolation guarantee and require a disposable directory when testing 0.1.1.
 - Isolated trial writes to `.aienvmap/trial` by building the light SBOM in memory instead of overwriting the workspace manifest or appending timeline events.
 - Documented `trial --json` privacy, safety, artifact, and manual-submission boundaries in `schema --json` and added trial to the reviewed 0.2.0 root-field freeze candidate.
 - Marked `outputs.trial` as a post-0.1.1 contract addition so AI tester instructions never request a field missing from the published 0.1.1 schema.

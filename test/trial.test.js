@@ -56,9 +56,11 @@ test("tester guides keep human consent and AI safety explicit", async () => {
   assert.match(ai, /Java discovery remains information-only/);
   assert.match(ai, /published 0\.1\.1 release/);
   assert.doesNotMatch(ai, /aienvmap@0\.1\.1 schema --json/);
-  assert.match(ai, /read `outputs\.trial` only if/);
-  assert.match(testing, /stay under `.aienvmap\/trial\/`/);
-  assert.match(testing, /Existing aienvmap state and agent instruction files remain unchanged/);
+  assert.match(ai, /read and obey `outputs\.trial\.writeScope` only if/);
+  assert.match(ai, /published 0\.1\.1 trial writes under `.aienvmap`/);
+  assert.match(testing, /published 0\.1\.1 trial writes only under `.aienvmap`/i);
+  assert.match(testing, /Run 0\.1\.1 in a disposable directory/);
+  assert.match(testing, /Current unreleased code isolates generated trial files under `.aienvmap\/trial\/`/);
   assert.match(invite, /Do not request positive reviews/);
   assert.match(invite, /npx aienvmap@0\.1\.1 trial/);
   assert.match(release, /signed npm provenance/);

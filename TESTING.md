@@ -6,18 +6,18 @@ Thank you for testing aienvmap on a real development machine. The test takes abo
 
 - Read-only environment inspection; no software removal or PATH modification.
 - No telemetry and no automatic upload.
-- Trial-generated project files stay under `.aienvmap/trial/` in the current directory. Existing aienvmap state and agent instruction files remain unchanged. The `npx` launcher may cache the aienvmap package itself.
+- The published 0.1.1 trial writes only under `.aienvmap`, but it refreshes `manifest.json`, may copy `manifest.previous.json`, and may append `timeline.jsonl`. Run 0.1.1 in a disposable directory. The `npx` launcher may cache the aienvmap package itself.
 - A human reviews the exact public draft before submitting anything.
 
 ## Run the trial
 
-Open a terminal in a disposable or existing project directory and run:
+Open a terminal in a disposable directory and run:
 
 ```bash
 npx aienvmap@0.1.1 trial
 ```
 
-For the pre-release package, the maintainer may provide a different exact version or npm tag. Do not use an unreviewed command pasted by another participant.
+To evaluate project dependencies, use a disposable copy of the project. Current unreleased code isolates generated trial files under `.aienvmap/trial/`; do not assume that guarantee for 0.1.1. For a later release, check the exact version's `schema --json` `outputs.trial.writeScope`. Do not use an unreviewed command pasted by another participant.
 
 Then open `.aienvmap/trial/NEXT.md`. Review and complete `.aienvmap/trial/case-draft.md`. Submit it through the GitHub link in `NEXT.md` only if you consent.
 
