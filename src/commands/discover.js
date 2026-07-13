@@ -1,6 +1,7 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 import { aiDefaultReadOrder, aiDiscoveryEntry, aiEntryContract, aiEnvMap, aiSessionUseContract, aiStartHere, aiStatus, aiSummary, npxAiFallbackPrompt, npxAiMissingFallbackPrompt, npxAiStartupChecklist } from "../ai-contract.js";
+import { hasAgentPointer } from "../agent-pointer.js";
 import { readJson } from "../fsutil.js";
 import { aiEnvPath, dashboardPath, discoveryJsonPath, manifestPath, sbomJsonPath, stateDir, stateReadmePath, statusJsonPath, summaryMdPath, workspaceDir } from "../paths.js";
 
@@ -30,7 +31,7 @@ export async function discoverWorkspace(args = {}) {
   const freshness = status?.artifactFreshness?.state || "unknown";
   const stale = ["stale", "unknown"].includes(freshness);
   const agentPointers = {
-    discovery: status?.agentPointers?.discovery || pointerDiscovery(pointers),
+    discovery: pointerDiscovery(pointers),
     installed: pointers.filter((item) => item.hasPointer).map((item) => item.agent),
     detected: pointers.filter((item) => item.exists).map((item) => item.agent)
   };
@@ -90,7 +91,7 @@ async function discoverPointers(dir) {
       agent,
       file: toSlash(file),
       exists: text !== null,
-      hasPointer: text?.includes("aienvmap") === true
+      hasPointer: hasAgentPointer(text)
     });
   }
   return out;

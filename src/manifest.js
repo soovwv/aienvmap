@@ -7,6 +7,7 @@ import { observedTrust } from "./trust.js";
 import { scanGlobalInventory } from "./inventory.js";
 import { scanSecurity } from "./security.js";
 import { buildLightSbom, linkVulnerableDependencies, scanDependencySnapshot } from "./dependencies.js";
+import { hasAgentPointer } from "./agent-pointer.js";
 
 export async function buildManifest(dir, options = {}) {
   const now = new Date().toISOString();
@@ -211,7 +212,7 @@ async function scanAgentFiles(dir) {
     out[name] = {
       path: rel,
       exists: fileExists,
-      hasAienvmapPointer: content.includes("<!-- aienvmap:begin -->") && content.includes("<!-- aienvmap:end -->"),
+      hasAienvmapPointer: hasAgentPointer(content),
       installCommand: snippetCommand(name),
       role: agentRole(name)
     };
