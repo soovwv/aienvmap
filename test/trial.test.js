@@ -35,6 +35,8 @@ test("trial creates a local human-review bundle without uploading or changing th
 test("tester guides keep human consent and AI safety explicit", async () => {
   const testing = await fs.readFile(path.resolve("TESTING.md"), "utf8");
   const ai = await fs.readFile(path.resolve("AI_TESTING.md"), "utf8");
+  const invite = await fs.readFile(path.resolve("TESTER_INVITE.md"), "utf8");
+  const release = await fs.readFile(path.resolve("RELEASE_NOTES_0.1.1.md"), "utf8");
   for (const text of [testing, ai]) {
     assert.match(text, /0\.1\.1 trial/);
     assert.match(text, /no automatic upload/i);
@@ -44,4 +46,8 @@ test("tester guides keep human consent and AI safety explicit", async () => {
   assert.match(ai, /Never submit a GitHub issue/);
   assert.match(ai, /Java discovery remains information-only/);
   assert.match(testing, /stay under `.aienvmap\/`/);
+  assert.match(invite, /Do not request positive reviews/);
+  assert.match(invite, /npx aienvmap@0\.1\.1 trial/);
+  assert.match(release, /signed npm provenance/);
+  assert.match(release, /```bash\s+npx aienvmap@0\.1\.1 trial\s+```/);
 });

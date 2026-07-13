@@ -100,7 +100,7 @@ test("package, README, and CLI help share the accurate environment-before-change
     path.resolve("bin/aienvmap.js"),
     "--help"
   ], { cwd: path.resolve(".") });
-  const readmeTop = readme.replace(/\r\n/g, "\n").slice(0, 1800);
+  const readmeTop = readme.replace(/\r\n/g, "\n").slice(0, 2800);
 
   assert.match(pkg.description, /Dependency-free environment map/);
   assert.match(pkg.description, /explicit change handoff/);
@@ -118,6 +118,8 @@ test("package, README, and CLI help share the accurate environment-before-change
   assert.match(readmeTop, /Know the development environment before an AI changes it/);
   assert.match(readmeTop, /environment map and explicit change handoff/);
   assert.match(readmeTop, /dependency-free/);
+  assert.match(readmeTop, /npx aienvmap@0\.1\.1 trial/);
+  assert.match(readmeTop, /nothing is uploaded automatically/);
   assert.match(readmeTop, /without silently installing, switching, or removing software/);
   assert.match(readmeTop, /## Why/);
   assert.match(readmeTop, /bad at remembering what another agent assumed/);
@@ -177,6 +179,7 @@ test("package publish allowlist stays small and intentional", async () => {
     "MARKET.md",
     "TESTING.md",
     "AI_TESTING.md",
+    "TESTER_INVITE.md",
     "action.yml",
     "examples",
     ".agents"
