@@ -18,12 +18,14 @@ test("trial creates a local human-review bundle without uploading or changing th
     assert.equal(result.privacy.automaticUpload, false);
     assert.equal(result.safety.environmentChanged, false);
     assert.equal(result.marketEvidence, false);
+    assert.equal(await fs.stat(path.join(dir, "AIENV.md")).then(() => true, () => false), false);
     const draft = await fs.readFile(path.join(dir, ".aienvmap", "trial", "case-draft.md"), "utf8");
     const next = await fs.readFile(path.join(dir, ".aienvmap", "trial", "NEXT.md"), "utf8");
     assert.match(draft, /Human verification/);
     assert.doesNotMatch(draft, /private-fixture/);
     assert.doesNotMatch(draft, new RegExp(dir.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
     assert.match(next, /no automatic upload/i);
+    assert.match(next, /may cache the aienvmap package/i);
     assert.match(next, /Do not paste `portable\.json` publicly/);
   } finally {
     await fs.rm(dir, { recursive: true, force: true });
@@ -41,4 +43,5 @@ test("tester guides keep human consent and AI safety explicit", async () => {
   assert.match(ai, /Do not invent positive feedback/);
   assert.match(ai, /Never submit a GitHub issue/);
   assert.match(ai, /Java discovery remains information-only/);
+  assert.match(testing, /stay under `.aienvmap\/`/);
 });
