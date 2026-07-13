@@ -21,8 +21,8 @@ test("product scorecard gives AI consumers evidence and bounded competitor categ
   assert.equal(result.externalEvidenceRequirements.marketCreditStartsAt, "outcome-verified");
   assert.equal(result.externalEvidenceRequirements.mustBeIndependent, true);
   assert.ok(result.externalEvidenceRequirements.disallowedAsMarketProof.includes("repository fixtures"));
-  assert.equal(result.marketResearch.publicSignals.npmDownloadsWindow.requests, 108);
-  assert.equal(result.marketResearch.adjacentSignals.microsoftApmStars, 3184);
+  assert.equal(result.marketResearch.publicSignals.npmDownloadsWindow.requests, 116);
+  assert.equal(result.marketResearch.adjacentSignals.microsoftApmStars, 3210);
   assert.match(result.weaknesses.join(" "), /reproducible environments/);
   assert.match(result.marketResearch.interpretation, /not unique users/);
   assert.match(result.marketResearch.scoreImpact, /none until/);

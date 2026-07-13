@@ -39,15 +39,15 @@ export function productScorecard() {
     positioning: "AI workspace coordination and environment evidence layer; not a package manager, vulnerability scanner, or full SBOM generator.",
     marketResearch: {
       report: "MARKET.md",
-      observedAt: "2026-07-12",
-      publicSignals: { githubStars: 0, githubForks: 0, independentOutcomeVerifiedCases: 0, npmDownloadsWindow: { requests: 108, start: "2026-06-12", end: "2026-07-11" } },
-      adjacentSignals: { observedAt: "2026-07-12", microsoftApmStars: 3184, devboxStars: 12162, floxStars: 4044 },
+      observedAt: "2026-07-14",
+      publicSignals: { githubStars: 0, githubForks: 0, independentOutcomeVerifiedCases: 0, npmDownloadsWindow: { requests: 116, start: "2026-06-12", end: "2026-07-11" } },
+      adjacentSignals: { observedAt: "2026-07-14", microsoftApmStars: 3210, devboxStars: 12165, floxStars: 4047, miseStars: 30707 },
       interpretation: "npm downloads are requests, not unique users, retention, successful setups, or recommendation evidence.",
       scoreImpact: "none until independent outcome-verified evidence exists"
     },
     adjacentAlternatives,
     strengths: ["zero-runtime-dependency local operation", "AI-readable environment and decision contracts", "read-only multi-install discovery", "no-exec evidence for explicit shared-server homes", "light SBOM interoperability", "explicit approval boundaries"],
-    weaknesses: ["limited independent adoption evidence", "few external case studies", "cross-user versions require owning-user verification", "adjacent tools increasingly combine AI context with reproducible environments", "information-only depth for several toolchains", "pre-0.2.0 contract stability"],
+    weaknesses: ["limited independent adoption evidence", "few external case studies", "cross-user versions require owning-user verification", "adjacent tools increasingly combine AI context, runtime setup, and reproducible environments", "information-only depth for several toolchains", "pre-0.2.0 contract stability"],
     nextPriorities: [
       { priority: 1, outcome: "external problem evidence", proof: "at least three reproducible user environments, including one shared-server owner-verified report" },
       { priority: 2, outcome: "AI-host integration evidence", proof: "verified examples for major coding-agent hosts" },

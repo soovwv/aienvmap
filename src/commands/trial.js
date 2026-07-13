@@ -1,7 +1,7 @@
 import path from "node:path";
 import { reconcileWorkspace } from "./reconcile.js";
 import { sbomWorkspace } from "./sbom.js";
-import { startWorkspace } from "./start.js";
+import { scanWorkspace } from "./scan.js";
 import { buildPortableCaseSummary, renderPortableCaseMarkdown } from "../portable-reconcile.js";
 import { writeJson, writeTextAtomic } from "../fsutil.js";
 import { trialDir, workspaceDir } from "../paths.js";
@@ -11,7 +11,7 @@ const issueUrl = "https://github.com/soovwv/aienvmap/issues/new?template=environ
 export async function trialWorkspace(args = {}) {
   const dir = workspaceDir(args);
   const outputDir = trialDir(dir);
-  await startWorkspace({ ...args, dir, quiet: true, json: false });
+  await scanWorkspace({ ...args, dir, quiet: true, deep: false, security: false });
   const portable = await reconcileWorkspace({ ...args, dir, portable: true, quick: true, quiet: true, json: false, write: false, show_paths: false, full_packages: false });
   const lightSbom = await sbomWorkspace({ ...args, dir, quiet: true, json: false, write: false, security: false });
   const summary = buildPortableCaseSummary(portable);
@@ -53,7 +53,7 @@ export async function trialWorkspace(args = {}) {
 function renderNextSteps() {
   return `# aienvmap trial next steps
 
-The read-only trial is complete. There is no automatic upload. Nothing was uploaded, removed, installed, or added to PATH.
+The read-only trial is complete. There is no automatic upload. aienvmap did not remove software, install development tools, or modify PATH. The \`npx\` launcher may cache the aienvmap package itself.
 
 1. Review \`case-summary.json\` and \`case-draft.md\`.
 2. In \`case-draft.md\`, complete every placeholder with honest feedback. Negative feedback, false positives, and missed installations are valuable.
