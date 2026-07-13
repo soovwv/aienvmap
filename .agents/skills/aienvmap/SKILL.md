@@ -40,6 +40,8 @@ If the workspace has not been onboarded yet, run:
 npx aienvmap onboard
 ```
 
+Read `verification` from the onboard result. `verification.pass` proves only that the requested marker block is currently installed or removed. `hostAutomaticPickupVerified` is always false because project files cannot prove that an AI host loaded them; run `aienvmap discover --json` and use `copyPastePrompt` when pickup is uncertain.
+
 For optional Cursor or GitHub Copilot discovery pointers, use:
 
 ```bash

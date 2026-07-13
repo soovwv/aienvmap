@@ -277,6 +277,11 @@ export function schemaContract() {
       automaticDiscoveryLimit: "AI hosts only auto-read their supported instruction files; otherwise use discover/status fallback artifacts.",
       decisionValues: ["auto-ready", "fallback-required"],
       nextSetupCommand: "aienvmap onboard when discovery is fallback-required; none when auto-ready",
+      onboardVerification: {
+        proofCommand: "aienvmap discover --json",
+        fields: ["status", "pass", "scope", "requested", "installed", "missing", "otherInstalled", "hostAutomaticPickupVerified", "proofCommand", "rule"],
+        rule: "Onboard verification proves only a complete current marker block; it never proves that an AI host automatically loaded the instruction file."
+      },
       fallbackCommand: "aienvmap start --json",
       discoveryArtifact: ".aienvmap/discovery.json",
       fallbackRead: aiFallbackRead,

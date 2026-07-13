@@ -7,6 +7,7 @@
 
 ## Unreleased
 
+- Added post-onboard marker verification while explicitly refusing to treat project-file presence as proof that an AI host automatically loaded the pointer.
 - Refreshed the evidence-bounded market snapshot and recorded mise's explicit AI-agent worktree and Codex-install adjacency without raising the market score.
 - Required one complete ordered marker block for AI instruction-pointer discovery and made `discover` prefer current file evidence over stale generated status.
 - Distinguished the published 0.1.1 trial write behavior from the current unreleased isolation guarantee and require a disposable directory when testing 0.1.1.

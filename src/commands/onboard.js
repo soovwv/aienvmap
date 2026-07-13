@@ -1,5 +1,6 @@
 import { snippetWorkspace } from "./snippet.js";
 import { syncWorkspace } from "./sync.js";
+import { discoverWorkspace } from "./discover.js";
 
 const defaultAgents = ["codex", "claude", "gemini"];
 const knownAgents = new Set(["agents", "codex", "claude", "gemini", "cursor", "copilot"]);
@@ -19,6 +20,15 @@ export async function onboardWorkspace(args = {}) {
   }
 
   const synced = args.no_sync || args.dry_run ? null : await syncWorkspace({ ...args, json: false, quiet: true });
+  const discovered = args.dry_run ? null : await discoverWorkspace({ ...args, json: false, quiet: true });
+  const verification = pointerVerification({ requested: discoveryTargets, discovered, preview: args.dry_run, uninstall: args.uninstall });
+  const discoveryStatus = args.dry_run
+    ? "preview"
+    : args.uninstall
+      ? verification.pass ? "removed" : "review"
+      : verification.pass
+        ? synced ? "ready" : "pointers-written"
+        : "review";
   const result = {
     status: args.dry_run ? "preview" : args.uninstall ? "uninstalled" : "ok",
     mode: args.dry_run ? "dry-run" : args.uninstall ? "uninstall" : "write",
@@ -29,8 +39,11 @@ export async function onboardWorkspace(args = {}) {
     nextCommands: ["aienvmap status", "aienvmap context --json"],
     sessionStart,
     freshnessRule: "Use artifactFreshness.nextCommand; when stale or unknown, run aienvmap sync before environment-affecting work.",
-    aiDiscovery: `${args.dry_run ? "preview" : args.uninstall ? "removed" : synced ? "ready" : "pointers-written"}: ${discoveryTargets.join(", ")}`,
-    next: "Run aienvmap status; AI agents should read their instruction file pointer, then .aienvmap/discovery.json and .aienvmap/status.json."
+    aiDiscovery: `${discoveryStatus}: ${discoveryTargets.join(", ")}`,
+    verification,
+    next: verification.pass === false
+      ? "Run aienvmap discover --json and review the requested instruction files; do not claim automatic discovery."
+      : "Run aienvmap status; AI agents should read their instruction file pointer, then .aienvmap/discovery.json and .aienvmap/status.json."
   };
 
   if (args.json) {
@@ -39,6 +52,7 @@ export async function onboardWorkspace(args = {}) {
     console.log(`AI discovery: ${result.aiDiscovery}`);
     console.log(`pointers: ${pointers.map((item) => item.file).join(", ")}`);
     console.log(`sync: ${result.sync}`);
+    console.log(`verification: ${verification.status} / ${verification.proofCommand}`);
     console.log(`read: ${result.readFirst.join(" -> ")}`);
     console.log(`session: ${result.sessionStart.join(" | ")}`);
     console.log(`commands: ${result.nextCommands.join(" | ")}`);
@@ -46,6 +60,25 @@ export async function onboardWorkspace(args = {}) {
   }
 
   return result;
+}
+
+export function pointerVerification({ requested = [], discovered = null, preview = false, uninstall = false } = {}) {
+  const installed = discovered?.agentPointers?.installed || [];
+  const requestedInstalled = requested.filter((agent) => installed.includes(agent));
+  const requestedMissing = requested.filter((agent) => !installed.includes(agent));
+  const pass = preview ? null : uninstall ? requestedInstalled.length === 0 : requestedMissing.length === 0;
+  return {
+    status: preview ? "preview-only" : pass ? uninstall ? "removed" : "installed" : "review",
+    pass,
+    scope: "instruction-pointer marker files only",
+    requested,
+    installed: requestedInstalled,
+    missing: requestedMissing,
+    otherInstalled: installed.filter((agent) => !requested.includes(agent)),
+    hostAutomaticPickupVerified: false,
+    proofCommand: "aienvmap discover --json",
+    rule: "A complete marker block verifies the project file write, not whether an AI host automatically loaded that file; use the fallback prompt when host pickup is uncertain."
+  };
 }
 
 function selectedAgents(args = {}) {

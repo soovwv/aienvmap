@@ -8,6 +8,8 @@ test("packaged aienvmap skill points AI agents to current startup contracts", as
 
   assert.match(skill, /npx aienvmap start/);
   assert.match(skill, /npx aienvmap onboard/);
+  assert.match(skill, /hostAutomaticPickupVerified/);
+  assert.match(skill, /proves only that the requested marker block/);
   assert.match(skill, /npx aienvmap discover --json/);
   assert.match(skill, /before assuming automatic pickup worked/);
   assert.match(skill, /aiEntry/);
