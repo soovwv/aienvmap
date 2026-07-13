@@ -4,7 +4,7 @@ const technicalDimensions = [
   dimension("environment-inventory", 19, 20, ["aienvmap reconcile --json --full-packages", "aienvmap reconcile --portable --json", "test/reconcile.test.js"], "Validate portable reports and consolidation plans against external, mixed-manager environments."),
   dimension("multi-ai-coordination", 13, 15, ["aienvmap demo --json", "test/multi-agent-demo.test.js"], "Validate the workflow in an external multi-user case study."),
   dimension("sbom-interoperability", 12, 15, ["aienvmap sbom --json", "test/sbom.test.js"], "Validate imported CycloneDX and SPDX evidence against more generators."),
-  dimension("safety-and-quality", 19, 20, ["npm test", "npm run perf:check", "test/reconcile.test.js", ".github/workflows/ci.yml"], "Add signed release provenance and validate performance budgets with more external environments.")
+  dimension("safety-and-quality", 20, 20, ["npm test", "npm run perf:check", "test/reconcile.test.js", ".github/workflows/ci.yml", "aienvmap@0.1.1 dist.attestations"], "Validate performance budgets and release safety with more external environments.")
 ];
 
 const marketDimensions = [
@@ -51,7 +51,7 @@ export function productScorecard() {
     nextPriorities: [
       { priority: 1, outcome: "external problem evidence", proof: "at least three reproducible user environments, including one shared-server owner-verified report" },
       { priority: 2, outcome: "AI-host integration evidence", proof: "verified examples for major coding-agent hosts" },
-      { priority: 3, outcome: "release provenance", proof: "signed npm provenance and reproducible release evidence for a meaningful batched version" }
+      { priority: 3, outcome: "release authentication hardening", proof: "npm trusted publisher configured and verified before the next release; 0.1.1 provenance remains registry-verifiable" }
     ],
     externalEvidenceRequirements: {
       guide: "examples/portable-environment-case-guide.md",
