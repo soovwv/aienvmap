@@ -242,9 +242,9 @@ test("schemaContract describes stable AI output contracts", () => {
   assert.equal(schema.releaseGate.localCommand, "npm run release:check");
   assert.equal(schema.releaseGate.workflow, ".github/workflows/release.yml");
   assert.ok(schema.releaseGate.beforePublish.includes("npm run release:check"));
-  assert.equal(schema.releaseGate.provenance.status, "workflow-ready-unpublished");
+  assert.equal(schema.releaseGate.provenance.status, "published-and-verified-0.1.1");
   assert.equal(schema.releaseGate.provenance.oidcPermission, "id-token: write");
-  assert.match(schema.releaseGate.provenance.trustedPublishing, /not-configured/);
+  assert.match(schema.releaseGate.provenance.trustedPublishing, /0\.1\.1 used the explicit token fallback/);
   assert.match(schema.releaseGate.rule, /batch meaningful changes/);
   assert.equal(schema.releaseReadiness.target, "0.2.0");
   assert.equal(schema.releaseReadiness.status, "prototype-hardening");

@@ -10,7 +10,7 @@ Observed 2026-07-14 from public GitHub repository metadata, the npm registry, th
 | GitHub forks | 0 | no visible downstream development yet |
 | Open external environment cases | 0 | no independent outcome-verified evidence yet |
 | npm downloads, 2026-06-12 through 2026-07-11 | 116 | requests, not unique people; may include bots, CI, maintainer use, and reinstalls |
-| Published npm versions | 1 | release noise is intentionally low; latest remains 0.1.0 |
+| Published npm versions | 2 | release noise remains low; latest is the signed-provenance 0.1.1 tester release |
 
 Do not convert downloads into users, retention, successful setups, or recommendation evidence. Market validation remains 43/100 until independent outcome-verified cases exist.
 
@@ -65,7 +65,7 @@ APM plus Flox/Devbox can increasingly cover agent context, AI runtime CLI setup,
 - broad feature surface makes the one-sentence value proposition harder to learn;
 - APM, Flox, and Devbox raise the evidence bar by combining mature agent-context, AI runtime setup, or reproducible-environment workflows;
 - no verified integration case for each major AI coding host;
-- pre-0.2.0 contract status and no signed provenance release yet.
+- pre-0.2.0 contract status; 0.1.1 has signed provenance but the stable contract still requires external proof.
 - cross-user file-presence evidence cannot prove versions or active routing until the owning user supplies a reviewed report.
 
 ## Positioning and improvement strategy
@@ -74,7 +74,7 @@ APM plus Flox/Devbox can increasingly cover agent context, AI runtime CLI setup,
 2. Collect three independent outcome-verified mixed-runtime cases using the portable case template; include one shared-server case pairing administrator file-presence evidence with an owning-user report.
 3. Measure whether an AI identifies the real problem, requests missing evidence, avoids destructive advice, and improves after before/after comparison.
 4. Publish host-specific proof only after it runs on that host; do not infer compatibility from instruction-file presence.
-5. Stabilize the additive contract and batch a 0.2.0 release only when external evidence and release provenance are ready.
+5. Stabilize the additive contract and batch a 0.2.0 release only when external evidence is ready; preserve the verified 0.1.1 provenance gate.
 
 ## Evidence sources
 

@@ -339,13 +339,13 @@ export function schemaContract() {
       publishWorkflow: "GitHub Actions Release workflow_dispatch",
       npmTokenSecret: "NPM_TOKEN",
       provenance: {
-        status: "workflow-ready-unpublished",
+        status: "published-and-verified-0.1.1",
         oidcPermission: "id-token: write",
         publishFlag: "--provenance",
         sourcePolicy: "current main commit with matching v<version> tag",
         duplicatePolicy: "fail when aienvmap@<version> already exists",
         postPublishVerification: "npm registry version and dist.integrity",
-        trustedPublishing: "not-configured; token authentication remains until npm-side trusted publisher setup is explicitly verified"
+        trustedPublishing: "not-configured; 0.1.1 used the explicit token fallback and published signed provenance; configure npm-side trusted publishing before the next release"
       },
       beforePublish: [
         "npm run release:check",
