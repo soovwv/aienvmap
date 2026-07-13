@@ -1,5 +1,7 @@
 # Contributing
 
+External environment reports follow [CASE_REVIEW.md](CASE_REVIEW.md). Evidence labels represent review maturity and must never be counted as separate users or endorsements.
+
 Thanks for helping improve `aienvmap`.
 
 ## Development
