@@ -91,6 +91,26 @@ test("discover finds generated start-here artifacts and agent pointers", async (
   assert.match(result.rule, /does not write files/);
 });
 
+test("discover rejects plain mentions and stale pointer status as automatic discovery", async () => {
+  const dir = await fs.mkdtemp(path.join(os.tmpdir(), "aienvmap-discover-pointer-proof-"));
+  await fs.writeFile(path.join(dir, "AGENTS.md"), [
+    "<!-- aienvmap:begin -->",
+    "Use aienvmap.",
+    "<!-- aienvmap:end -->"
+  ].join("\n"), "utf8");
+  await syncWorkspace({ dir, quiet: true });
+  await fs.writeFile(path.join(dir, "AGENTS.md"), "This file mentions aienvmap but has no installed pointer.\n", "utf8");
+
+  const result = await discoverWorkspace({ dir, quiet: true });
+
+  assert.deepEqual(result.agentPointers.installed, []);
+  assert.deepEqual(result.agentPointers.detected, ["codex"]);
+  assert.equal(result.agentPointers.discovery, "missing: run aienvmap onboard");
+  assert.equal(result.aiDiscovery.decision, "fallback-required");
+  assert.equal(result.aiDiscovery.automatic, false);
+  assert.equal(result.aiDiscovery.pointerStatus, "missing");
+});
+
 test("discover JSON output is machine-readable for AI agents", async () => {
   const dir = await fs.mkdtemp(path.join(os.tmpdir(), "aienvmap-discover-json-"));
   await syncWorkspace({ dir, quiet: true });

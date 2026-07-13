@@ -1,7 +1,5 @@
 import { dashboardAgentClientScript, dashboardDependencyProtocolClientScript, dashboardDependencyReadSetClientScript, dashboardEnvironmentProtocolClientScript, dashboardLayoutClientScripts, dashboardPayload, dashboardReleaseClientScripts, dashboardSbomClientScripts, dashboardStateCardsClientScript } from "./dashboard.js";
-
-const markerBegin = "<!-- aienvmap:begin -->";
-const markerEnd = "<!-- aienvmap:end -->";
+import { markerBegin, markerEnd } from "./agent-pointer.js";
 
 export { markerBegin, markerEnd };
 export { dashboardAgentClientScript, dashboardAiUseClientScript, dashboardAiUseHtmlClientScript, dashboardCardClientScript, dashboardCardPriority, dashboardDependencyCoordinationClientScript, dashboardDependencyHintsClientScript, dashboardDependencyProtocolClientScript, dashboardDependencyReadSetClientScript, dashboardDependencyReviewClientScript, dashboardDiscoveryFallback, dashboardDiscoveryFallbackClientScript, dashboardEnvironmentProtocolClientScript, dashboardEssentialCards, dashboardEssentialSurfaceClientScript, dashboardEssentialSurfaces, dashboardLayoutClientScripts, dashboardMainCardsClientScript, dashboardOperationalCardsClientScript, dashboardPayload, dashboardQualityDefaults, dashboardReleaseClientScripts, dashboardReleaseDefaults, dashboardSurfaceBudget, dashboardPackageManagerPolicyClientScript, dashboardPriorityClientScript, dashboardQualitySignalsClientScript, dashboardReleaseReadinessClientScript, dashboardReviewPlanClientScript, dashboardReviewPlanHtmlClientScript, dashboardRiskSummaryClientScript, dashboardSbomClientScripts, dashboardScannerGuidanceClientScript, dashboardScannerGuidanceHtmlClientScript, dashboardStateCardsClientScript, dashboardSupportCardsClientScript } from "./dashboard.js";
