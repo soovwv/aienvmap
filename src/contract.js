@@ -643,6 +643,13 @@ export function schemaContract() {
       },
       trial: {
         command: "aienvmap trial --json",
+        availability: {
+          repository: "current-main",
+          npmLatestVersion: "0.1.1",
+          availableInNpmLatest: false,
+          introducedIn: "first release after 0.1.1",
+          compatibility: "aienvmap 0.1.1 supports the trial command but does not expose outputs.trial from schema --json"
+        },
         mode: "read-only discovery with project-local reports and human-reviewed manual submission",
         writeScope: ".aienvmap only; the npx launcher may cache the aienvmap package outside the project",
         rootFields: ["schemaName", "schemaVersion", "status", "decision", "inventoryCounts", "lightSbom", "artifacts", "next", "feedbackUrl", "privacy", "safety", "marketEvidence", "rule"],
