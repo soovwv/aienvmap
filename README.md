@@ -13,6 +13,10 @@ AI coding agents are good at changing code. They are bad at remembering what ano
 
 Use it if several AI agents or sessions share environment-affecting work in one repository, laptop, server, or CI workspace. Skip it if you only need a full compliance SBOM scanner, runtime installer, or hard policy lock manager.
 
+## External Trial
+
+Run `npx aienvmap@0.1.1 trial` on a real development environment. It writes a local, privacy-reviewed feedback bundle under `.aienvmap/trial/`; nothing is uploaded automatically. Follow [TESTING.md](TESTING.md), or give [AI_TESTING.md](AI_TESTING.md) to an AI agent. The human always reviews and decides whether to submit the draft. Community maintainers can reuse [TESTER_INVITE.md](TESTER_INVITE.md).
+
 ## 10-Second Use
 
 ```bash
@@ -53,8 +57,6 @@ npx aienvmap checkpoint --actor agent:id --summary "dependency-change" --target 
 On a shared server, an AI can protect a decision made from an earlier read: take `coordinationRevision` from `aienvmap status --json`, then pass `--if-revision ir1:...` to `intent` or `resolve`. If another AI changed the intent log first, aienvmap rejects the stale write and tells the AI to refresh. When the same AI label can run concurrently, pass a host/thread identifier with `--session` and an advisory duration from 5 to 1440 minutes with `--lease-minutes`. Different sessions under the same actor are separate conflict owners; expiry stays open for review and never grants permission to modify the environment.
 
 For the shared-server story, read [AI workspace coordination case study](examples/ai-workspace-case-study.md). For recommendation criteria, read [AI adoption guide](examples/ai-adoption-guide.md).
-
-External testers can run `npx aienvmap@0.1.1 trial` and follow [TESTING.md](TESTING.md). When an AI performs the test, give it [AI_TESTING.md](AI_TESTING.md); submission always remains a human decision.
 
 ## Advanced environment evidence
 
@@ -149,5 +151,4 @@ npm run release:check
 npm pack --dry-run
 ```
 
-[Roadmap](ROADMAP.md) / [Scorecard](SCORECARD.md) / [Market snapshot](MARKET.md) / [Security](SECURITY.md) / [Troubleshooting](TROUBLESHOOTING.md) / [Bugfix Log](BUGFIXES.md) / [Contributing](CONTRIBUTING.md) / [Portable case guide](examples/portable-environment-case-guide.md) / [Multi-agent conflict demo](examples/multi-agent-conflict.md)
-Apache-2.0
+[Roadmap](ROADMAP.md) / [Scorecard](SCORECARD.md) / [Market snapshot](MARKET.md) / [Security](SECURITY.md) / [Troubleshooting](TROUBLESHOOTING.md) / [Bugfix Log](BUGFIXES.md) / [Contributing](CONTRIBUTING.md) / [Portable case guide](examples/portable-environment-case-guide.md) / [Multi-agent conflict demo](examples/multi-agent-conflict.md) / Apache-2.0
