@@ -45,6 +45,9 @@ test("tester guides keep human consent and AI safety explicit", async () => {
   assert.match(ai, /Do not invent positive feedback/);
   assert.match(ai, /Never submit a GitHub issue/);
   assert.match(ai, /Java discovery remains information-only/);
+  assert.match(ai, /published 0\.1\.1 release/);
+  assert.doesNotMatch(ai, /aienvmap@0\.1\.1 schema --json/);
+  assert.match(ai, /read `outputs\.trial` only if/);
   assert.match(testing, /stay under `.aienvmap\/`/);
   assert.match(invite, /Do not request positive reviews/);
   assert.match(invite, /npx aienvmap@0\.1\.1 trial/);

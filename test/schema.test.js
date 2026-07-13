@@ -65,6 +65,9 @@ test("schemaContract describes stable AI output contracts", () => {
   assert.match(schema.outputs.environmentCaseSummary.markdownCommand, /--markdown/);
   assert.ok(schema.outputs.environmentCaseSummary.excluded.includes("runtime versions"));
   assert.equal(schema.outputs.trial.command, "aienvmap trial --json");
+  assert.equal(schema.outputs.trial.availability.npmLatestVersion, "0.1.1");
+  assert.equal(schema.outputs.trial.availability.availableInNpmLatest, false);
+  assert.match(schema.outputs.trial.availability.compatibility, /does not expose outputs\.trial/);
   assert.match(schema.outputs.trial.writeScope, /\.aienvmap only/);
   assert.ok(schema.outputs.trial.rootFields.includes("privacy"));
   assert.ok(schema.outputs.trial.rootFields.includes("safety"));
