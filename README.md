@@ -86,7 +86,7 @@ AIENV.md                 # Markdown env map for AI agents
 
 ## AI Contract
 
-- `schema --json` prints the machine-readable contract without scanning, including the read-only external-trial write, privacy, safety, and manual-submission boundaries.
+- The current repository's `schema --json` contract includes the read-only external-trial write, privacy, safety, and manual-submission boundaries. Published 0.1.1 supports `trial` but predates `outputs.trial`; run its trial directly.
 - `start`, `status`, `context`, `reconcile`, and SBOM outputs share `aiDecisionEnvelope`; read it first, while `requiresHumanApprovalBefore` keeps destructive action classes review-only even when clear.
 - `reconcile` also emits a proposal-only `consolidationPlan`: evidence, stop conditions, rollback requirements, and approval gates - never an apply or removal command.
 - `schemaVersion`, `contractVersion`, `stableFrom`, and compatibility rules are explicit.
