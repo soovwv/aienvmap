@@ -31,7 +31,9 @@ try {
   assert.equal(version, installedPackage.version);
   const trial = JSON.parse((await run(process.execPath, [cli, "trial", "--json"], consumer, 90_000)).stdout);
   assert.equal(trial.status, "technical-test-complete");
+  assert.equal(trial.safety.environmentMutationRequested, false);
   assert.equal(trial.safety.projectWrappersExecuted, false);
+  assert.equal(trial.safety.thirdPartyProbeSideEffectsGuaranteedAbsent, false);
   assert.equal(trial.artifacts.length, 4);
   for (const relative of trial.artifacts) await fs.access(path.join(consumer, relative));
 

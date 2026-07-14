@@ -22,6 +22,7 @@ There is no automatic upload. Any public submission requires a separate human de
 - Do not burden the human with a questionnaire for routine technical testing. Public case evidence is optional.
 - Never paste raw reconciliation output, `portable.json`, paths, usernames, hostnames, secrets, tokens, environment variables, or private project/package names.
 - Never infer that duplicate versions are accidental. Ask whether they are intentional.
+- Runtime version probes execute discovered third-party files with bounded arguments. Never claim that arbitrary executables are guaranteed side-effect-free; use a disposable directory or project copy.
 - Java discovery remains information-only and must not become a removal or consolidation action.
 - If the output is unclear or wrong, record that as feedback instead of hiding it.
 

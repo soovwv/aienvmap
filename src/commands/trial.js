@@ -35,7 +35,15 @@ export async function trialWorkspace(args = {}) {
     next: "Technical testing is complete. Ask an AI to summarize case-summary.json. Public case evidence is optional and requires brief human confirmation and separate submission consent.",
     feedbackUrl: issueUrl,
     privacy: { automaticUpload: false, telemetry: false, pathsInCaseDraft: false, technicalResultReviewRequired: false, publicSubmissionReviewRequired: true },
-    safety: { environmentChanged: false, softwareRemoved: false, pathModified: false, projectWrappersExecuted: false, runtimeVersionProbesExecuted: true },
+    safety: {
+      environmentMutationRequested: false,
+      softwareRemovalRequested: false,
+      pathModificationRequested: false,
+      aienvmapMutationPerformed: false,
+      projectWrappersExecuted: false,
+      runtimeVersionProbesExecuted: true,
+      thirdPartyProbeSideEffectsGuaranteedAbsent: false
+    },
     marketEvidence: false,
     rule: "Technical testing needs no human opinion; public market evidence requires independent human confirmation, privacy review, and explicit submission consent."
   };
@@ -53,7 +61,7 @@ export async function trialWorkspace(args = {}) {
 function renderNextSteps() {
   return `# aienvmap trial next steps
 
-The non-mutating trial is complete. There is no automatic upload. aienvmap did not remove software, install development tools, modify PATH, or execute project Maven/Gradle wrappers. It did run bounded version probes for discovered runtime executables. The \`npx\` launcher may cache the aienvmap package itself.
+The non-mutating-by-design trial is complete. There is no automatic upload. aienvmap requested no software removal, development-tool installation, or PATH modification, and it did not execute project Maven/Gradle wrappers. It did run bounded version probes for discovered runtime executables; aienvmap cannot guarantee that arbitrary third-party executables have no side effects. Use a disposable directory or project copy. The \`npx\` launcher may cache the aienvmap package itself.
 
 ## Technical test: no opinion required
 

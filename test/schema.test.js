@@ -13,7 +13,7 @@ test("schemaContract describes stable AI output contracts", () => {
   assert.equal(schema.contractVersion, "0.1-prototype");
   assert.equal(schema.stableFrom, "0.2.0");
   assert.equal(schema.outputs.reconcile.file, ".aienvmap/reconcile.json");
-  assert.equal(schema.outputs.reconcile.mode, "read-only environment; writes only the report when --write is explicit");
+  assert.equal(schema.outputs.reconcile.mode, "non-mutating-by-design environment inspection; writes only the report when --write is explicit");
   assert.ok(schema.outputs.reconcile.rootFields.includes("aiDecision"));
   assert.ok(schema.outputs.reconcile.rootFields.includes("aiDecisionEnvelope"));
   assert.ok(schema.outputs.reconcile.rootFields.includes("platform"));
@@ -47,6 +47,10 @@ test("schemaContract describes stable AI output contracts", () => {
   assert.ok(schema.outputs.reconcile.miseRuntimeInventoryFields.includes("runtimeCount"));
   assert.deepEqual(schema.outputs.reconcile.miseRuntimeRelationships, ["installed-json-path-match", "managed-root-inference", "unconfirmed"]);
   assert.match(schema.outputs.reconcile.rule, /never authorize removal/);
+  assert.deepEqual(schema.outputs.reconcile.probeFields, ["status", "reason"]);
+  assert.ok(schema.outputs.reconcile.probeFailureValues.includes("command-not-found"));
+  assert.ok(schema.outputs.reconcile.probeFailureValues.includes("version-not-recognized"));
+  assert.match(schema.outputs.reconcile.probeRule, /never promote a later PATH candidate automatically/);
   assert.equal(schema.outputs.reconcilePortable.command, "aienvmap reconcile --portable --json");
   assert.match(schema.outputs.reconcilePortable.artifactCommand, /--portable-from/);
   assert.ok(schema.outputs.reconcilePortable.excluded.includes("package names"));
@@ -73,7 +77,9 @@ test("schemaContract describes stable AI output contracts", () => {
   assert.ok(schema.outputs.trial.rootFields.includes("privacy"));
   assert.ok(schema.outputs.trial.rootFields.includes("safety"));
   assert.ok(schema.outputs.trial.privacyFields.includes("automaticUpload"));
-  assert.ok(schema.outputs.trial.safetyFields.includes("pathModified"));
+  assert.ok(schema.outputs.trial.safetyFields.includes("pathModificationRequested"));
+  assert.ok(schema.outputs.trial.safetyFields.includes("thirdPartyProbeSideEffectsGuaranteedAbsent"));
+  assert.match(schema.outputs.trial.probeBoundary, /cannot be guaranteed absent/);
   assert.ok(schema.outputs.trial.doNotShare.includes("portable.json"));
   assert.match(schema.outputs.trial.rule, /not market evidence/);
   assert.deepEqual(schema.outputs.reconcile.detailedToolchains, ["node/npm/pnpm/yarn/corepack", "python/pip/uv/pipx/conda"]);

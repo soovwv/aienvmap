@@ -31,9 +31,13 @@ test("trial completes a local technical test without uploading or changing the e
     assert.equal(result.privacy.automaticUpload, false);
     assert.equal(result.privacy.technicalResultReviewRequired, false);
     assert.equal(result.privacy.publicSubmissionReviewRequired, true);
-    assert.equal(result.safety.environmentChanged, false);
+    assert.equal(result.safety.environmentMutationRequested, false);
+    assert.equal(result.safety.softwareRemovalRequested, false);
+    assert.equal(result.safety.pathModificationRequested, false);
+    assert.equal(result.safety.aienvmapMutationPerformed, false);
     assert.equal(result.safety.projectWrappersExecuted, false);
     assert.equal(result.safety.runtimeVersionProbesExecuted, true);
+    assert.equal(result.safety.thirdPartyProbeSideEffectsGuaranteedAbsent, false);
     assert.equal(result.marketEvidence, false);
     assert.deepEqual(result.artifacts, [".aienvmap/trial/portable.json", ".aienvmap/trial/case-summary.json", ".aienvmap/trial/case-draft.md", ".aienvmap/trial/NEXT.md"]);
     assert.equal(await fs.stat(path.join(dir, "AIENV.md")).then(() => true, () => false), false);
@@ -51,6 +55,7 @@ test("trial completes a local technical test without uploading or changing the e
     assert.doesNotMatch(draft, new RegExp(dir.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
     assert.match(next, /no automatic upload/i);
     assert.match(next, /may cache the aienvmap package/i);
+    assert.match(next, /cannot guarantee that arbitrary third-party executables have no side effects/i);
     assert.match(next, /Do not paste `portable\.json` publicly/);
     assert.match(next, /Technical test: no opinion required/);
     assert.match(next, /real=yes\|partly\|no/);

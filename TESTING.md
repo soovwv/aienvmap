@@ -4,7 +4,7 @@ Thank you for testing aienvmap on a real development machine. The test takes abo
 
 ## Safety contract
 
-- Bounded runtime version probes; no software removal or PATH modification. Current unreleased trial and quick mode do not execute project Maven/Gradle wrappers.
+- Bounded runtime version probes; aienvmap requests no software removal or PATH modification. Current unreleased trial and quick mode do not execute project Maven/Gradle wrappers. Arbitrary discovered executables are not guaranteed side-effect-free, so use a disposable directory or project copy.
 - No telemetry and no automatic upload.
 - The published 0.1.1 trial writes only under `.aienvmap`, refreshes state, and may execute project Maven/Gradle wrappers. Run 0.1.1 only in a new empty disposable directory, not a project copy. The `npx` launcher may cache the aienvmap package itself.
 - A human reviews the exact public draft before submitting anything.
