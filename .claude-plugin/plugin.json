@@ -1,0 +1,6 @@
+{
+  "name": "aienvmap",
+  "version": "0.1.1",
+  "description": "AI environment preflight and explicit change handoff for existing or shared development machines.",
+  "license": "Apache-2.0"
+}
