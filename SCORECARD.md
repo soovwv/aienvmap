@@ -20,6 +20,8 @@ Adjacent tools establish the boundaries: [Microsoft APM](https://github.com/micr
 
 The APM skill-subpath install and native-pointer coexistence now have a clean consumer regression gate. This is technical distribution evidence only; it does not prove that Codex, Claude, Gemini, Cursor, or Copilot automatically loaded the skill in a real session.
 
+The APM gate is pinned to the observed latest v0.25.0 release. A future pin update requires the same clean consumer-install regression check; ecosystem release velocity does not increase aienvmap's market score.
+
 ## Evidence policy
 
 - Repository features and CI count toward technical readiness.

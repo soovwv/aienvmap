@@ -26,7 +26,8 @@ test("product scorecard gives AI consumers evidence and bounded competitor categ
   assert.equal(result.marketResearch.publicSignals.npmDownloadsWindow.requests, 116);
   assert.equal(result.marketResearch.publicSignals.npmDownloadsWindow.start, "2026-06-14");
   assert.equal(result.marketResearch.publicSignals.npmDownloadsWindow.end, "2026-07-13");
-  assert.equal(result.marketResearch.adjacentSignals.microsoftApmStars, 3216);
+  assert.equal(result.marketResearch.adjacentSignals.microsoftApmStars, 3219);
+  assert.equal(result.marketResearch.adjacentSignals.microsoftApmRelease, "v0.25.0");
   assert.equal(result.marketResearch.adjacentSignals.miseStars, 30724);
   assert.equal(result.marketResearch.adjacentSignals.miseAiWorktreeRelease, "v2026.7.5");
   assert.match(result.weaknesses.join(" "), /reproducible environments/);

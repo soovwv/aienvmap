@@ -16,6 +16,7 @@ test("market snapshot separates public requests from verified users", async () =
   assert.match(market, /Do not build an agent package manager/);
   assert.match(market, /use APM only to distribute the bounded advisory skill/);
   assert.match(market, /Microsoft APM/);
+  assert.match(market, /3,219 stars; latest v0\.25\.0/);
   assert.match(market, /Devbox/);
   assert.match(market, /Flox/);
   assert.match(market, /AI runtime CLI setup/);

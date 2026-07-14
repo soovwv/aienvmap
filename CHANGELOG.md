@@ -11,6 +11,7 @@
 - Prefer the APM skill-subpath install so consumers do not retain the full repository as the installed package payload.
 - Added a clean APM consumer-install CI gate that verifies skill placement, no executable/MCP configuration, and non-duplicating native onboarding.
 - Included the bounded APM manifest, skill, and consumer check in future npm package bundles without adding a runtime dependency.
+- Refreshed the dated APM market evidence to v0.25.0 and 3,219 stars without changing aienvmap's evidence-limited market score.
 - Added `onboard --json` to the reviewed 0.2.0 root-field freeze and made its runtime root keys match the documented AI contract exactly.
 - Added post-onboard marker verification while explicitly refusing to treat project-file presence as proof that an AI host automatically loaded the pointer.
 - Refreshed the evidence-bounded market snapshot and recorded mise's explicit AI-agent worktree and Codex-install adjacency without raising the market score.
