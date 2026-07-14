@@ -274,7 +274,11 @@
 - Added a package metadata test that keeps the CLI runtime dependency-free for lightweight shared-machine installs.
 - Added a package publish allowlist test to keep npm contents small and intentional.
 
-## 0.1.69
+## Pre-release development history
+
+The following numbered batches were internal repository milestones, not npm releases. Only headings at level two that use semantic versions represent published or planned package releases.
+
+### Internal batch 69
 
 - Added `aiBootstrap` to the shared preflight surfaces so AI agents can read the shortest first-read, next-command, and local-mode hint.
 - Mirrored `aiBootstrap` in the dashboard first-read area so humans see the same AI entry hint.
@@ -284,7 +288,7 @@
 - Added `aiBootstrap` and `nextSafeCommand` to the standalone light SBOM artifact so dependency review starts from the same AI loop.
 - Added `aienvmap:aiBootstrap:*` properties to CycloneDX-lite output so external SBOM consumers can find the same next-step hint.
 
-## 0.1.68
+### Internal batch 68
 
 - Added an `aienvmap AI loop` block to the GitHub Action Step Summary using `schema.aiLoop`.
 - Kept the Action summary advisory by default while showing the same loop documented in README and `schema --json`.
@@ -295,7 +299,7 @@
 - Added `handoff --json` `nextSafeCommand` so the next AI can resume from one root-level advisory command.
 - Added `status --json` and `.aienvmap/status.json` `nextSafeCommand` as a stable alias for the preflight next command.
 
-## 0.1.67
+### Internal batch 67
 
 - Added a dashboard `First read` strip with status, first file, review targets, and local operation mode.
 - Kept the detailed dashboard cards below the top decision area so humans get a faster scan without losing AI context.
@@ -310,7 +314,7 @@
 - Reworked the README first-read flow around shared AI workspaces, the 10-second command path, and the AI maintenance loop.
 - Added `aiLoop` to `schema --json` and plain schema output so AI consumers see the same loop described in the README.
 
-## 0.1.66
+### Internal batch 66
 
 - Added `aienvmap resolve --target <target>` to resolve all open intents for one environment target.
 - Added `aienvmap resolve --all` to close all open intents after coordination.
@@ -320,7 +324,7 @@
 - Updated CLI help and README command guidance for the simplified resolve flow.
 - Added regression tests for target resolve, all resolve, JSON output, and coordination action commands.
 
-## 0.1.65
+### Internal batch 65
 
 - Added a dashboard `Next command` bar directly below the AI control strip.
 - Chose the dashboard next command from preflight, top recommended action, collaboration, then status fallback.
@@ -330,7 +334,7 @@
 - Updated README wording to mention the single next command.
 - Added dashboard regression coverage for next-command source and reason binding.
 
-## 0.1.64
+### Internal batch 64
 
 - Added a dashboard `AI control strip` above the existing audit area.
 - Made readiness, collaboration, and SBOM risk the first three dashboard decisions.
@@ -340,7 +344,7 @@
 - Documented the dashboard 3-card first-read surface in the README.
 - Added dashboard regression coverage for the control strip, top cards, and SBOM-risk binding.
 
-## 0.1.63
+### Internal batch 63
 
 - Compressed plain `aienvmap status` output into a 5-line AI/human decision view.
 - Added `aienvmap status --verbose` for detailed command hints without cluttering the default path.
@@ -350,7 +354,7 @@
 - Updated README command guidance for default, artifact, and verbose status usage.
 - Added regression tests for compact default output, verbose output, and exact status text shape.
 
-## 0.1.62
+### Internal batch 62
 
 - Added a compact `collaboration` block to the shared preflight/status contract for multi-agent environment coordination.
 - Exposed `collaboration` at the root of `context --json` so AI agents can read status, active targets, and the next command without digging through multiple sections.
@@ -360,7 +364,7 @@
 - Documented the collaboration block in the stable schema contract and README.
 - Added regression tests for status, context, summary, dashboard, and schema surfaces.
 
-## 0.1.61
+### Internal batch 61
 
 - Added an `aienvmap strict plan` block to the GitHub Action Step Summary.
 - Reused advisory `doctor --json` data so CI can show local and strict commands without forcing failure.
@@ -368,7 +372,7 @@
 - Documented the Action Step Summary strict-plan surface in the README.
 - Added regression coverage for the Action strict-plan summary contract.
 
-## 0.1.60
+### Internal batch 60
 
 - Added `enforcement.strictPlan` to help AI agents and CI choose the narrowest explicit strict scope.
 - Added `preflight.enforcementProfile.strictPlan` so status/context consumers see the same strict guidance.
@@ -377,7 +381,7 @@
 - Documented strict-plan consumption in `schema --json` and README.
 - Added regression tests for enforcement advice, doctor JSON, status/context, summary, dashboard, and schema outputs.
 
-## 0.1.59
+### Internal batch 59
 
 - Added `aiDependencyReview.statusReason` so AI agents can distinguish actual review risk from scanner-off uncertainty.
 - Added `aiDependencyReview.securityConfidence` across generated light SBOM, standalone SBOM, dashboard, summary, and schema metadata.
@@ -385,7 +389,7 @@
 - Updated dashboard and summary surfaces to show dependency-review confidence.
 - Updated README and regression tests for scanner-off dependency review behavior.
 
-## 0.1.58
+### Internal batch 58
 
 - Added `lightSbom.aiDependencyReview` during manifest generation so all generated artifacts share the same dependency-review block.
 - Reused generated `aiDependencyReview` in standalone `.aienvmap/sbom.json`.
@@ -393,7 +397,7 @@
 - Added the AI dependency review status and first command to `.aienvmap/summary.md`.
 - Added regression tests for light SBOM generation, dashboard rendering, SBOM artifact output, and summary output.
 
-## 0.1.57
+### Internal batch 57
 
 - Added `aiDependencyReview` to the standalone `.aienvmap/sbom.json` artifact.
 - Linked SBOM risk to dependency-change read order, safe actions, review targets, and before/after commands.
@@ -402,7 +406,7 @@
 - Fixed dependency-review command grouping so `checkpoint` appears after dependency changes, not before.
 - Added regression tests for SBOM dependency review and schema metadata.
 
-## 0.1.56
+### Internal batch 56
 
 - Added `aiReadiness.requiresHumanReview` so agents can distinguish review-needed signals from hard blocking.
 - Added `aiReadiness.safeProjectLocalActions` to clarify what AI agents may still do in review state.
@@ -411,14 +415,14 @@
 - Documented the summary top block and `aiReadiness` consumption rule in `schema --json`.
 - Added regression tests for status, context, summary, and schema outputs.
 
-## 0.1.55
+### Internal batch 55
 
 - Moved `AI readiness`, readiness signals, and next action to the top of `.aienvmap/summary.md`.
 - Added `aiReadiness.signals` to the dashboard audit-band hint.
 - Kept the CI Step Summary lightweight while making the first AI review signal easier to scan.
 - Updated README and regression tests for the new summary/dashboard readiness surface.
 
-## 0.1.54
+### Internal batch 54
 
 - Added `aiReadiness` to the shared preflight/status contract.
 - Added root `aiReadiness` to `context --json`.
@@ -428,7 +432,7 @@
 - Added an AI readiness item to the dashboard audit band.
 - Updated README, schema metadata, and regression tests for the ready/review signal.
 
-## 0.1.53
+### Internal batch 53
 
 - Added `agentPointers` to the shared AI preflight/status contract.
 - Added `agentPointers` to `context --json` at the root for quick AI access.
@@ -438,7 +442,7 @@
 - Preserved legacy boolean `agentFiles` compatibility in preflight summaries.
 - Added regression tests for status, context, doctor, schema, and summary pointer outputs.
 
-## 0.1.52
+### Internal batch 52
 
 - Expanded `manifest.agentFiles` from booleans to lightweight agent instruction metadata.
 - Detected whether AGENTS.md, CLAUDE.md, and GEMINI.md contain the aienvmap pointer marker.
@@ -448,7 +452,7 @@
 - Updated README guidance to mention pointer detection and non-blocking doctor recommendations.
 - Added regression tests for pointer scanning, pointer recommendations, dashboard rendering, and sync output.
 
-## 0.1.51
+### Internal batch 51
 
 - Updated Codex/Claude/Gemini pointer snippets to use the current `status -> summary.md -> context` read order.
 - Added agent-specific actor examples for Codex, Claude, and Gemini snippet output.
@@ -458,7 +462,7 @@
 - Added a Dependency changes section to `summary.md` with read files, intent command, checkpoint command, and package-manager policy.
 - Updated README agent-file guidance and added regression coverage for the AI snippet and summary protocol.
 
-## 0.1.50
+### Internal batch 50
 
 - Added `aienvmap summary` for a compact Markdown AI/CI handoff view.
 - Added `.aienvmap/summary.md` writing through the default `sync` flow.
@@ -469,7 +473,7 @@
 - Fixed UTF-8 BOM JSON parsing so Windows-created `package.json` files are scanned correctly.
 - Added regression tests for summary rendering, sync output, schema metadata, Action Step Summary wiring, and BOM JSON parsing.
 
-## 0.1.49
+### Internal batch 49
 
 - Added a `write-sbom` GitHub Action input for explicit SBOM artifact generation.
 - Added Action steps for writing `.aienvmap/sbom.json` and `.aienvmap/sbom.cdx.json`.
@@ -479,7 +483,7 @@
 - Updated README CI usage to mention SBOM artifacts.
 - Added regression coverage for Action SBOM inputs, commands, and example upload paths.
 
-## 0.1.48
+### Internal batch 48
 
 - Added `aienvmap sbom --format cyclonedx-lite` for a lightweight CycloneDX-compatible export.
 - Added `.aienvmap/sbom.cdx.json` writing through the default `sync` flow.
@@ -489,7 +493,7 @@
 - Included explicit metadata limitations so consumers know no install or dependency resolver was run.
 - Added regression tests for CycloneDX-lite component mapping, vulnerability hints, sync output, schema contract, and dashboard rendering.
 
-## 0.1.47
+### Internal batch 47
 
 - Added `aienvmap sbom` for standalone AI-readable light SBOM output without deep manifest parsing.
 - Added `.aienvmap/sbom.json` writing through `aienvmap sbom --write` and the default `sync` flow.
@@ -499,7 +503,7 @@
 - Updated README outputs and commands with the standalone SBOM artifact.
 - Added regression tests for SBOM artifact building, writing, sync output, schema contract, and dashboard rendering.
 
-## 0.1.46
+### Internal batch 46
 
 - Added `lightSbom.riskSummary` with compact risk level, score, scanner state, signals, review targets, and next commands.
 - Added `sbomRisk` to the shared AI preflight contract so status/context consumers can read SBOM risk without deep parsing.
@@ -509,7 +513,7 @@
 - Updated dependency change hints to point agents to `aienvmap checkpoint` after accepted dependency changes.
 - Added regression tests for risk scoring, scanner-off guidance, status/context outputs, dashboard rendering, and recommended actions.
 
-## 0.1.45
+### Internal batch 45
 
 - Added `aienvmap checkpoint` as a one-command post-environment-change flow for record, sync, status, and handoff.
 - Added quiet command support so checkpoint can compose existing commands without noisy intermediate output.
@@ -519,7 +523,7 @@
 - Shortened the README environment-change flow to intent plus checkpoint.
 - Added checkpoint regression coverage for JSON output, ledger updates, follow-up closure, status artifacts, and rendered guidance.
 
-## 0.1.44
+### Internal batch 44
 
 - Added multi-agent record warnings when multiple agents record environment changes for the same target after the last handoff.
 - Added `agentActivity` to the shared preflight contract so status/context/handoff can expose recent env records by target and actor.
@@ -529,7 +533,7 @@
 - Documented the new AI contract field in the compact README.
 - Added regression tests for warning detection, handoff reset behavior, status JSON, dashboard HTML, and recommended actions.
 
-## 0.1.43
+### Internal batch 43
 
 - Added follow-up metadata to `record` timeline entries so dependency/security changes point agents back to sync, status, and handoff.
 - Added timeline follow-up summarization so unresolved dependency/security records can be surfaced consistently.
@@ -538,7 +542,7 @@
 - Updated the README change loop to show record, sync, status, and handoff as one simple continuation flow.
 - Documented Windows/macOS candidate verification for the record follow-up loop.
 
-## 0.1.42
+### Internal batch 42
 
 - Added explicit enforcement gate metadata so AI and CI consumers know local checks are warn-only unless `--strict` or `--ci` is requested.
 - Added `doctor --json` exit behavior metadata to distinguish advisory warnings from strict failure conditions.
@@ -547,7 +551,7 @@
 - Clarified README guidance for advisory-by-default behavior and opt-in strict/CI failure.
 - Documented advisory doctor exit behavior and strict verification steps in troubleshooting and bugfix notes.
 
-## 0.1.41
+### Internal batch 41
 
 - Added preflight contract metadata so AI and CI consumers can rely on stable entry fields while ignoring additive changes.
 - Added `aienvmap schema --json` to print the stable AI-readable output contract without scanning a workspace.
@@ -556,7 +560,7 @@
 - Updated the README with the schema command and light SBOM verification boundary while keeping the quick-start compact.
 - Added an AI Contract dashboard card so humans can review the same stable fields that agents consume.
 
-## 0.1.40
+### Internal batch 40
 
 - Added dependency handoff summaries so the next AI receives dependency read-set and protocol guidance directly in `handoff`.
 - Added a compact `nextAgent` hint to status/preflight JSON for safer AI-to-AI continuation.
@@ -565,7 +569,7 @@
 - Updated the dashboard handoff card with next-agent read hints, dependency files, and conflict targets.
 - Printed the next-agent handoff command in the plain `status` output.
 
-## 0.1.39
+### Internal batch 39
 
 - Added a dependency read set to preflight, `AIENV.md`, and the dashboard so agents know which manifests and lockfiles to read before package or security changes.
 - Added an advisory dependency change protocol so agents follow the same intent, refresh, record, and handoff flow for package/security edits.
@@ -575,7 +579,7 @@
 - Added CLI regression coverage for `context --dir <workspace> --json` so remote and CI agents can safely inspect another workspace.
 - Allowed `--dir <workspace>` before the command, so AI and CI agents can use either global-style or command-style workspace targeting.
 
-## 0.1.38
+### Internal batch 38
 
 - Added a 10-second AI quickstart flow to the shared preflight contract and status output.
 - Added preflight intent target recommendations so agents can record runtime, package manager, dependency, Docker, or coordination changes consistently.
@@ -583,7 +587,7 @@
 - Added the same quickstart and intent target guidance to `AIENV.md` so Markdown-first agents receive the current preflight.
 - Aligned AGENTS/Claude/Gemini pointer snippets with the same status-first, target-aware AI flow.
 
-## 0.1.37
+### Internal batch 37
 
 - Added `lightSbom` to the manifest as an AI-ready package and vulnerability summary.
 - Linked dependency manifests, ecosystem/group counts, vulnerable direct dependencies, and top risk packages into one compact SBOM view.
@@ -591,211 +595,211 @@
 - Added read-only lockfile awareness to dependency snapshots and light SBOM hints.
 - Added package manager policy hints from lockfiles to reduce accidental npm/pnpm/yarn drift.
 
-## 0.1.36
+### Internal batch 36
 
 - Added an explicit enforcement profile to the shared AI preflight contract.
 - Surfaced advisory-by-default vs optional strict mode in the dashboard.
 - Clarified that strict checks are intended for CI or explicit human-requested gates, not default local blocking.
 
-## 0.1.35
+### Internal batch 35
 
 - Added a shared AI preflight contract across status, context, plan, and handoff outputs.
 - Reused the same artifact map, read order, safe commands, decision, and enforcement guidance across AI-facing JSON.
 - Reduced drift risk between multi-agent handoffs and environment planning.
 
-## 0.1.34
+### Internal batch 34
 
 - Added AI navigation metadata to `.aienvmap/status.json`.
 - Included artifact paths, read order, safe commands, and agent-use rules in the compact status output.
 - Kept the status enhancement read-only and lightweight so `sync` remains the simple default flow.
 
-## 0.1.33
+### Internal batch 33
 
 - Made `.aienvmap/status.json` a first-class artifact written by `aienvmap sync`.
 - Added `aienvmap status --write` so AI agents and CI can refresh the compact state file directly.
 - Updated the GitHub Action to use the built-in status writer instead of shell redirection.
 
-## 0.1.32
+### Internal batch 32
 
 - Added GitHub Action support for writing `.aienvmap/status.json` by default.
 - Added a `write-status` action input so CI can keep compact AI status artifacts optional.
 - Updated the GitHub Action example artifact list to include the status output.
 
-## 0.1.31
+### Internal batch 31
 
 - Added `aienvmap status` as a compact human and AI entrypoint.
 - Summarized clear/review state, next command, counts, top action, and enforcement advice in one output.
 - Kept `context --json` as the richer preflight while making first checks simpler.
 
-## 0.1.30
+### Internal batch 30
 
 - Added shared enforcement advice for AI and CI surfaces.
 - Exposed advisory-by-default behavior, suggested strict scopes, and scoped CI commands in context and plan outputs.
 - Moved strict scope logic into a reusable enforcement module while keeping existing `doctor --strict` behavior compatible.
 
-## 0.1.29
+### Internal batch 29
 
 - Added lightweight remediation priority scoring for vulnerable packages.
 - Exposed priority level, score, and reasons in security summaries, plans, compact context, and dashboard rows.
 - Kept scoring advisory-only so AI agents can choose safer next steps without blocking local operation.
 
-## 0.1.28
+### Internal batch 28
 
 - Linked vulnerable package summaries to the dependency snapshot when the package is directly declared.
 - Added direct dependency metadata to remediation steps and dashboard security rows.
 - Kept the linkage read-only and file-based so security context stays lightweight and non-disruptive.
 
-## 0.1.27
+### Internal batch 27
 
 - Added a read-only dependency snapshot to the manifest, context, AIENV.md, and dashboard.
 - Captured npm and Python project dependencies from `package.json`, `requirements.txt`, and `pyproject.toml` without installing or resolving packages.
 - Linked the env map and light SBOM story so AI agents can see runtime, dependency, and vulnerability context together.
 
-## 0.1.26
+### Internal batch 26
 
 - Shared one AI decision contract across `context --json`, `plan`, and `handoff`.
 - Added decision mode and required command guidance to plan and handoff outputs.
 - Reduced duplicated guidance so multiple AI agents receive the same environment-change rules.
 
-## 0.1.25
+### Internal batch 25
 
 - Added a more explicit AI decision contract to `context --json`.
 - Included project-local work allowance, environment-change review state, warning codes, and required follow-up commands.
 - Clarified that local project work can continue while environment changes remain intent-gated and review-oriented.
 
-## 0.1.24
+### Internal batch 24
 
 - Added a dashboard CI Readiness card for `doctor --strict security|policy|coordination|all`.
 - Reused the same non-blocking warning engine so humans can pick CI enforcement scope without changing local operation.
 - Surfaced matched warning codes per strict scope for faster AI and human review.
 
-## 0.1.23
+### Internal batch 23
 
 - Added compact `stepSummary` output to `context --json`.
 - Reused the AI plan step model so preflight context can show remediation and environment drift summaries.
 - Kept full step details in `aienvmap plan` while keeping context lightweight.
 
-## 0.1.22
+### Internal batch 22
 
 - Reworked the README around Quick Start, AI Usage, CI Usage, and outputs.
 - Made the project positioning clearer: AI-first environment maps for shared coding machines.
 - Emphasized read-only planning and avoiding runtime/tool drift across agents.
 
-## 0.1.21
+### Internal batch 21
 
 - Added a GitHub Actions artifact upload example for `AIENV.md`, plan outputs, manifest, and dashboard.
 - Added a short README CI pointer to the example workflow.
 - Kept the core composite action lightweight and read-only by default.
 
-## 0.1.20
+### Internal batch 20
 
 - Added a dashboard Environment Steps card backed by `.aienvmap/plan.json`.
 - Surfaced runtime, package manager, Docker, and coordination plan summaries for humans.
 - Kept detailed step lists in `plan.md` while keeping the dashboard bounded.
 
-## 0.1.19
+### Internal batch 19
 
 - Added runtime, package manager, Docker, and coordination environment steps to `aienvmap plan`.
 - Kept environment plans read-only and ask-first for global changes.
 - Improved AI guidance for resolving version drift and multi-agent coordination warnings.
 
-## 0.1.18
+### Internal batch 18
 
 - Added a dashboard remediation steps card backed by `.aienvmap/plan.json`.
 - Kept dashboard remediation details bounded to package, severity, fix version, and advisory references.
 - Improved human visibility for AI-generated read-only security plans.
 
-## 0.1.17
+### Internal batch 17
 
 - Added bounded security remediation steps to `aienvmap plan`.
 - Included package fix versions and advisory references in plan JSON and markdown output.
 - Kept remediation output read-only and review-oriented.
 
-## 0.1.16
+### Internal batch 16
 
 - Added scoped strict checks with `doctor --strict security|policy|coordination|all`.
 - Kept `doctor --ci` compatible as strict `all`.
 - Updated the GitHub Action `strict` input to support scoped enforcement while keeping advisory mode by default.
 
-## 0.1.15
+### Internal batch 15
 
 - Added dashboard links for written AI plan artifacts.
 - Added `write-plan` support to the GitHub Action so CI can emit read-only plan outputs.
 - Updated the GitHub Action example to show the sync, plan, and doctor flow.
 
-## 0.1.14
+### Internal batch 14
 
 - Added `aienvmap plan` for read-only AI environment action plans.
 - Added optional `aienvmap plan --write` artifacts at `.aienvmap/plan.json` and `.aienvmap/plan.md`.
 - Kept plan output advisory-only with review gates instead of automatic fixes.
 
-## 0.1.13
+### Internal batch 13
 
 - Added `recommendedActions` to AI handoff output.
 - Added a Recommended Actions dashboard card for human review.
 - Reused the same advisory action engine across context, doctor, handoff, and dashboard.
 
-## 0.1.12
+### Internal batch 12
 
 - Added AI-readable `recommendedActions` to `context --json` and `doctor --json`.
 - Added concise recommended actions to text context and doctor output.
 - Kept recommendations advisory-only; strict failure still requires `doctor --ci`.
 
-## 0.1.11
+### Internal batch 11
 
 - Added bounded remediation details to security summaries, including fix versions and advisory references.
 - Surfaced remediation hints in `AIENV.md` and the dashboard so AI agents can plan safer dependency updates.
 - Kept security scanning read-only and opt-in.
 
-## 0.1.10
+### Internal batch 10
 
 - Added optional `pip-audit` JSON parsing for Python security summaries.
 - Combined npm and Python vulnerable package summaries into the same AI-facing security context.
 - Kept missing Python scanners non-blocking with explicit scanner availability metadata.
 
-## 0.1.9
+### Internal batch 9
 
 - Added top vulnerable package summaries for AI context, handoff, `AIENV.md`, and the dashboard.
 - Ranked vulnerable packages by severity so agents can prioritize review without reading full audit output.
 - Kept security package details bounded to preserve lightweight output.
 
-## 0.1.8
+### Internal batch 8
 
 - Added optional `sync --security` / `scan --security` vulnerability summary collection.
 - Added read-only npm audit parsing for light SBOM security awareness.
 - Exposed security summaries to AI-facing context, handoff, `AIENV.md`, and the dashboard.
 
-## 0.1.7
+### Internal batch 7
 
 - Added stale open intent warnings for long-running environment change plans.
 - Added stale handoff warnings when environment changes happen after the last recorded AI handoff.
 - Added optional `aienvmap handoff --record --actor <agent:id>` timeline entries.
 
-## 0.1.6
+### Internal batch 6
 
 - Added optional `sync --deep` / `scan --deep` read-only global tool inventory.
 - Kept the default scan lightweight while exposing deep inventory summaries to `AIENV.md`, `context`, `handoff`, and the dashboard.
 - Added parsers for npm global packages, pipx tools, uv tools, and Homebrew package versions.
 
-## 0.1.5
+### Internal batch 5
 
 - Added machine-readable trust states for observed, planned, changed, review, verified, and stale environment facts.
 - Added multi-agent intent conflict warnings for shared runtime/package manager targets.
 - Added trust and schema context to `context`, `handoff`, `doctor`, `AIENV.md`, and the dashboard.
 - Repositioned the docs around AI environment coordination instead of general AI project memory.
 
-## 0.1.4
+### Internal batch 4
 
 - Added `aienvmap handoff` for next-agent environment handoff summaries.
 - Added an AI Handoff card to the dashboard.
 - Added handoff test coverage.
 
-## 0.1.3
+### Internal batch 3
 
 - Strengthened the dashboard audit summary with AI decision, open intents, warnings, and recent changes.
 - Added dashboard render coverage for the audit summary surface.
 
-## 0.1.2
+### Internal batch 2
 
 - Added `aienvmap sync` as the simple one-step command for init, scan, `AIENV.md`, manifest, ledger, and dashboard generation.
 - Improved AI preflight context with an explicit next action.
