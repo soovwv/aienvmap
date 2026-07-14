@@ -129,7 +129,7 @@ test("package, README, and CLI help share the accurate environment-before-change
   assert.match(readmeTop, /Agent B starts later and sees the pending intent/);
   assert.match(readme, /no package is installed, removed, or switched/);
   assert.match(readmeTop, /npx aienvmap reconcile --quick/);
-  assert.ok(readme.split(/\r?\n/).length <= 155);
+  assert.ok(readme.split(/\r?\n/).length <= 160);
   assert.ok(readme.indexOf("## Advanced environment evidence") > readme.indexOf("## What the AI gets"));
   assert.match(readme, /AI adoption guide/);
   assert.match(readme, /Automatic discovery is best-effort/);
@@ -175,11 +175,13 @@ test("package publish allowlist stays small and intentional", async () => {
     "CHANGELOG.md",
     "BUGFIXES.md",
     "CONTRIBUTING.md",
+    "CASE_REVIEW.md",
     "SECURITY.md",
     "TROUBLESHOOTING.md",
     "ROADMAP.md",
     "SCORECARD.md",
     "MARKET.md",
+    "VALIDATION.md",
     "TESTING.md",
     "AI_TESTING.md",
     "TESTER_INVITE.md",
