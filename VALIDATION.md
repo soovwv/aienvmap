@@ -4,7 +4,7 @@ Maintainer host scenarios were observed 2026-07-12. The 0.2.0 release candidate 
 
 | Environment | Runtime | Checks | Result |
 | --- | --- | --- | --- |
-| Windows 11 x64 workstation | Node 24.14.1, npm 11.11.0 | full 0.2.0 `npm run release:check`; 340 tests; installed-tarball trial; real-host quick reconciliation | pass; 339 tests passed and 1 platform test was intentionally skipped |
+| Windows 11 x64 workstation | Node 24.14.1, npm 11.11.0 | full 0.2.0 `npm run release:check`; installed-tarball trial; real-host quick reconciliation | pass; the full suite passed and one platform test was intentionally skipped |
 | GitHub Ubuntu runner | Node 20 | full test, contract, performance, package, and installed-tarball trial gates on the merged 0.2.0 main commit | pass |
 | GitHub macOS runner | Node 20 | full test, contract, performance, package, and installed-tarball trial gates on the merged 0.2.0 main commit | pass |
 | GitHub Windows runners | Node 18, 20, and 22 | full test, contract, performance, package, and installed-tarball trial gates on the merged 0.2.0 main commit | pass |
