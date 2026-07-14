@@ -64,7 +64,7 @@ export function renderSummary(status = {}, manifest = {}) {
   const dependencyCommands = dependencyProtocol.commands || {};
   const dependencyFiles = dependencyFilesFor(status.dependencyReadSet);
   const agentPointers = status.agentPointers || {};
-  const discoveryDecision = agentPointers.discoveryDecision || (toList(agentPointers.installed).length ? "auto-ready" : "fallback-required");
+  const discoveryDecision = agentPointers.discoveryDecision || (toList(agentPointers.covered || agentPointers.installed).length ? "auto-ready" : "fallback-required");
   const discoverySetup = agentPointers.nextSetupCommand || (discoveryDecision === "auto-ready" ? "none" : "aienvmap onboard");
   const aiReadiness = status.aiReadiness || {};
   const aiSignals = toList(aiReadiness.signals).slice(0, 5);

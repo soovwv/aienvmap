@@ -266,9 +266,12 @@ export function schemaContract() {
       strictRule: "Local checks are warn-only; use doctor --strict only for CI or explicit human-requested gates."
     },
     agentDiscovery: {
-      mode: "best-effort-instruction-file-pointer",
+      mode: "best-effort-instruction-pointer-or-agent-skill",
       files: ["AGENTS.md", "CLAUDE.md", "GEMINI.md"],
       optionalFiles: [".cursor/rules/environment.md", ".github/copilot-instructions.md"],
+      skillFiles: [".agents/skills/aienvmap/SKILL.md", ".claude/skills/aienvmap/SKILL.md"],
+      apmInstallCommand: "apm install soovwv/aienvmap#main",
+      apmReleaseRule: "Current main is a GitHub-addressable preview, not a claimed central-marketplace listing. The existing v0.1.1 tag predates APM support; use the first APM-compatible release tag when published for immutable installs.",
       startCommand: "aienvmap start",
       discoverCommand: "aienvmap discover",
       installCommand: "aienvmap onboard",
@@ -279,8 +282,8 @@ export function schemaContract() {
       nextSetupCommand: "aienvmap onboard when discovery is fallback-required; none when auto-ready",
       onboardVerification: {
         proofCommand: "aienvmap discover --json",
-        fields: ["status", "pass", "scope", "requested", "installed", "missing", "otherInstalled", "hostAutomaticPickupVerified", "proofCommand", "rule"],
-        rule: "Onboard verification proves only a complete current marker block; it never proves that an AI host automatically loaded the instruction file."
+        fields: ["status", "pass", "scope", "requested", "installed", "skillCovered", "covered", "missing", "otherInstalled", "hostAutomaticPickupVerified", "proofCommand", "rule"],
+        rule: "Onboard verification proves only a complete current marker or recognized agent skill; it never proves that an AI host automatically loaded the project context."
       },
       fallbackCommand: "aienvmap start --json",
       discoveryArtifact: ".aienvmap/discovery.json",
@@ -302,7 +305,7 @@ export function schemaContract() {
         "Run aienvmap sync if .aienvmap/status.json is missing or stale.",
         "Continue project-local code work unless status/context requires environment review."
       ],
-      rule: "aienvmap does not replace agent instruction files, the active shell, or owning-user verification; it gives AI agents shared observed environment evidence and a light SBOM. Instruction-file pointers improve automatic discovery, while discovery.json and aienvmap start give AI hosts a fallback entry contract when pickup is uncertain. Existing artifacts remain directly usable through the fallback read path starting at .aienvmap/discovery.json. Optional Cursor and Copilot pointers are opt-in."
+      rule: "aienvmap does not replace agent instruction files, APM, the active shell, or owning-user verification; it gives AI agents shared observed environment evidence and a light SBOM. Recognized agent skills and instruction-file pointers improve automatic discovery, while discovery.json and aienvmap start give AI hosts a fallback entry contract when pickup is uncertain. Existing artifacts remain directly usable through the fallback read path starting at .aienvmap/discovery.json. Optional Cursor and Copilot pointers are opt-in."
     },
     demo: {
       command: "aienvmap demo",
@@ -368,8 +371,10 @@ export function schemaContract() {
       currentBatch: {
         status: "accumulating",
         releaseType: "stability-batch",
-        themes: ["AI discovery", "verified AI onboarding", "dependency quick check", "dashboard parity", "dashboard maintainability", "AI quality signals", "SBOM interoperability", "recommendation positioning", "shared contract constants", "release gating"],
+        themes: ["APM ecosystem distribution", "AI discovery", "verified AI onboarding", "dependency quick check", "dashboard parity", "dashboard maintainability", "AI quality signals", "SBOM interoperability", "recommendation positioning", "shared contract constants", "release gating"],
         changes: [
+          "APM-compatible bounded agent skill with no hooks, MCP server, executable deployment, or automatic install behavior",
+          "discovery, sync, status, and onboarding recognize APM skill coverage and avoid duplicate native pointer writes",
           "best-effort AI discovery with aiDiscovery.decision, discovery.json, startupChecklist, and fallback prompt contract",
           "onboard re-reads requested marker files and reports fail-closed verification without claiming AI-host automatic pickup",
           "copyPastePrompt, promptUse, and aiEntry recovery fields for AI hosts that miss instruction-file automatic discovery",
@@ -548,9 +553,9 @@ export function schemaContract() {
         writeScope: "Selected marker blocks in supported project instruction files plus normal aienvmap artifacts when sync is enabled; dry-run writes nothing and uninstall removes only selected marker blocks.",
         rootFields: ["status", "mode", "pointers", "sync", "startHere", "readFirst", "nextCommands", "sessionStart", "freshnessRule", "aiDiscovery", "verification", "next"],
         pointerFields: ["file", "target", "mode", "exists", "changed", "action", "beforeBytes", "afterBytes"],
-        verificationFields: ["status", "pass", "scope", "requested", "installed", "missing", "otherInstalled", "hostAutomaticPickupVerified", "proofCommand", "rule"],
+        verificationFields: ["status", "pass", "scope", "requested", "installed", "skillCovered", "covered", "missing", "otherInstalled", "hostAutomaticPickupVerified", "proofCommand", "rule"],
         hostProofBoundary: "hostAutomaticPickupVerified is always false because project-file evidence cannot prove that an AI host loaded its instruction file.",
-        rule: "Read verification first. A failed marker check requires review; a passed check proves file integrity only, not AI-host automatic pickup."
+        rule: "Read verification first. A failed discovery-context check requires review; a passed check proves marker file integrity only or recognized-skill availability, not AI-host automatic pickup."
       },
       startHere: {
         file: ".aienvmap/README.md",

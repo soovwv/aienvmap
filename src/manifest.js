@@ -8,6 +8,7 @@ import { scanGlobalInventory } from "./inventory.js";
 import { scanSecurity } from "./security.js";
 import { buildLightSbom, linkVulnerableDependencies, scanDependencySnapshot } from "./dependencies.js";
 import { hasAgentPointer } from "./agent-pointer.js";
+import { agentSkillLocations, hasAienvmapAgentSkill } from "./agent-skill.js";
 
 export async function buildManifest(dir, options = {}) {
   const now = new Date().toISOString();
@@ -216,6 +217,21 @@ async function scanAgentFiles(dir) {
       installCommand: snippetCommand(name),
       role: agentRole(name)
     };
+  }
+  out.skills = [];
+  for (const location of agentSkillLocations) {
+    const full = path.join(dir, location.file);
+    const fileExists = await exists(full);
+    const content = fileExists ? await fs.readFile(full, "utf8") : "";
+    if (!hasAienvmapAgentSkill(content)) continue;
+    out.skills.push({
+      name: "aienvmap",
+      kind: location.kind,
+      file: location.file.split(path.sep).join("/"),
+      distribution: "apm-compatible-agent-skill",
+      availableTo: location.availableTo,
+      hostAutomaticPickupVerified: false
+    });
   }
   return out;
 }

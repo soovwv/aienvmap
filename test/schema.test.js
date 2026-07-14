@@ -215,7 +215,7 @@ test("schemaContract describes stable AI output contracts", () => {
   assert.equal(schema.aiLoop.steps[0].command, "aienvmap sync");
   assert.equal(schema.aiLoop.steps[5].command, "aienvmap handoff");
   assert.match(schema.aiLoop.strictRule, /warn-only/);
-  assert.equal(schema.agentDiscovery.mode, "best-effort-instruction-file-pointer");
+  assert.equal(schema.agentDiscovery.mode, "best-effort-instruction-pointer-or-agent-skill");
   assert.equal(schema.agentDiscovery.startCommand, "aienvmap start");
   assert.equal(schema.agentDiscovery.discoverCommand, "aienvmap discover");
   assert.equal(schema.agentDiscovery.installCommand, "aienvmap onboard");
@@ -227,6 +227,7 @@ test("schemaContract describes stable AI output contracts", () => {
   assert.match(schema.agentDiscovery.nextSetupCommand, /aienvmap onboard/);
   assert.equal(schema.agentDiscovery.onboardVerification.proofCommand, "aienvmap discover --json");
   assert.ok(schema.agentDiscovery.onboardVerification.fields.includes("hostAutomaticPickupVerified"));
+  assert.ok(schema.agentDiscovery.onboardVerification.fields.includes("skillCovered"));
   assert.match(schema.agentDiscovery.onboardVerification.rule, /never proves/);
   assert.match(schema.agentDiscovery.automaticDiscoveryLimit, /AI hosts only auto-read/);
   assert.equal(schema.agentDiscovery.fallbackCommand, "aienvmap start --json");
@@ -238,6 +239,9 @@ test("schemaContract describes stable AI output contracts", () => {
   assert.ok(schema.agentDiscovery.promptUse.pasteInto.includes("Codex"));
   assert.match(schema.agentDiscovery.promptUse.when, /did not auto-read/);
   assert.ok(schema.agentDiscovery.optionalFiles.includes(".github/copilot-instructions.md"));
+  assert.ok(schema.agentDiscovery.skillFiles.includes(".agents/skills/aienvmap/SKILL.md"));
+  assert.equal(schema.agentDiscovery.apmInstallCommand, "apm install soovwv/aienvmap#main");
+  assert.match(schema.agentDiscovery.apmReleaseRule, /v0\.1\.1 tag predates APM support/);
   assert.deepEqual(schema.agentDiscovery.files, ["AGENTS.md", "CLAUDE.md", "GEMINI.md"]);
   assert.match(schema.agentDiscovery.startupChecklist.join(" "), /dependencyQuickCheck/);
   assert.match(schema.agentDiscovery.startupChecklist.join(" "), /record intent before/);
