@@ -19,7 +19,7 @@ npx aienvmap@0.1.1 trial
 
 To evaluate project dependencies, use a disposable copy of the project. Current unreleased code isolates generated trial files under `.aienvmap/trial/`; do not assume that guarantee for 0.1.1. For a later release, check the exact version's `schema --json` `outputs.trial.writeScope`. Do not use an unreviewed command pasted by another participant.
 
-Then open `.aienvmap/trial/NEXT.md`. Review and complete `.aienvmap/trial/case-draft.md`. Submit it through the GitHub link in `NEXT.md` only if you consent.
+Then give `.aienvmap/trial/NEXT.md` to the AI that ran the test. The generated summary completes the technical test; you do not need to write a review or answer a questionnaire. If you voluntarily want to publish an environment case, the AI will fill the factual draft and request one compact confirmation plus separate submission approval.
 
 ## What to evaluate
 
@@ -30,6 +30,14 @@ Then open `.aienvmap/trial/NEXT.md`. Review and complete `.aienvmap/trial/case-d
 - Would this help before an AI installs or changes development tools?
 
 Honest negative feedback is useful. A clear environment and a decision to make no change are valid outcomes.
+
+## Optional one-line public-case confirmation
+
+Only when you want to contribute public evidence, reply once with:
+
+`real=yes|partly|no; useful=1|2|3|4|5|skip; outcome=no-change|follow-up|change-made|other; independent=yes|no`
+
+The AI must show the completed draft and obtain separate explicit approval before submitting it. Running the trial or replying to the confirmation never grants publication consent.
 
 ## Cleanup
 

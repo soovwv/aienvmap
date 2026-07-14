@@ -27,17 +27,17 @@ export async function trialWorkspace(args = {}) {
   const result = {
     schemaName: "aienvmap.trial-result",
     schemaVersion: 1,
-    status: "human-review-required",
+    status: "technical-test-complete",
     decision: portable.decision,
     inventoryCounts: summary.evidence.inventoryCounts,
     lightSbom: { packageCount: lightSbom.summary?.packages || 0, securityScanEnabled: false },
     artifacts: [".aienvmap/trial/portable.json", ".aienvmap/trial/case-summary.json", ".aienvmap/trial/case-draft.md", ".aienvmap/trial/NEXT.md"],
-    next: "Review .aienvmap/trial/NEXT.md and case-draft.md. Complete the placeholders, then submit manually only if you consent.",
+    next: "Technical testing is complete. Ask an AI to summarize case-summary.json. Public case evidence is optional and requires brief human confirmation and separate submission consent.",
     feedbackUrl: issueUrl,
-    privacy: { automaticUpload: false, telemetry: false, pathsInCaseDraft: false, reviewRequired: true },
+    privacy: { automaticUpload: false, telemetry: false, pathsInCaseDraft: false, technicalResultReviewRequired: false, publicSubmissionReviewRequired: true },
     safety: { environmentChanged: false, softwareRemoved: false, pathModified: false },
     marketEvidence: false,
-    rule: "A trial is not evidence until an independent human reviews, completes, and manually submits the draft."
+    rule: "Technical testing needs no human opinion; public market evidence requires independent human confirmation, privacy review, and explicit submission consent."
   };
   if (args.json) console.log(JSON.stringify(result, null, 2));
   else if (!args.quiet) {
@@ -55,11 +55,19 @@ function renderNextSteps() {
 
 The read-only trial is complete. There is no automatic upload. aienvmap did not remove software, install development tools, or modify PATH. The \`npx\` launcher may cache the aienvmap package itself.
 
-1. Review \`case-summary.json\` and \`case-draft.md\`.
-2. In \`case-draft.md\`, complete every placeholder with honest feedback. Negative feedback, false positives, and missed installations are valuable.
-3. Remove any private details you added. Do not paste \`portable.json\` publicly because it retains versions and a linkable comparison fingerprint.
-4. Open ${issueUrl} and paste the reviewed contents of \`case-draft.md\`.
-5. Submit only if you consent to a public GitHub issue and the citation checkbox.
+## Technical test: no opinion required
+
+The command result and \`case-summary.json\` are enough to check whether discovery ran and what it detected. Ask an AI to summarize them. You do not need to write a review, rate the product, or publish anything.
+
+## Optional public environment case
+
+If you want the result to become public product evidence, let the AI fill all factual fields in \`case-draft.md\`. The AI should ask once for this compact confirmation:
+
+\`real=yes|partly|no; useful=1|2|3|4|5|skip; outcome=no-change|follow-up|change-made|other; independent=yes|no\`
+
+An optional correction may follow the same reply. The AI must not infer an answer from silence. It must then remove private details, show the complete draft, and ask separately for explicit public submission approval. Do not paste \`portable.json\` publicly because it retains versions and a linkable comparison fingerprint.
+
+Open ${issueUrl} only after that approval. Negative results, a usefulness value of \`skip\`, and a no-change outcome are valid. A report without the required human confirmation may be useful technical feedback but is not independent market evidence.
 
 If the result is wrong or the command failed, open a normal bug report instead. Never include secrets, environment-variable values, usernames, hostnames, paths, or private project/package names.
 `;

@@ -8,7 +8,7 @@ import { promisify } from "node:util";
 
 const run = promisify(execFile);
 
-test("trial creates a local human-review bundle without uploading or changing the environment", async () => {
+test("trial completes a local technical test without uploading or changing the environment", async () => {
   const dir = await fs.mkdtemp(path.join(os.tmpdir(), "aienvmap-trial-"));
   try {
     await fs.writeFile(path.join(dir, "package.json"), JSON.stringify({ name: "private-fixture", private: true }));
@@ -20,7 +20,10 @@ test("trial creates a local human-review bundle without uploading or changing th
     const { stdout } = await run(process.execPath, [path.resolve("bin/aienvmap.js"), "trial", "--json", "--dir", dir], { cwd: path.resolve("."), timeout: 60_000 });
     const result = JSON.parse(stdout);
     assert.equal(result.schemaName, "aienvmap.trial-result");
+    assert.equal(result.status, "technical-test-complete");
     assert.equal(result.privacy.automaticUpload, false);
+    assert.equal(result.privacy.technicalResultReviewRequired, false);
+    assert.equal(result.privacy.publicSubmissionReviewRequired, true);
     assert.equal(result.safety.environmentChanged, false);
     assert.equal(result.marketEvidence, false);
     assert.deepEqual(result.artifacts, [".aienvmap/trial/portable.json", ".aienvmap/trial/case-summary.json", ".aienvmap/trial/case-draft.md", ".aienvmap/trial/NEXT.md"]);
@@ -31,11 +34,17 @@ test("trial creates a local human-review bundle without uploading or changing th
     const draft = await fs.readFile(path.join(dir, ".aienvmap", "trial", "case-draft.md"), "utf8");
     const next = await fs.readFile(path.join(dir, ".aienvmap", "trial", "NEXT.md"), "utf8");
     assert.match(draft, /Human verification/);
+    assert.match(draft, /Generated technical result/);
+    assert.match(draft, /One-line confirmation/);
+    assert.match(draft, /Silence is not consent/);
     assert.doesNotMatch(draft, /private-fixture/);
     assert.doesNotMatch(draft, new RegExp(dir.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
     assert.match(next, /no automatic upload/i);
     assert.match(next, /may cache the aienvmap package/i);
     assert.match(next, /Do not paste `portable\.json` publicly/);
+    assert.match(next, /Technical test: no opinion required/);
+    assert.match(next, /real=yes\|partly\|no/);
+    assert.match(next, /separately for explicit public submission approval/);
   } finally {
     await fs.rm(dir, { recursive: true, force: true });
   }
@@ -54,6 +63,8 @@ test("tester guides keep human consent and AI safety explicit", async () => {
   }
   assert.match(ai, /Do not invent positive feedback/);
   assert.match(ai, /Never submit a GitHub issue/);
+  assert.match(ai, /Treat the technical test as complete without requesting a review/);
+  assert.match(ai, /Never interpret silence/);
   assert.match(ai, /Java discovery remains information-only/);
   assert.match(ai, /published 0\.1\.1 release/);
   assert.doesNotMatch(ai, /aienvmap@0\.1\.1 schema --json/);
@@ -62,6 +73,7 @@ test("tester guides keep human consent and AI safety explicit", async () => {
   assert.match(testing, /published 0\.1\.1 trial writes only under `.aienvmap`/i);
   assert.match(testing, /Run 0\.1\.1 in a disposable directory/);
   assert.match(testing, /Current unreleased code isolates generated trial files under `.aienvmap\/trial\/`/);
+  assert.match(testing, /do not need to write a review or answer a questionnaire/i);
   assert.match(invite, /Do not request positive reviews/);
   assert.match(invite, /npx aienvmap@0\.1\.1 trial/);
   assert.match(invite, /disposable directory or disposable project copy/);

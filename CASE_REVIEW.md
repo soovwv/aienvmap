@@ -2,6 +2,8 @@
 
 This checklist keeps public tester reports separate from verified market evidence. A label records evidence maturity, not product quality or author credibility.
 
+A completed local technical trial needs no user opinion and is useful for product debugging. Apply evidence labels only when the tester voluntarily chooses the public-case path; never turn routine testing into a review request.
+
 ## Intake
 
 New environment-case issues receive `evidence` and `environment-case` automatically. Before investigating:
