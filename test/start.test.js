@@ -62,6 +62,9 @@ test("start syncs a missing workspace then returns the AI startup contract", asy
   await assert.doesNotReject(fs.access(path.join(dir, ".aienvmap", "reconcile.json")));
   const reconcile = JSON.parse(await fs.readFile(path.join(dir, ".aienvmap", "reconcile.json"), "utf8"));
   assert.equal(reconcile.scanMode, "quick");
+  assert.equal(reconcile.baselineUse.status, "automatic-observation");
+  assert.equal(reconcile.baselineUse.checkEligible, false);
+  assert.equal(result.reconciliation.baselineUse.checkEligible, false);
 });
 
 test("start reads fresh artifacts without resyncing", async () => {

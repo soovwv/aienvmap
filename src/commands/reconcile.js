@@ -75,6 +75,9 @@ export async function reconcileWorkspace(args = {}) {
   const baselinePath = args.baseline ? path.resolve(dir, String(args.baseline)) : reconcileJsonPath(dir);
   const baseline = args.check ? await readJson(baselinePath, null) : null;
   if (args.check && !baseline) throw new Error(`missing reconciliation baseline at ${baselinePath}; run \`aienvmap reconcile --write\` first`);
+  if (args.check && baseline?.baselineUse?.checkEligible !== true) {
+    throw new Error(`reconciliation snapshot at ${baselinePath} was created automatically and is not an accepted drift baseline; review the environment, then run \`aienvmap reconcile --write\``);
+  }
   const scanMode = args.quick || args.full_packages ? null : baseline?.scanMode;
   if (inspectedHome && scanMode === "full-packages") throw new Error("--inspect-home cannot check a full-packages baseline; create a standard or quick baseline for the inspected home");
   const result = inspectedHome ? await inspectExplicitHome(dir, inspectedHome) : await inspectPackageManagers(dir, {
@@ -102,6 +105,7 @@ export async function reconcileWorkspace(args = {}) {
     return check;
   }
   if (args.write) {
+    result.baselineUse = baselineUse(args);
     result.written = reconcileJsonPath(dir);
     await writeJson(result.written, result);
   }
@@ -231,6 +235,11 @@ export function summarizeReconciliation(value = {}) {
     decision: value.decision || "unknown",
     generatedAt: value.generatedAt || "",
     artifact: ".aienvmap/reconcile.json",
+    baselineUse: value.baselineUse || {
+      status: "not-recorded",
+      checkEligible: false,
+      rule: "Only an explicit aienvmap reconcile --write accepts an observation as a drift-check baseline."
+    },
     detailedToolchains: {
       node: value.node?.installations?.length || 0,
       npm: value.npm?.installations?.length || 0,
@@ -291,5 +300,17 @@ export function summarizeReconciliation(value = {}) {
     },
     nextCommand: value.decision === "review" ? "aienvmap reconcile --json --full-packages" : "aienvmap status --json",
     rule: "Read the report before runtime or package-manager changes; removal still requires explicit human approval."
+  };
+}
+
+function baselineUse(args = {}) {
+  const automatic = args.automatic_snapshot === true;
+  return {
+    status: automatic ? "automatic-observation" : "explicit-baseline",
+    checkEligible: !automatic,
+    sourceCommand: automatic ? "aienvmap start" : "aienvmap reconcile --write",
+    rule: automatic
+      ? "This startup observation is AI context, not an accepted drift baseline. Review it and run aienvmap reconcile --write before enabling reconcile --check."
+      : "The explicit write accepts the current observation as the drift baseline; drift checks remain read-only and never authorize environment changes."
   };
 }

@@ -1224,8 +1224,23 @@ test("reconcile --write saves only an aienvmap report", async () => {
   const saved = JSON.parse(await fs.readFile(path.join(dir, ".aienvmap", "reconcile.json"), "utf8"));
   assert.equal(saved.schemaName, "aienvmap.reconcile");
   assert.equal(saved.mode, "read-only");
+  assert.equal(saved.baselineUse.status, "explicit-baseline");
+  assert.equal(saved.baselineUse.checkEligible, true);
   assert.equal(saved.written, json.written);
   assert.deepEqual((await fs.readdir(path.join(dir, ".aienvmap"))).sort(), ["reconcile.json"]);
+});
+
+test("reconcile --check rejects an automatic startup observation as a baseline", async () => {
+  const dir = await fs.mkdtemp(path.join(os.tmpdir(), "aienvmap-reconcile-auto-baseline-"));
+  const cli = path.resolve("bin/aienvmap.js");
+  const { execFile } = await import("node:child_process");
+  const { promisify } = await import("node:util");
+  const run = promisify(execFile);
+  await run(process.execPath, [cli, "start", "--json", "--dir", dir], { cwd: path.resolve(".") });
+  await assert.rejects(
+    run(process.execPath, [cli, "reconcile", "--check", "--json", "--dir", dir], { cwd: path.resolve(".") }),
+    /not an accepted drift baseline/
+  );
 });
 
 test("reconcile --check reports project drift with stable exit code 2", async () => {

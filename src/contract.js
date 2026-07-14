@@ -597,7 +597,7 @@ export function schemaContract() {
         file: ".aienvmap/reconcile.json",
         command: "aienvmap reconcile --json --write",
         mode: "non-mutating-by-design environment inspection; writes only the report when --write is explicit",
-        rootFields: ["schemaName", "schemaVersion", "generatedAt", "platform", "architecture", "mode", "scanMode", "scope", "limitations", "project", "node", "npm", "python", "otherRuntimes", "findings", "decision", "aiDecision", "aiDecisionEnvelope", "written"],
+        rootFields: ["schemaName", "schemaVersion", "generatedAt", "platform", "architecture", "mode", "scanMode", "scope", "limitations", "project", "node", "npm", "python", "otherRuntimes", "findings", "decision", "aiDecision", "aiDecisionEnvelope", "baselineUse", "written"],
         probeFields: ["status", "reason"],
         probeStatusValues: ["failed"],
         probeFailureValues: ["command-not-found", "permission-denied", "timeout-or-terminated", "nonzero-exit", "version-not-recognized", "execution-failed"],
