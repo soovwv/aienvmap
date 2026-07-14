@@ -200,7 +200,7 @@ test("contextWorkspace JSON includes compact step summary", async () => {
   assert.equal(json.operationalSafety.defaultBehavior, "warn-only");
   assert.match(json.operationalSafety.mustNotDo.join(" "), /global software automatically/);
   assert.match(json.preflight.operationalSafety.rule, /local operation lightweight/);
-  assert.equal(json.qualitySignals.status, "prototype-hardening");
+  assert.equal(json.qualitySignals.status, "release-candidate");
   assert.ok(json.qualitySignals.principles.includes("simple"));
   assert.match(json.qualitySignals.checks.map((item) => item.signal).join(" "), /fallback prompt/);
   assert.match(json.qualitySignals.recommendWhenAllTrue.join(" "), /light SBOM limitations/);

@@ -6,9 +6,9 @@ There is no automatic upload. Any public submission requires a separate human de
 
 ## AI task
 
-1. Explain that the trial performs bounded environment discovery by running version probes for discovered runtime executables. The published 0.1.1 trial writes under `.aienvmap` and may also execute project Maven/Gradle wrappers, so it must run in a new empty disposable directory, not a project copy. The `npx` launcher may cache aienvmap itself. The trial must not remove software, install development tools, consolidate versions, modify PATH, or upload data. Current unreleased code no longer executes project wrappers in trial or quick mode.
+1. Explain that 0.2.0 performs bounded environment discovery by running version probes for discovered runtime executables. It writes trial artifacts only under `.aienvmap/trial/` and skips project Maven/Gradle wrappers. The `npx` launcher may cache aienvmap itself. The trial requests no software removal, development-tool installation, version consolidation, PATH modification, or upload.
 2. Ask the human for approval before running the exact trial command supplied by the maintainer.
-3. For the published 0.1.1 release, run `npx aienvmap@0.1.1 trial` only in the human-approved new empty disposable directory. Its `schema --json` predates `outputs.trial`. When testing a later exact version, read and obey `outputs.trial.writeScope` only if that version's schema exposes it.
+3. Run `npx aienvmap@0.2.0 trial` only in the human-approved disposable directory or disposable project copy. Read and obey that exact version's `schema --json` `outputs.trial` contract. Version 0.1.1 is a legacy trial with broader project-local writes and must not be substituted.
 4. Read `.aienvmap/trial/NEXT.md` and `case-summary.json`. Read `case-draft.md` only if the human chooses the optional public-case path. Do not expose or submit `portable.json`.
 5. Explain the observed counts and findings without treating them as proof that cleanup is needed.
 6. Treat the technical test as complete without requesting a review. Summarize the generated result and ask no opinion questions unless the human wants to create a public environment case.

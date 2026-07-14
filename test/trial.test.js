@@ -70,9 +70,10 @@ test("tester guides keep human consent and AI safety explicit", async () => {
   const ai = await fs.readFile(path.resolve("AI_TESTING.md"), "utf8");
   const invite = await fs.readFile(path.resolve("TESTER_INVITE.md"), "utf8");
   const release = await fs.readFile(path.resolve("RELEASE_NOTES_0.1.1.md"), "utf8");
+  const currentRelease = await fs.readFile(path.resolve("RELEASE_NOTES_0.2.0.md"), "utf8");
   const readme = await fs.readFile(path.resolve("README.md"), "utf8");
   for (const text of [testing, ai]) {
-    assert.match(text, /0\.1\.1 trial/);
+    assert.match(text, /0\.2\.0 trial/);
     assert.match(text, /no automatic upload/i);
     assert.match(text, /human/i);
   }
@@ -81,22 +82,23 @@ test("tester guides keep human consent and AI safety explicit", async () => {
   assert.match(ai, /Treat the technical test as complete without requesting a review/);
   assert.match(ai, /Never interpret silence/);
   assert.match(ai, /Java discovery remains information-only/);
-  assert.match(ai, /published 0\.1\.1 release/);
+  assert.match(ai, /Version 0\.1\.1 is a legacy trial/);
   assert.doesNotMatch(ai, /aienvmap@0\.1\.1 schema --json/);
-  assert.match(ai, /read and obey `outputs\.trial\.writeScope` only if/);
-  assert.match(ai, /published 0\.1\.1 trial writes under `.aienvmap`/);
-  assert.match(testing, /published 0\.1\.1 trial writes only under `.aienvmap`/i);
-  assert.match(testing, /Run 0\.1\.1 only in a new empty disposable directory/);
-  assert.match(testing, /Current unreleased code isolates generated trial files under `.aienvmap\/trial\/`/);
+  assert.match(ai, /Read and obey that exact version's `schema --json` `outputs\.trial` contract/);
+  assert.match(ai, /writes trial artifacts only under `.aienvmap\/trial\/`/);
+  assert.match(testing, /Version 0\.2\.0 isolates generated files under `.aienvmap\/trial\/`/i);
+  assert.match(testing, /disposable directory or disposable project copy/);
   assert.match(testing, /do not need to write a review or answer a questionnaire/i);
   assert.match(invite, /Do not request positive reviews/);
-  assert.match(invite, /npx aienvmap@0\.1\.1 trial/);
-  assert.match(invite, /new empty disposable directory/);
-  assert.match(invite, /Do not use a project copy/);
-  assert.match(invite, /may refresh existing `.aienvmap` state and execute project Maven\/Gradle wrappers/);
+  assert.match(invite, /npx aienvmap@0\.2\.0 trial/);
+  assert.match(invite, /disposable directory or disposable project copy/);
+  assert.match(invite, /skips project Maven\/Gradle wrappers/);
+  assert.match(invite, /side-effect-free behavior cannot be guaranteed/);
   assert.match(release, /signed npm provenance/);
   assert.match(release, /```bash\s+npx aienvmap@0\.1\.1 trial\s+```/);
   assert.match(release, /Run it in a disposable directory or disposable project copy/);
-  assert.match(readme, /Run `npx aienvmap@0\.1\.1 trial` only in a new empty disposable directory/);
-  assert.match(readme, /Current unreleased code isolates trial writes to `.aienvmap\/trial\/`/);
+  assert.match(currentRelease, /npx aienvmap@0\.2\.0 trial/);
+  assert.match(currentRelease, /arbitrary third-party executable side effects cannot be guaranteed absent/);
+  assert.match(readme, /Run `npx aienvmap@0\.2\.0 trial` in a disposable directory or disposable project copy/);
+  assert.match(readme, /Trial artifacts are isolated under `.aienvmap\/trial\/`/);
 });

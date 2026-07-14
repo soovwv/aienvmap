@@ -15,7 +15,7 @@ Use it if several AI agents or sessions share environment-affecting work in one 
 
 ## External Trial
 
-Run `npx aienvmap@0.1.1 trial` only in a new empty disposable directory on a real development machine. Do not use a project copy: published 0.1.1 may refresh existing `.aienvmap` state and execute project Maven/Gradle wrappers while probing Java bindings; nothing is uploaded automatically. Current unreleased code isolates trial writes to `.aienvmap/trial/` and skips project wrappers in trial and quick mode. Both versions run bounded runtime version probes, so arbitrary discovered executables are not guaranteed side-effect-free. Follow [TESTING.md](TESTING.md), or give [AI_TESTING.md](AI_TESTING.md) to an AI agent. Technical testing needs no human review; optional public evidence uses one compact confirmation, complete-draft review, and separate submission consent. Community maintainers can reuse [TESTER_INVITE.md](TESTER_INVITE.md).
+Run `npx aienvmap@0.2.0 trial` in a disposable directory or disposable project copy on a real development machine. Trial artifacts are isolated under `.aienvmap/trial/`, project Maven/Gradle wrappers are skipped, and nothing is uploaded automatically. The trial runs bounded runtime version probes, so arbitrary discovered executables are not guaranteed side-effect-free. Follow [TESTING.md](TESTING.md), or give [AI_TESTING.md](AI_TESTING.md) to an AI agent. Technical testing needs no human review; optional public evidence uses one compact confirmation, complete-draft review, and separate submission consent. Community maintainers can reuse [TESTER_INVITE.md](TESTER_INVITE.md).
 
 ## 10-Second Use
 
@@ -42,7 +42,7 @@ Try `npx aienvmap demo` for an isolated conflict example. It shows one agent's d
 
 `start` creates the env map, light SBOM, AI status, discovery entry, and human dashboard when missing or stale. `reconcile` is read-only by default. Removal, PATH edits, runtime switching, global installs, and lockfile rewrites always require review.
 
-`discover` is read-only and reports `aiDiscovery.decision`: `auto-ready` or `fallback-required`. Current main is also an APM-compatible GitHub skill preview (`apm install soovwv/aienvmap/.apm/skills/aienvmap#main --target agent-skills,claude`), not a claimed central-marketplace listing; the old `v0.1.1` tag is not APM-compatible, so use the first APM-enabled release tag when published for an immutable install. The skill-subpath command keeps APM's installed package footprint bounded. APM deploys the skill only: no hooks, MCP server, executable, runtime install, or automatic command execution. `onboard --dry-run` previews tiny marker-scoped pointers, while `onboard` preserves a recognized APM skill and writes native pointers only where coverage is missing. Automatic discovery is best-effort: verification proves marker or skill availability, never AI-host pickup. If pickup is uncertain, paste `copyPastePrompt` from `start --json` or `.aienvmap/discovery.json`, then follow `sessionUse` and `aiEntry`.
+`discover` is read-only and reports `aiDiscovery.decision`: `auto-ready` or `fallback-required`. The bounded APM GitHub skill subpath can be installed with `apm install soovwv/aienvmap/.apm/skills/aienvmap#v0.2.0 --target agent-skills,claude` after the immutable release tag exists; this is a distribution channel, not a claimed central-marketplace listing. APM deploys the skill only: no hooks, MCP server, executable, runtime install, or automatic command execution. `onboard --dry-run` previews tiny marker-scoped pointers, while `onboard` preserves a recognized APM skill and writes native pointers only where coverage is missing. Automatic discovery is best-effort: verification proves marker or skill availability, never AI-host pickup. If pickup is uncertain, paste `copyPastePrompt` from `start --json` or `.aienvmap/discovery.json`, then follow `sessionUse` and `aiEntry`.
 
 Formerly published as `aienvmp`. Use `aienvmap` going forward; new workspaces write `.aienvmap/` artifacts.
 
@@ -86,7 +86,7 @@ AIENV.md                 # Markdown env map for AI agents
 
 ## AI Contract
 
-- The current repository's `schema --json` contract includes the read-only external-trial write, privacy, safety, and manual-submission boundaries. Published 0.1.1 supports `trial` but predates `outputs.trial`; run its trial directly.
+- The 0.2.0 `schema --json` contract includes trial write scope, privacy, precise safety fields, runtime-probe boundaries, and manual-submission rules. Version 0.1.1 supports `trial` but predates `outputs.trial`.
 - `start`, `status`, `context`, `reconcile`, and SBOM outputs share `aiDecisionEnvelope`; read it first, while `requiresHumanApprovalBefore` keeps destructive action classes review-only even when clear.
 - `reconcile` also emits a proposal-only `consolidationPlan`: evidence, stop conditions, rollback requirements, and approval gates - never an apply or removal command.
 - `schemaVersion`, `contractVersion`, `stableFrom`, and compatibility rules are explicit.

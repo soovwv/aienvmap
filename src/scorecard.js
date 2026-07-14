@@ -4,7 +4,7 @@ const technicalDimensions = [
   dimension("environment-inventory", 19, 20, ["aienvmap reconcile --json --full-packages", "aienvmap reconcile --portable --json", "test/reconcile.test.js"], "Validate portable reports and consolidation plans against external, mixed-manager environments."),
   dimension("multi-ai-coordination", 13, 15, ["aienvmap demo --json", "test/demo.test.js"], "Validate the workflow in an external multi-user case study."),
   dimension("sbom-interoperability", 12, 15, ["aienvmap sbom --json", "test/sbom.test.js"], "Validate imported CycloneDX and SPDX evidence against more generators."),
-  dimension("safety-and-quality", 20, 20, ["npm test", "npm run perf:check", "test/reconcile.test.js", ".github/workflows/ci.yml", "aienvmap@0.1.1 dist.attestations"], "Validate performance budgets and release safety with more external environments.")
+  dimension("safety-and-quality", 19, 20, ["npm run release:check", "npm run pack:install-check", "test/reconcile.test.js", ".github/workflows/ci.yml", "aienvmap@0.1.1 dist.attestations"], "Validate the 0.2.0 package and probe boundaries in independent external environments.")
 ];
 
 const marketDimensions = [
@@ -47,7 +47,7 @@ export function productScorecard() {
     },
     adjacentAlternatives,
     strengths: ["zero-runtime-dependency local operation", "AI-readable environment and decision contracts", "read-only multi-install discovery", "bounded APM skill distribution with consumer-install regression coverage", "light SBOM interoperability", "explicit approval boundaries"],
-    weaknesses: ["limited independent adoption evidence", "few external case studies", "AI-host automatic skill pickup remains unverified", "cross-user versions require owning-user verification", "adjacent tools increasingly combine AI context, agent worktrees, runtime setup, and reproducible environments", "pre-0.2.0 contract stability"],
+    weaknesses: ["limited independent adoption evidence", "few external case studies", "AI-host automatic skill pickup remains unverified", "cross-user versions require owning-user verification", "third-party runtime version probes cannot guarantee side-effect-free executables", "adjacent tools increasingly combine AI context, agent worktrees, runtime setup, and reproducible environments"],
     nextPriorities: [
       { priority: 1, outcome: "external problem evidence", proof: "at least three reproducible user environments, including one shared-server owner-verified report" },
       { priority: 2, outcome: "AI-host integration evidence", proof: "verified automatic-pickup and fallback examples for major coding-agent hosts" },

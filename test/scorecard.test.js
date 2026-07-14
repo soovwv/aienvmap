@@ -7,9 +7,9 @@ import { productScorecard } from "../src/scorecard.js";
 test("product scorecard separates technical readiness from market validation", () => {
   const result = productScorecard();
   assert.equal(result.schemaName, "aienvmap-product-scorecard");
-  assert.equal(result.technicalReadiness.score, 93);
+  assert.equal(result.technicalReadiness.score, 92);
   assert.equal(result.marketValidation.score, 43);
-  assert.equal(result.overall.score, 78);
+  assert.equal(result.overall.score, 77);
   assert.ok(result.technicalReadiness.score > result.marketValidation.score);
   assert.match(result.limitations.join(" "), /not inferred from feature count/);
 });

@@ -1,6 +1,6 @@
 {
   "name": "aienvmap",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "description": "Dependency-free environment map and explicit change handoff for AI coding agents sharing a repository or machine.",
   "type": "module",
   "bin": {
@@ -35,6 +35,7 @@
     "TESTING.md",
     "AI_TESTING.md",
     "TESTER_INVITE.md",
+    "RELEASE_NOTES_0.2.0.md",
     "action.yml",
     "examples",
     ".agents",
@@ -79,6 +80,5 @@
   "license": "Apache-2.0",
   "engines": {
     "node": ">=18"
-  },
-  "author": ""
+  }
 }

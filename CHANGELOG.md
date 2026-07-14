@@ -1,11 +1,18 @@
 # Changelog
 
-## 0.1.1
-
-- Added a one-command, read-only `trial` flow that writes a privacy-reviewed tester bundle locally without telemetry or automatic upload.
-- Added external tester and AI-assisted testing guides with explicit human consent, redaction, and no-cleanup rules.
-
 ## Unreleased
+
+- No changes yet.
+
+## 0.2.0 - 2026-07-15
+
+- Stabilized the additive AI-readable contract, conservative change authority, and multi-agent coordination workflow.
+- Added read-only multi-install discovery for Node, Python, Java, and common managers with explicit failed-probe evidence.
+- Added isolated, non-mutating-by-design `trial` output with no telemetry or automatic upload; project wrappers are skipped, while arbitrary third-party executable side effects cannot be guaranteed absent.
+- Added light SBOM coordination, external CycloneDX/SPDX evidence import, and optional scanner handoff.
+- Added bounded APM skill distribution without hooks, MCP configuration, runtime installation, or automatic execution.
+- Added cross-platform verification of the installed npm tarball and kept zero runtime dependencies.
+- Added a one-command trial flow and AI-assisted testing guides with explicit human consent and redaction rules.
 
 - Added an APM-compatible, non-executing agent skill and safe coexistence with native onboarding pointers; APM distributes guidance while aienvmap retains explicit, review-first environment authority.
 - Prefer the APM skill-subpath install so consumers do not retain the full repository as the installed package payload.
