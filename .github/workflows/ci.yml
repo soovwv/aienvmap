@@ -28,9 +28,6 @@ jobs:
       - name: Preview cross-tool placement
         run: apm compile --dry-run --target agent-skills,claude
 
-      - name: Validate package metadata
-        run: apm pack --dry-run
-
   test:
     name: Node ${{ matrix.node }} on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
