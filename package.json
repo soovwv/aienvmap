@@ -20,6 +20,7 @@
     "scripts/performance-check.mjs",
     "scripts/contract-check.mjs",
     "scripts/apm-consumer-check.mjs",
+    "scripts/installed-package-check.mjs",
     "contracts",
     "README.md",
     "LICENSE",
@@ -43,12 +44,13 @@
   "scripts": {
     "test": "node --test",
     "pack:dry": "npm pack --dry-run",
+    "pack:install-check": "node scripts/installed-package-check.mjs",
     "smoke": "node bin/aienvmap.js --version && node bin/aienvmap.js --help",
     "perf:check": "node scripts/performance-check.mjs",
     "contract:check": "node scripts/contract-check.mjs",
     "text:check": "node scripts/text-policy-check.mjs",
     "demo:conflict": "node examples/multi-agent-conflict-demo.mjs",
-    "release:check": "npm run text:check && npm test && npm run smoke && npm run contract:check && npm run perf:check && npm run demo:conflict && npm run pack:dry"
+    "release:check": "npm run text:check && npm test && npm run smoke && npm run contract:check && npm run perf:check && npm run demo:conflict && npm run pack:dry && npm run pack:install-check"
   },
   "keywords": [
     "ai",
@@ -77,11 +79,6 @@
   "license": "Apache-2.0",
   "engines": {
     "node": ">=18"
-  },
-  "main": "index.js",
-  "directories": {
-    "example": "examples",
-    "test": "test"
   },
   "author": ""
 }
