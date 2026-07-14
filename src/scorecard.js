@@ -41,7 +41,7 @@ export function productScorecard() {
       report: "MARKET.md",
       observedAt: "2026-07-14",
       publicSignals: { githubStars: 0, githubForks: 0, independentOutcomeVerifiedCases: 0, npmDownloadsWindow: { requests: 116, start: "2026-06-14", end: "2026-07-13" } },
-      adjacentSignals: { observedAt: "2026-07-14", microsoftApmStars: 3216, devboxStars: 12166, floxStars: 4047, miseStars: 30724, miseAiWorktreeRelease: "v2026.7.5" },
+      adjacentSignals: { observedAt: "2026-07-14", microsoftApmStars: 3219, microsoftApmRelease: "v0.25.0", devboxStars: 12166, floxStars: 4047, miseStars: 30724, miseAiWorktreeRelease: "v2026.7.5" },
       interpretation: "npm downloads are requests, not unique users, retention, successful setups, or recommendation evidence.",
       scoreImpact: "none until independent outcome-verified evidence exists"
     },
