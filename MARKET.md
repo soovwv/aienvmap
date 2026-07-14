@@ -19,7 +19,7 @@ Do not convert downloads into users, retention, successful setups, or recommenda
 | Product | Public GitHub signal at observation | Primary job | Relationship to aienvmap |
 | --- | ---: | --- | --- |
 | [mise](https://github.com/jdx/mise) | 30,724 stars | manage dev tools, environment variables, tasks, and config trust; v2026.7.5 explicitly shares trust into AI-agent worktrees and prefers the npm Codex distribution | increasing AI-workspace adjacency, but aienvmap observes mixed active routing and coordinates changes rather than trusting config, installing, or switching tools |
-| [Microsoft APM](https://github.com/microsoft/apm) | 3,216 stars | declare and reproduce agent context; its runtime command can also install selected AI runtime CLIs | growing adjacency around AI setup, but aienvmap provides observed host runtime/routing evidence and never installs agent packages or runtime CLIs |
+| [Microsoft APM](https://github.com/microsoft/apm) | 3,216 stars | declare and reproduce agent context across major AI hosts | distribution channel for aienvmap's bounded skill; aienvmap remains the observed host evidence and review-first coordination layer |
 | [Devbox](https://github.com/jetify-com/devbox) | 12,166 stars | create isolated, reproducible development environments | adjacent declarative environment; aienvmap focuses on existing non-clean machines without replacing the shell |
 | [Flox](https://github.com/flox/flox) | 4,047 stars | define and activate reusable environments across local, CI, and production | closer AI/environment adjacency, but declarative activation differs from aienvmap's read-only host evidence and change coordination |
 | [asdf](https://github.com/asdf-vm/asdf) | 25,453 stars | extensible multi-runtime version management | adjacent runtime manager with a mature plugin ecosystem |
@@ -47,7 +47,7 @@ The strongest differentiation is the combination of:
 
 The practical substitute is often not one product but a manual bundle: `AGENTS.md`, shell scripts, version-manager commands, SBOM tools, and team conventions. aienvmap must prove it reduces repeated AI rediscovery and unsafe environment assumptions enough to justify one more tool.
 
-APM plus Flox/Devbox can increasingly cover agent context, AI runtime CLI setup, and reproducible clean environments as a bundle. mise now also treats AI-agent worktrees and Codex installation as first-class workflow concerns. aienvmap should not follow them into installation, activation, package resolution, runtime download, config trust, or agent-package distribution; its defensible wedge is evidence from mixed existing hosts plus review-first multi-AI coordination.
+APM plus Flox/Devbox can increasingly cover agent context, AI runtime CLI setup, and reproducible clean environments as a bundle. mise now also treats AI-agent worktrees and Codex installation as first-class workflow concerns. aienvmap should use APM for skill distribution instead of rebuilding that ecosystem, while refusing installation, activation, package resolution, runtime download, config trust, hooks, or automatic execution. Its defensible wedge remains evidence from mixed existing hosts plus review-first multi-AI coordination.
 
 ## Strengths
 
@@ -70,11 +70,12 @@ APM plus Flox/Devbox can increasingly cover agent context, AI runtime CLI setup,
 
 ## Positioning and improvement strategy
 
-1. Do not add package-manager, environment activation, agent-package distribution, or vulnerability-database behavior.
+1. Do not build an agent package manager, environment activator, runtime installer, or vulnerability database; use APM only to distribute the bounded advisory skill.
 2. Collect three independent outcome-verified mixed-runtime cases using the portable case template; include one shared-server case pairing administrator file-presence evidence with an owning-user report.
 3. Measure whether an AI identifies the real problem, requests missing evidence, avoids destructive advice, and improves after before/after comparison.
 4. Publish host-specific proof only after it runs on that host; do not infer compatibility from instruction-file presence.
 5. Stabilize the additive contract and batch a 0.2.0 release only when external evidence is ready; preserve the verified 0.1.1 provenance gate.
+6. Treat current-main APM installs as preview-only, verify disposable host installs, and publish one immutable APM-compatible tag with the next meaningful release.
 
 ## Evidence sources
 

@@ -15,7 +15,7 @@ Reconciliation may propose consolidation evidence and approval gates, but never 
 ## Competitive Boundary
 
 - mise, Flox, and Devbox declare, install, lock, or reproduce environments; aienvmap observes the runtime state that already exists on a host and gives AI agents review-first coordination evidence.
-- Microsoft APM packages and reproduces agent instructions, prompts, skills, plugins, and MCP declarations; aienvmap supplies runtime/package-manager truth that those agents can read before acting.
+- Microsoft APM is a distribution channel for aienvmap's bounded agent skill, not an environment authority: APM delivers the workflow, then aienvmap supplies observed runtime/package-manager truth before an AI acts.
 - Syft, Trivy, Grype, and Dependency-Track generate or analyze full security evidence; aienvmap imports only bounded CycloneDX/SPDX references with digest freshness and points AI back to originals instead of duplicating their databases.
 - `reconcile --check` detects drift from a reviewed host snapshot. It does not replace runtime lockfiles, create an isolated shell, or repair the machine.
 
@@ -41,6 +41,8 @@ The default remains advisory and lightweight: observe existing state, explain co
 - Current shared-server safety: distinguish project, current-user, and visible-host facts, redact user paths by default, atomically replace generated artifacts, serialize concurrent JSONL writes with stale-lock recovery, optionally reject stale writes with `coordinationRevision`, and distinguish optional actor/session intent owners with bounded advisory lease expiry.
 - Next shared-server safety: validate session ownership and lease review behavior in an independent concurrent multi-user deployment before claiming complete coordination.
 - Current lifecycle integration: startup/status surface a compact reconciliation decision, and `reconcile --check` provides an opt-in exit-code drift gate for stable or self-hosted PR environments; no cleanup or installation runs automatically.
+- Current APM integration: `apm.yml` and one compact skill distribute the advisory workflow to the shared `.agents/skills` and Claude skill roots; no hooks, MCP server, executable deployment, or automatic aienvmap/npm install is declared.
+- Current onboarding coexistence: discovery, sync, status, and onboard recognize the marked APM skill; onboard preserves it and creates native pointer blocks only for requested tools without skill coverage.
 - Shared-server inspection: `reconcile --inspect-home` accepts one explicit readable absolute home, isolates invoking-user environment variables and PATH, scans bounded known roots without invoking discovered executables, and keeps paths redacted; it never recursively enumerates arbitrary homes.
 - Bounded multi-home inspection: `reconcile --inspect-homes` accepts up to eight explicit alias/home entries, rejects duplicate aliases and canonical paths, scans sequentially with no candidate execution, and emits portable evidence without manifest or home paths. It never enumerates operating-system accounts.
 - Owner verification: `reconcile --portable-compare ... --owner-verification` pairs administrator no-exec and owning-user reports by explicit operator assertion, then compares redacted category coverage without claiming user identity, exact path correspondence, or removal authority.
@@ -64,6 +66,7 @@ Acceptance gates: cross-platform fixtures for every manager, no writes in defaul
 - Keep README, examples, schema, dashboard, and packaged skill aligned on AI workspace coordination
 - Treat `onboard.verification` as marker-file integrity only; it never proves that an AI host loaded the pointer
 - Validate actual start/onboard/discover fallback pickup across Codex, Claude, Gemini, Cursor, and Copilot surfaces
+- Validate APM install and host pickup in disposable Codex, Claude, Gemini, Cursor, and Copilot projects; publish the first immutable APM-compatible tag with the batched `0.2.0` release rather than pointing users at the old `v0.1.1` tag
 - Keep JSON contracts additive after `0.2.0`; breaking changes require a contract version bump and migration notes
 - Keep release provenance fail-closed: current main, matching version tag, unpublished version, explicit confirmation, compatible Node/npm floors, OIDC attestation, and post-publish registry verification; trusted publishing receives no token and the token fallback remains an explicit security exception until trusted publisher configuration is verified
 - Deprecate `0.1.x` prototype versions after `0.2.0` is published
