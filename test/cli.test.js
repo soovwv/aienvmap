@@ -75,7 +75,7 @@ test("CLI schema prints the AI-readable output contract without a workspace", as
 
   const json = JSON.parse(stdout);
   assert.equal(json.name, "aienvmap-contract");
-  assert.equal(json.contractVersion, "0.1-prototype");
+  assert.equal(json.contractVersion, "0.2");
   assert.equal(json.stableFrom, "0.2.0");
   assert.equal(json.outputs.status.contract.name, "aienvmap-preflight");
 });
@@ -118,7 +118,7 @@ test("package, README, and CLI help share the accurate environment-before-change
   assert.match(readmeTop, /Know the development environment before an AI changes it/);
   assert.match(readmeTop, /environment map and explicit change handoff/);
   assert.match(readmeTop, /dependency-free/);
-  assert.match(readmeTop, /npx aienvmap@0\.1\.1 trial/);
+  assert.match(readmeTop, /npx aienvmap@0\.2\.0 trial/);
   assert.match(readmeTop, /nothing is uploaded automatically/);
   assert.match(readmeTop, /without silently installing, switching, or removing software/);
   assert.match(readmeTop, /## Why/);
@@ -155,7 +155,8 @@ test("package stays runtime dependency-free for lightweight shared machines", as
   assert.equal(pkg.optionalDependencies, undefined);
   assert.equal(pkg.peerDependencies, undefined);
   assert.equal(pkg.bundledDependencies, undefined);
-  assert.equal(pkg.version, "0.1.1");
+  assert.equal(pkg.main, undefined);
+  assert.equal(pkg.version, "0.2.0");
 });
 
 test("package publish allowlist stays small and intentional", async () => {
@@ -167,6 +168,7 @@ test("package publish allowlist stays small and intentional", async () => {
     "scripts/performance-check.mjs",
     "scripts/contract-check.mjs",
     "scripts/apm-consumer-check.mjs",
+    "scripts/installed-package-check.mjs",
     "contracts",
     "README.md",
     "LICENSE",
@@ -181,6 +183,7 @@ test("package publish allowlist stays small and intentional", async () => {
     "TESTING.md",
     "AI_TESTING.md",
     "TESTER_INVITE.md",
+    "RELEASE_NOTES_0.2.0.md",
     "action.yml",
     "examples",
     ".agents",

@@ -22,7 +22,7 @@ test("dashboardPayload centralizes schema-backed dashboard data", () => {
   assert.equal(payload.intents.length, 1);
   assert.equal(payload.policy.node, "24");
   assert.equal(payload.releaseReadiness.target, "0.2.0");
-  assert.equal(payload.schemaQualitySignals.status, "prototype-hardening");
+  assert.equal(payload.schemaQualitySignals.status, "release-candidate");
   assert.equal(payload.schemaAiAdoptionDecision.proofCommand, "aienvmap demo --json");
   assert.match(payload.schemaAiAdoptionDecision.position, /Environment map and explicit change handoff/);
   assert.equal(payload.schemaAgentDiscovery.sessionUse.decisionField, "aiDiscovery.decision");
@@ -485,7 +485,7 @@ test("renderDashboard includes the audit summary surface", () => {
   assert.match(html, /schemaAiAdoptionDecision/);
   assert.match(html, /Release Readiness/);
   assert.match(html, /Quality Signals/);
-  assert.match(html, /prototype-hardening/);
+  assert.match(html, /release-candidate/);
   assert.match(html, /publishDecision=releaseReadiness\?\.publishDecision\|\|\{\}/);
   assert.match(html, /Decision/);
   assert.match(html, /meaningful changes are batched/);

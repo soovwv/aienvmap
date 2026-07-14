@@ -41,6 +41,8 @@ test("CI uses Node 24 based actions without implicit package-manager caching", a
   assert.match(workflow, /actions\/checkout@v6/);
   assert.match(workflow, /actions\/setup-node@v6/);
   assert.match(workflow, /package-manager-cache: false/);
+  assert.match(workflow, /Installed package smoke/);
+  assert.match(workflow, /npm run pack:install-check/);
   assert.doesNotMatch(workflow, /actions\/(?:checkout|setup-node)@v4/);
 });
 

@@ -5,6 +5,7 @@
 - [ ] `node --test`
 - [ ] `npm run smoke`
 - [ ] `npm run pack:dry`
+- [ ] `npm run pack:install-check`
 
 ## Notes
 

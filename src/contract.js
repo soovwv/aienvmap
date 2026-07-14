@@ -16,7 +16,7 @@ export function preflightContract() {
 export function qualitySignalsContract() {
   return {
     purpose: "Compact AI-readable quality signals for deciding whether aienvmap is safe to use, recommend, or release.",
-    status: "prototype-hardening",
+    status: "release-candidate",
     principles: ["AI-friendly", "simple", "lightweight", "advisory-first", "batched-release"],
     checks: [
       {
@@ -94,7 +94,7 @@ export function operationalSafetyContract() {
 export function schemaContract() {
   return {
     schemaVersion: 1,
-    contractVersion: "0.1-prototype",
+    contractVersion: "0.2",
     stableFrom: "0.2.0",
     name: "aienvmap-contract",
     purpose: "Stable AI-readable contract for aienvmap outputs.",
@@ -270,8 +270,8 @@ export function schemaContract() {
       files: ["AGENTS.md", "CLAUDE.md", "GEMINI.md"],
       optionalFiles: [".cursor/rules/environment.md", ".github/copilot-instructions.md"],
       skillFiles: [".agents/skills/aienvmap/SKILL.md", ".claude/skills/aienvmap/SKILL.md"],
-      apmInstallCommand: "apm install soovwv/aienvmap/.apm/skills/aienvmap#main --target agent-skills,claude",
-      apmReleaseRule: "Current main is a bounded GitHub skill-subpath preview, not a claimed central-marketplace listing. The existing v0.1.1 tag predates APM support; use the first APM-compatible release tag when published for immutable installs.",
+      apmInstallCommand: "apm install soovwv/aienvmap/.apm/skills/aienvmap#v0.2.0 --target agent-skills,claude",
+      apmReleaseRule: "The bounded GitHub skill subpath is an APM distribution channel, not a claimed central-marketplace listing. Use the immutable v0.2.0 tag after that tag is published.",
       startCommand: "aienvmap start",
       discoverCommand: "aienvmap discover",
       installCommand: "aienvmap onboard",
@@ -347,13 +347,13 @@ export function schemaContract() {
       publishWorkflow: "GitHub Actions Release workflow_dispatch",
       npmTokenSecret: "NPM_TOKEN",
       provenance: {
-        status: "published-and-verified-0.1.1",
+        status: "0.1.1-verified-0.2.0-pending",
         oidcPermission: "id-token: write",
         publishFlag: "--provenance",
         sourcePolicy: "current main commit with matching v<version> tag",
         duplicatePolicy: "fail when aienvmap@<version> already exists",
         postPublishVerification: "npm registry version and dist.integrity",
-        trustedPublishing: "not-configured; 0.1.1 used the explicit token fallback and published signed provenance; configure npm-side trusted publishing before the next release"
+        trustedPublishing: "workflow-ready; npm-side trusted publisher configuration must be verified before the 0.2.0 release"
       },
       beforePublish: [
         "npm run release:check",
@@ -367,11 +367,11 @@ export function schemaContract() {
     },
     releaseReadiness: {
       target: "0.2.0",
-      status: "prototype-hardening",
+      status: "release-candidate",
       currentBatch: {
-        status: "accumulating",
+        status: "reviewed",
         releaseType: "stability-batch",
-        themes: ["APM ecosystem distribution", "AI discovery", "verified AI onboarding", "dependency quick check", "dashboard parity", "dashboard maintainability", "AI quality signals", "SBOM interoperability", "recommendation positioning", "shared contract constants", "release gating"],
+        themes: ["APM ecosystem distribution", "AI discovery", "verified AI onboarding", "dependency quick check", "dashboard parity", "dashboard maintainability", "AI quality signals", "SBOM interoperability", "recommendation positioning", "shared contract constants", "runtime probe safety", "installed package verification", "release gating"],
         changes: [
           "APM-compatible bounded agent skill with no hooks, MCP server, executable deployment, or automatic install behavior",
           "discovery, sync, status, and onboarding recognize APM skill coverage and avoid duplicate native pointer writes",
@@ -399,10 +399,12 @@ export function schemaContract() {
           "package metadata and recommendation signals for shared-environment version drift prevention",
           "centralized AI discovery/read-order constants across discovery, status, dashboard, schema, SBOM, and generated artifacts",
           "external SBOM/security scanner guidance",
+          "non-mutating-by-design trial safety fields and explicit third-party runtime probe limits",
+          "cross-platform packed-install smoke verification for the actual npm artifact",
           "manual batched release gate"
         ],
-        decision: "hold",
-        reason: "Several stability and AI-contract changes are being accumulated for one intentional release instead of publishing every commit."
+        decision: "release-candidate",
+        reason: "The stability and AI-contract batch has been reviewed as one intentional release candidate for 0.2.0; final release checks, tag verification, and npm authentication remain."
       },
       publishDecision: {
         default: "hold",
@@ -425,10 +427,10 @@ export function schemaContract() {
         emergencyException: "Security or broken-package fixes may publish sooner, but still run the release gate."
       },
       publishGate: {
-        status: "hold",
-        reason: "0.2.0 is still accumulating AI-contract, dashboard, SBOM, and release-gate changes as one stability batch.",
-        nextAction: "Keep committing tested stabilization changes; do not npm publish until the batch is intentionally versioned and release notes are reviewed.",
-        requiredEvidence: ["npm run release:check", "node bin/aienvmap.js schema --json", "node bin/aienvmap.js demo --json", "npm pack --dry-run"],
+        status: "ready-for-final-check",
+        reason: "The 0.2.0 stability batch is reviewed and versioned; publishing remains blocked until the final release check, exact tag, and npm trusted publisher are verified.",
+        nextAction: "Run npm run release:check, verify npm trusted publishing, tag the exact merged main commit, then use the manual release workflow.",
+        requiredEvidence: ["npm run release:check", "npm run pack:install-check", "node bin/aienvmap.js schema --json", "node bin/aienvmap.js demo --json", "npm pack --dry-run"],
         readyWhen: [
           "currentBatch changes are reviewed as one release note group",
           "documented JSON contracts are additive and compatible",
@@ -440,8 +442,8 @@ export function schemaContract() {
           "package.json version is intentionally bumped for 0.2.0 or the chosen release"
         ],
         holdWhen: [
-          "changes are still accumulating for the stability batch",
-          "release notes have not been reviewed as one group",
+          "release-candidate changes differ from the reviewed release notes",
+          "release notes are not reviewed as one group",
           "package.json version has not been intentionally bumped",
           "release:check has not passed after the final batched change"
         ],
@@ -468,6 +470,7 @@ export function schemaContract() {
       ],
       evidenceCommands: [
         "npm run release:check",
+        "npm run pack:install-check",
         "npm run contract:check",
         "node bin/aienvmap.js schema --json",
         "node bin/aienvmap.js demo --json",
@@ -483,7 +486,7 @@ export function schemaContract() {
         "keep sessionUse aligned across discover, start, discovery.json, schema, and generated start-here artifacts",
         "validate actual start/onboard/discover host pickup across Codex, Claude, Gemini, Cursor, and Copilot; marker verification alone is not host evidence",
         "keep light SBOM coordination separate from optional full scanner evidence",
-        "review CHANGELOG as one 0.2.0 release-note group before any npm publish"
+        "collect independent mixed-host and AI-host pickup evidence after release without treating it as a package safety prerequisite"
       ],
       contractReview: {
         status: "freeze-candidate-verified",
@@ -492,7 +495,7 @@ export function schemaContract() {
         digestAlgorithm: "sha256(JSON.stringify(ordered surface-to-rootFields map))",
         surfaces: ["discover", "start", "discovery", "onboard", "status", "context", "handoff", "plan", "manifest", "reconcile", "reconcileCheck", "trial", "sbom", "cyclonedxLite", "demo"],
         reviewFields: ["outputs.*.rootFields", "outputs.*Fields", "compatibility.additiveRule", "stableContractRule"],
-        rule: "Before 0.2.0, review documented rootFields as the compatibility floor; after 0.2.0, add fields only additively unless contractVersion changes."
+        rule: "The reviewed 0.2.0 rootFields are the compatibility floor; from 0.2.0 onward, add fields only additively unless contractVersion changes."
       },
       stabilizationFocus: [
         "AI session/status/context contract",
@@ -509,7 +512,7 @@ export function schemaContract() {
         "dashboard essential surfaces, discovery parity, and release readiness",
         "manual batched release workflow"
       ],
-      stableContractRule: "After 0.2.0, documented JSON fields are additive and backward-compatible; breaking changes require a contractVersion bump and migration note.",
+      stableContractRule: "From 0.2.0, documented JSON fields are additive and backward-compatible; breaking changes require a contractVersion bump and migration note.",
       batchRule: "Accumulate several meaningful AI-contract, dashboard, SBOM, release-gate, and bugfix changes before one npm publish; hold small isolated changes for the next batch."
     },
     outputs: {
@@ -594,8 +597,12 @@ export function schemaContract() {
       reconcile: {
         file: ".aienvmap/reconcile.json",
         command: "aienvmap reconcile --json --write",
-        mode: "read-only environment; writes only the report when --write is explicit",
+        mode: "non-mutating-by-design environment inspection; writes only the report when --write is explicit",
         rootFields: ["schemaName", "schemaVersion", "generatedAt", "platform", "architecture", "mode", "scanMode", "scope", "limitations", "project", "node", "npm", "python", "otherRuntimes", "findings", "decision", "aiDecision", "aiDecisionEnvelope", "written"],
+        probeFields: ["status", "reason"],
+        probeStatusValues: ["failed"],
+        probeFailureValues: ["command-not-found", "permission-denied", "timeout-or-terminated", "nonzero-exit", "version-not-recognized", "execution-failed"],
+        probeRule: "A failed executable probe remains inventory evidence and requires review; never treat it as absence, never promote a later PATH candidate automatically, and treat unknown future failure values as execution-failed.",
         aiDecisionFields: ["consumer", "decision", "readFirst", "canonicalCandidates", "actionCandidates", "clarification", "consolidationPlan", "runtimeLinkSummary", "pythonInstallerEvidence", "pythonManagerEvidence", "nodeManagerEvidence", "javaManagerEvidence", "safeCommands", "rules"],
         clarificationFields: ["required", "status", "reason", "question", "choices", "defaultChoice", "affectedKinds", "policyMatchedKinds", "environmentChangesAuthorized", "removalAuthorized", "rule"],
         consolidationPlanFields: ["schemaName", "schemaVersion", "mode", "status", "canonicalCandidates", "phases", "candidates", "applyCommand", "rollbackRequirements", "requiresHumanApprovalBefore", "environmentChangesAuthorized", "removalAuthorized", "nextSafeCommand", "rule"],
@@ -668,17 +675,17 @@ export function schemaContract() {
       trial: {
         command: "aienvmap trial --json",
         availability: {
-          repository: "current-main",
-          npmLatestVersion: "0.1.1",
-          availableInNpmLatest: false,
-          introducedIn: "first release after 0.1.1",
-          compatibility: "aienvmap 0.1.1 supports the trial command but does not expose outputs.trial from schema --json"
+          packageVersion: "0.2.0",
+          availableInThisVersion: true,
+          previousPublishedVersion: "0.1.1",
+          compatibility: "aienvmap 0.1.1 supports trial but predates outputs.trial; 0.2.0 exposes the bounded trial contract"
         },
-        mode: "read-only technical testing with project-local reports; optional public evidence uses human-reviewed manual submission",
+        mode: "non-mutating-by-design technical testing with bounded runtime version probes and project-local reports; optional public evidence uses human-reviewed manual submission",
         writeScope: ".aienvmap/trial only; existing manifest, timeline, status, SBOM, AIENV.md, and agent instruction files remain unchanged; the npx launcher may cache the aienvmap package outside the project",
         rootFields: ["schemaName", "schemaVersion", "status", "decision", "inventoryCounts", "lightSbom", "artifacts", "next", "feedbackUrl", "privacy", "safety", "marketEvidence", "rule"],
         privacyFields: ["automaticUpload", "telemetry", "pathsInCaseDraft", "technicalResultReviewRequired", "publicSubmissionReviewRequired"],
-        safetyFields: ["environmentChanged", "softwareRemoved", "pathModified"],
+        safetyFields: ["environmentMutationRequested", "softwareRemovalRequested", "pathModificationRequested", "aienvmapMutationPerformed", "projectWrappersExecuted", "runtimeVersionProbesExecuted", "thirdPartyProbeSideEffectsGuaranteedAbsent"],
+        probeBoundary: "Runtime executables may be invoked with bounded version arguments. Project Maven/Gradle wrappers are skipped. Arbitrary third-party executable side effects cannot be guaranteed absent.",
         artifactFiles: [".aienvmap/trial/portable.json", ".aienvmap/trial/case-summary.json", ".aienvmap/trial/case-draft.md", ".aienvmap/trial/NEXT.md"],
         shareOnly: ["case-summary.json", "case-draft.md after human review"],
         doNotShare: ["portable.json", "raw reconciliation output", "paths", "identities", "secrets", "private project or package names"],
@@ -729,7 +736,7 @@ export function schemaContract() {
     },
     compatibility: {
       stability: "additive",
-      contractVersion: "0.1-prototype",
+      contractVersion: "0.2",
       stableFrom: "0.2.0",
       consumerRule: "Ignore unknown fields. Do not require optional fields unless listed in requiredFields.",
       additiveRule: "After 0.2.0, new fields may be added, but existing documented fields should remain backward-compatible.",

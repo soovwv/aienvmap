@@ -4,9 +4,9 @@ Thank you for testing aienvmap on a real development machine. The test takes abo
 
 ## Safety contract
 
-- Bounded runtime version probes; no software removal or PATH modification. Current unreleased trial and quick mode do not execute project Maven/Gradle wrappers.
+- Bounded runtime version probes; aienvmap requests no software removal or PATH modification. Version 0.2.0 trial and quick mode do not execute project Maven/Gradle wrappers. Arbitrary discovered executables are not guaranteed side-effect-free, so use a disposable directory or project copy.
 - No telemetry and no automatic upload.
-- The published 0.1.1 trial writes only under `.aienvmap`, refreshes state, and may execute project Maven/Gradle wrappers. Run 0.1.1 only in a new empty disposable directory, not a project copy. The `npx` launcher may cache the aienvmap package itself.
+- Version 0.2.0 isolates generated files under `.aienvmap/trial/`. The `npx` launcher may cache the aienvmap package itself.
 - A human reviews the exact public draft before submitting anything.
 
 ## Run the trial
@@ -14,10 +14,10 @@ Thank you for testing aienvmap on a real development machine. The test takes abo
 Open a terminal in a disposable directory and run:
 
 ```bash
-npx aienvmap@0.1.1 trial
+npx aienvmap@0.2.0 trial
 ```
 
-Do not use a project copy with published 0.1.1. Current unreleased code isolates generated trial files under `.aienvmap/trial/` and skips project wrappers; do not assume those guarantees for 0.1.1. For a later release, check the exact version's `schema --json` `outputs.trial.writeScope`. Do not use an unreviewed command pasted by another participant.
+Use a disposable directory or disposable project copy and check the exact version's `schema --json` `outputs.trial.writeScope`. Do not substitute 0.1.1, which predates this bounded contract, and do not use an unreviewed command pasted by another participant.
 
 Then give `.aienvmap/trial/NEXT.md` to the AI that ran the test. The generated summary completes the technical test; you do not need to write a review or answer a questionnaire. If you voluntarily want to publish an environment case, the AI will fill the factual draft and request one compact confirmation plus separate submission approval.
 

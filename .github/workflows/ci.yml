@@ -73,3 +73,6 @@ jobs:
 
       - name: Pack dry-run
         run: npm run pack:dry
+
+      - name: Installed package smoke
+        run: npm run pack:install-check

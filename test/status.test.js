@@ -137,7 +137,7 @@ test("buildStatus returns a compact clear state", () => {
   assert.match(status.operationalSafety.mustNotDo.join(" "), /audit fix/);
   assert.ok(status.operationalSafety.allowedWithoutIntent.includes("read generated artifacts"));
   assert.ok(status.operationalSafety.requireIntentBefore.includes("global tool installation or removal"));
-  assert.equal(status.qualitySignals.status, "prototype-hardening");
+  assert.equal(status.qualitySignals.status, "release-candidate");
   assert.ok(status.qualitySignals.principles.includes("AI-friendly"));
   assert.ok(status.qualitySignals.principles.includes("lightweight"));
   assert.match(status.qualitySignals.checks.map((item) => item.name).join(" "), /AI entry path/);
