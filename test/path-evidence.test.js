@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
-import { classifyScope, classifySource, displayPath, namedFilesBelow, pathEntries } from "../src/path-evidence.js";
+import { classifyScope, classifySource, displayPath, namedFilesBelow, pathEntries, pathIsWithin } from "../src/path-evidence.js";
 
 test("path evidence redacts user paths and classifies known managers", () => {
   const home = path.join(path.parse(process.cwd()).root, "private-home");
@@ -11,6 +11,15 @@ test("path evidence redacts user paths and classifies known managers", () => {
   assert.equal(classifyScope(path.join(home, "bin"), home), "user");
   assert.equal(classifySource(path.join(home, ".pyenv", "versions")), "pyenv");
   assert.equal(classifySource(path.join(home, "unknown")), "path");
+});
+
+test("home redaction requires a real path boundary", () => {
+  const root = path.parse(process.cwd()).root;
+  const home = path.join(root, "Users", "User");
+  const sibling = path.join(root, "Users", "User2", "secret", "python.exe");
+  assert.equal(pathIsWithin(home, sibling), false);
+  assert.equal(classifyScope(sibling, home), "host");
+  assert.equal(displayPath(sibling, { home }), path.normalize(sibling));
 });
 
 test("bounded named-file discovery and PATH parsing stay platform-aware", async () => {

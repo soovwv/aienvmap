@@ -3,6 +3,7 @@ import os from "node:os";
 import path from "node:path";
 import { exists } from "./fsutil.js";
 import { commandOutput, commandResult, commandVersion, portableCommandResult } from "./shell.js";
+import { classifyScope as classifyPathScope } from "./path-evidence.js";
 
 export async function inspectCommonRuntimes(options = {}) {
   const definitions = runtimeDefinitions(options.env || process.env, options.home || os.homedir());
@@ -498,7 +499,7 @@ function classifySource(value) {
 }
 
 function classifyScope(value, home = os.homedir()) {
-  return String(value).toLowerCase().startsWith(String(home).toLowerCase()) ? "user" : "host";
+  return classifyPathScope(value, home);
 }
 
 function displayPath(value, options) {

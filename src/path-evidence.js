@@ -35,7 +35,7 @@ export function classifySource(value) {
 }
 
 export function classifyScope(value, home = os.homedir()) {
-  return String(value).toLowerCase().startsWith(String(home).toLowerCase()) ? "user" : "host";
+  return pathIsWithin(home, value) ? "user" : "host";
 }
 
 export function displayPath(value, options = {}) {
@@ -43,5 +43,11 @@ export function displayPath(value, options = {}) {
   if (options.showPaths) return path.normalize(value);
   const home = options.home || os.homedir();
   const normalized = path.normalize(value);
-  return normalized.toLowerCase().startsWith(path.normalize(home).toLowerCase()) ? `$HOME${normalized.slice(home.length)}` : normalized;
+  return pathIsWithin(home, normalized) ? `$HOME${normalized.slice(path.normalize(home).length)}` : normalized;
+}
+
+export function pathIsWithin(root, value) {
+  if (!root || !value) return false;
+  const relative = path.relative(path.resolve(root), path.resolve(value));
+  return relative === "" || (!relative.startsWith("..") && !path.isAbsolute(relative));
 }
