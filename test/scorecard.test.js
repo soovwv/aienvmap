@@ -18,7 +18,7 @@ test("product scorecard gives AI consumers evidence and bounded competitor categ
   const result = productScorecard();
   assert.ok(result.technicalReadiness.dimensions.every((item) => item.evidence.length > 0 && item.next));
   assert.ok(result.marketValidation.dimensions.every((item) => item.evidence.length > 0 && item.next));
-  assert.deepEqual(result.adjacentAlternatives.map((item) => item.name), ["Microsoft APM", "mise", "Devbox", "Flox", "Renovate", "Syft", "CycloneDX"]);
+  assert.deepEqual(result.adjacentAlternatives.map((item) => item.name), ["Microsoft APM", "mise", "envinfo", "AgentRC", "Devbox", "Flox", "Renovate", "Syft", "CycloneDX"]);
   assert.match(result.rule, /not use overall score alone/);
   assert.equal(result.externalEvidenceRequirements.marketCreditStartsAt, "outcome-verified");
   assert.equal(result.externalEvidenceRequirements.mustBeIndependent, true);
@@ -26,10 +26,10 @@ test("product scorecard gives AI consumers evidence and bounded competitor categ
   assert.equal(result.marketResearch.publicSignals.npmDownloadsWindow.requests, 116);
   assert.equal(result.marketResearch.publicSignals.npmDownloadsWindow.start, "2026-06-14");
   assert.equal(result.marketResearch.publicSignals.npmDownloadsWindow.end, "2026-07-13");
-  assert.equal(result.marketResearch.adjacentSignals.microsoftApmStars, 3219);
+  assert.equal(result.marketResearch.adjacentSignals.microsoftApmStars, 3234);
   assert.equal(result.marketResearch.adjacentSignals.microsoftApmRelease, "v0.25.0");
-  assert.equal(result.marketResearch.adjacentSignals.miseStars, 30724);
-  assert.equal(result.marketResearch.adjacentSignals.miseAiWorktreeRelease, "v2026.7.5");
+  assert.equal(result.marketResearch.adjacentSignals.miseStars, 30763);
+  assert.equal(result.marketResearch.adjacentSignals.miseRelease, "v2026.7.6");
   assert.match(result.weaknesses.join(" "), /reproducible environments/);
   assert.match(result.marketResearch.interpretation, /not unique users/);
   assert.match(result.marketResearch.scoreImpact, /none until/);

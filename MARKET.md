@@ -1,6 +1,6 @@
 # aienvmap market snapshot
 
-Observed 2026-07-14 from public GitHub repository metadata, the npm registry, the npm downloads API, and official product documentation. This is a dated snapshot, not live telemetry or proof of unique users.
+Observed 2026-07-15 from public GitHub repository metadata, the npm registry, the npm downloads API, and official product documentation. This is a dated snapshot, not live telemetry or proof of unique users.
 
 ## Current traction
 
@@ -18,13 +18,14 @@ Do not convert downloads into users, retention, successful setups, or recommenda
 
 | Product | Public GitHub signal at observation | Primary job | Relationship to aienvmap |
 | --- | ---: | --- | --- |
-| [mise](https://github.com/jdx/mise) | 30,724 stars | manage dev tools, environment variables, tasks, and config trust; v2026.7.5 explicitly shares trust into AI-agent worktrees and prefers the npm Codex distribution | increasing AI-workspace adjacency, but aienvmap observes mixed active routing and coordinates changes rather than trusting config, installing, or switching tools |
-| [Microsoft APM](https://github.com/microsoft/apm) | 3,219 stars; latest v0.25.0 | declare and reproduce agent context across major AI hosts | distribution channel for aienvmap's bounded skill; aienvmap remains the observed host evidence and review-first coordination layer |
-| [Devbox](https://github.com/jetify-com/devbox) | 12,166 stars | create isolated, reproducible development environments | adjacent declarative environment; aienvmap focuses on existing non-clean machines without replacing the shell |
-| [Flox](https://github.com/flox/flox) | 4,047 stars | define and activate reusable environments across local, CI, and production | closer AI/environment adjacency, but declarative activation differs from aienvmap's read-only host evidence and change coordination |
+| [mise](https://github.com/jdx/mise) | 30,763 stars; latest v2026.7.6 | manage dev tools, environment variables, tasks, and config trust; its MCP server exposes tools, tasks, environment variables, and config to AI assistants | direct AI-workspace adjacency, but aienvmap observes mixed active routing and coordinates changes rather than trusting config, installing, or switching tools |
+| [Microsoft APM](https://github.com/microsoft/apm) | 3,234 stars; latest v0.25.0 | declare, lock, audit, govern, and reproduce agent context; export agent-package SBOMs | distribution channel for aienvmap's bounded skill; aienvmap remains the observed host-runtime evidence and review-first coordination layer |
+| [Devbox](https://github.com/jetify-com/devbox) | 12,172 stars; latest 0.17.5 | create isolated, reproducible development environments | adjacent declarative environment; aienvmap focuses on existing non-clean machines without replacing the shell |
+| [Flox](https://github.com/flox/flox) | 4,049 stars; latest v1.13.2 | define and activate reusable environments and deterministic AI toolchains | closer AI/environment adjacency, but declarative activation differs from aienvmap's read-only host evidence and change coordination |
+| [envinfo](https://github.com/tabrindle/envinfo) | 793 stars; latest v7.22.0 | report common active development binaries and system information | closest lightweight inventory substitute; aienvmap adds multi-path evidence, AI decisions, and change handoff |
 | [asdf](https://github.com/asdf-vm/asdf) | 25,453 stars | extensible multi-runtime version management | adjacent runtime manager with a mature plugin ecosystem |
 | [Renovate](https://github.com/renovatebot/renovate) | 21,994 stars | automate dependency updates | complementary automation; aienvmap records AI intent, evidence, approval, and handoff |
-| [Syft](https://github.com/anchore/syft) | 9,227 stars | generate full SBOMs from images and filesystems | complementary evidence generator imported by aienvmap |
+| [Syft](https://github.com/anchore/syft) | 9,235 stars; latest v1.46.0 | generate full SBOMs from images and filesystems | complementary evidence generator imported by aienvmap |
 | [Trivy](https://github.com/aquasecurity/trivy) | 36,902 stars | scan vulnerabilities, misconfiguration, secrets, and SBOMs | complementary security scanner; intentionally outside the lightweight default |
 | [CycloneDX CLI](https://github.com/CycloneDX/cyclonedx-cli) | 518 stars | analyze, merge, diff, and convert SBOMs | complementary SBOM workflow; aienvmap emits/imports bounded coordination evidence |
 
@@ -47,7 +48,7 @@ The strongest differentiation is the combination of:
 
 The practical substitute is often not one product but a manual bundle: `AGENTS.md`, shell scripts, version-manager commands, SBOM tools, and team conventions. aienvmap must prove it reduces repeated AI rediscovery and unsafe environment assumptions enough to justify one more tool.
 
-APM plus Flox/Devbox can increasingly cover agent context, AI runtime CLI setup, and reproducible clean environments as a bundle. mise now also treats AI-agent worktrees and Codex installation as first-class workflow concerns. aienvmap should use APM for skill distribution instead of rebuilding that ecosystem, while refusing installation, activation, package resolution, runtime download, config trust, hooks, or automatic execution. Its defensible wedge remains evidence from mixed existing hosts plus review-first multi-AI coordination.
+APM plus Flox/Devbox can increasingly cover agent context, AI runtime CLI setup, and reproducible clean environments as a bundle. APM now exports agent-package SBOMs and detects agent-context drift, while mise exposes managed tools and environment data through MCP. aienvmap should use APM for skill distribution and dedicated scanners for full SBOM evidence instead of rebuilding either ecosystem. Its defensible wedge remains manager-agnostic evidence from mixed existing hosts plus review-first multi-AI coordination.
 
 ## Strengths
 
@@ -65,7 +66,7 @@ APM plus Flox/Devbox can increasingly cover agent context, AI runtime CLI setup,
 - broad feature surface makes the one-sentence value proposition harder to learn;
 - APM, mise, Flox, and Devbox raise the evidence bar by combining mature agent-context, AI worktree/tool setup, or reproducible-environment workflows;
 - no verified integration case for each major AI coding host;
-- pre-0.2.0 contract status; 0.1.1 has signed provenance but the stable contract still requires external proof.
+- the 0.2 contract is technically reviewed but still lacks independent proof that AI hosts and users find the workflow useful.
 - cross-user file-presence evidence cannot prove versions or active routing until the owning user supplies a reviewed report.
 
 ## Positioning and improvement strategy
@@ -74,12 +75,12 @@ APM plus Flox/Devbox can increasingly cover agent context, AI runtime CLI setup,
 2. Collect three independent outcome-verified mixed-runtime cases using the portable case template; include one shared-server case pairing administrator file-presence evidence with an owning-user report.
 3. Measure whether an AI identifies the real problem, requests missing evidence, avoids destructive advice, and improves after before/after comparison.
 4. Publish host-specific proof only after it runs on that host; do not infer compatibility from instruction-file presence.
-5. Stabilize the additive contract and batch a 0.2.0 release only when external evidence is ready; preserve the verified 0.1.1 provenance gate.
-6. Treat current-main APM installs as preview-only, verify disposable host installs, and publish one immutable APM-compatible tag with the next meaningful release.
+5. Publish 0.2.0 as a stable contract release after final package and authentication checks; do not present it as market-proven.
+6. Publish the immutable APM-compatible v0.2.0 tag with the release, then verify actual host pickup separately from package placement.
 
 ## Evidence sources
 
 - GitHub repository API snapshots for [aienvmap](https://github.com/soovwv/aienvmap), [Microsoft APM](https://github.com/microsoft/apm), [Devbox](https://github.com/jetify-com/devbox), [Flox](https://github.com/flox/flox), [mise](https://github.com/jdx/mise), [asdf](https://github.com/asdf-vm/asdf), [Renovate](https://github.com/renovatebot/renovate), [Syft](https://github.com/anchore/syft), [Trivy](https://github.com/aquasecurity/trivy), and [CycloneDX CLI](https://github.com/CycloneDX/cyclonedx-cli).
 - [npm package metadata](https://www.npmjs.com/package/aienvmap) and the public npm downloads point API for 2026-06-14 through 2026-07-13.
-- [Microsoft APM target matrix](https://microsoft.github.io/apm/reference/targets-matrix/), [Microsoft APM v0.25.0 release](https://github.com/microsoft/apm/releases/tag/v0.25.0), [mise documentation](https://mise.jdx.dev/), [mise v2026.7.5 release](https://github.com/jdx/mise/releases/tag/v2026.7.5), [Flox environment documentation](https://flox.dev/docs/concepts/environments), and each official repository description define the current product boundaries.
+- [Microsoft APM documentation](https://github.com/microsoft/apm), [Microsoft APM v0.25.0 release](https://github.com/microsoft/apm/releases/tag/v0.25.0), [mise documentation](https://mise.jdx.dev/), [mise MCP documentation](https://mise.jdx.dev/cli/mcp.html), [Flox environment documentation](https://flox.dev/docs/concepts/environments), and each official repository description define the current product boundaries.
 - Product scope is taken from each official repository description; category relationships are aienvmap's positioning analysis.

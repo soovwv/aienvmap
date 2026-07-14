@@ -13,10 +13,6 @@ AI coding agents are good at changing code. They are bad at remembering what ano
 
 Use it if several AI agents or sessions share environment-affecting work in one repository, laptop, server, or CI workspace. Skip it if you only need a full compliance SBOM scanner, runtime installer, or hard policy lock manager.
 
-## External Trial
-
-Run `npx aienvmap@0.2.0 trial` in a disposable directory or disposable project copy on a real development machine. Trial artifacts are isolated under `.aienvmap/trial/`, project Maven/Gradle wrappers are skipped, and nothing is uploaded automatically. The trial runs bounded runtime version probes, so arbitrary discovered executables are not guaranteed side-effect-free. Follow [TESTING.md](TESTING.md), or give [AI_TESTING.md](AI_TESTING.md) to an AI agent. Technical testing needs no human review; optional public evidence uses one compact confirmation, complete-draft review, and separate submission consent. Community maintainers can reuse [TESTER_INVITE.md](TESTER_INVITE.md).
-
 ## 10-Second Use
 
 ```bash
@@ -25,6 +21,8 @@ npx aienvmap reconcile --quick
 npx aienvmap status
 ```
 
+`start` is the one-command AI preflight: it refreshes the environment map when needed, runs quick multi-install reconciliation, and returns the next safe command. To add project instruction pointers for supported AI hosts, preview with `npx aienvmap onboard --dry-run`, then run `npx aienvmap onboard` after review.
+
 Try `npx aienvmap demo` for an isolated conflict example. It shows one agent's dependency intent becoming visible to the next agent; environment changes are never inferred automatically and remain approval-gated.
 
 ![aienvmap terminal demo showing a review-first dependency conflict](examples/aienvmap-terminal-demo.svg)
@@ -32,6 +30,10 @@ Try `npx aienvmap demo` for an isolated conflict example. It shows one agent's d
 - Agent A records a planned dependency change.
 - Agent B starts later and sees the pending intent.
 - The workspace becomes review-first; no package is installed, removed, or switched.
+
+## External Trial
+
+Run `npx aienvmap@0.2.0 trial` in a disposable directory or disposable project copy on a real development machine. Trial artifacts are isolated under `.aienvmap/trial/`, project Maven/Gradle wrappers are skipped, and nothing is uploaded automatically. The trial runs bounded runtime version probes, so arbitrary discovered executables are not guaranteed side-effect-free. Follow [TESTING.md](TESTING.md), or give [AI_TESTING.md](AI_TESTING.md) to an AI agent. Technical testing needs no human review; optional public evidence uses one compact confirmation, complete-draft review, and separate submission consent. Community maintainers can reuse [TESTER_INVITE.md](TESTER_INVITE.md).
 
 ## What the AI gets
 
@@ -139,7 +141,7 @@ The GitHub Action writes discovery, status, summary, schema, doctor, plan, SBOM,
 - `0.2.x` starts the stabilized AI workspace contract.
 - npm releases are manually gated and batched; the workflow requires current main, a matching `v<version>` tag, an unpublished version, OIDC provenance, and post-publish registry integrity verification.
 - Default publish decision is `hold`; publish only after several meaningful changes are batched, `npm run release:check` passes, and `schema --json` `releaseReadiness.currentBatch` is reviewed.
-- `schema --json` exposes `releaseGate`, `releaseReadiness.currentBatch`, `contractReview`, `nextStabilizationTasks`, `requiredBeforeStable`, and `evidenceCommands`. `npm run contract:check` fail-closes on an unreviewed change to the 14 documented AI JSON root-field surfaces, including `trial`.
+- `schema --json` exposes `releaseGate`, `releaseReadiness.currentBatch`, `contractReview`, `nextStabilizationTasks`, `requiredBeforeStable`, and `evidenceCommands`. `npm run contract:check` fail-closes on an unreviewed change to the 15 documented AI JSON root-field surfaces, including `trial`.
 - Broken or superseded versions are deprecated instead of unpublished.
 
 ## Development

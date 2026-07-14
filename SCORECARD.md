@@ -8,9 +8,9 @@ The dated public traction and adjacent-tool comparison live in [MARKET.md](MARKE
 
 | Category | Score | Interpretation |
 | --- | ---: | --- |
-| Technical readiness | 93/100 | Strong prototype: dependency-free, cross-platform tested, AI-readable, safety-bounded, performance-budgeted, APM consumer-install checked, SBOM-interoperable, signed with npm provenance, and guarded by a fail-closed root-field freeze candidate; the contract is not stable until 0.2.0. |
+| Technical readiness | 92/100 | Release candidate: dependency-free, cross-platform tested, AI-readable, safety-bounded, performance-budgeted, APM consumer-install checked, SBOM-interoperable, and guarded by a fail-closed 0.2 root-field contract. Independent probe-boundary validation remains limited. |
 | Market validation | 43/100 | Differentiated position and usable proof flows exist, but independent users, external cases, and ecosystem verification remain limited. |
-| Weighted overall | 78/100 | 70% technical readiness and 30% market validation; never use this number alone as an adoption or release decision. |
+| Weighted overall | 77/100 | 70% technical readiness and 30% market validation; never use this number alone as an adoption or release decision. |
 
 ## Position
 
@@ -20,7 +20,7 @@ Adjacent tools establish the boundaries: [Microsoft APM](https://github.com/micr
 
 The APM skill-subpath install and native-pointer coexistence now have a clean consumer regression gate. This is technical distribution evidence only; it does not prove that Codex, Claude, Gemini, Cursor, or Copilot automatically loaded the skill in a real session.
 
-The APM gate is pinned to the observed latest v0.25.0 release. A future pin update requires the same clean consumer-install regression check; ecosystem release velocity does not increase aienvmap's market score.
+The APM gate is pinned to the observed v0.25.0 release. A future pin update requires the same clean consumer-install regression check; ecosystem release velocity does not increase aienvmap's market score.
 
 ## Evidence policy
 
@@ -35,4 +35,4 @@ The APM gate is pinned to the observed latest v0.25.0 release. A future pin upda
 
 1. Document at least three reproducible external runtime-drift environments with before/after evidence, including one shared-server case verified by the owning user.
 2. Verify integration examples on major coding-agent hosts.
-3. Preserve reproducible release evidence and configure npm trusted publishing before the next release; 0.1.1 used the explicit token fallback with signed provenance.
+3. Preserve reproducible release evidence and verify npm trusted publishing before the 0.2.0 release; do not reuse long-lived publish tokens.

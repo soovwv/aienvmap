@@ -16,8 +16,10 @@ const marketDimensions = [
 ];
 
 const adjacentAlternatives = [
-  alternative("Microsoft APM", "agent context dependency management", "APM declares and reproduces instructions, skills, prompts, plugins, and MCP servers; aienvmap supplies observed host runtime and coordination evidence", "https://github.com/microsoft/apm"),
-  alternative("mise", "runtime, tool, task, and config-trust management", "mise increasingly supports AI-agent worktrees and Codex installation; aienvmap observes mixed active routing and coordinates changes without trusting config, installing, or switching tools", "https://mise.jdx.dev/"),
+  alternative("Microsoft APM", "agent context dependency management", "APM declares, locks, audits, governs, and exports SBOMs for agent context; aienvmap supplies observed host runtime and coordination evidence", "https://github.com/microsoft/apm"),
+  alternative("mise", "runtime, tool, task, and config-trust management", "mise exposes managed tools and environment data to AI through MCP; aienvmap observes mixed active routing and coordinates changes without trusting config, installing, or switching tools", "https://mise.jdx.dev/"),
+  alternative("envinfo", "active development environment reporting", "envinfo quickly reports common active binaries and system details; aienvmap adds bounded multi-path evidence, AI decisions, and change handoff", "https://github.com/tabrindle/envinfo"),
+  alternative("AgentRC", "AI repository context generation and evaluation", "AgentRC measures and generates codebase instructions; aienvmap supplies host runtime evidence and environment-change coordination", "https://github.com/microsoft/agentrc"),
   alternative("Devbox", "isolated reproducible development environments", "Devbox creates a declared portable environment; aienvmap observes mixed existing installations without replacing the shell", "https://github.com/jetify-com/devbox"),
   alternative("Flox", "declared reusable development environments", "Flox aligns humans and AI on an activated reproducible environment; aienvmap maps and coordinates the non-clean host state already present", "https://github.com/flox/flox"),
   alternative("Renovate", "automated dependency updates", "aienvmap coordinates AI intent and environment evidence before and after changes", "https://docs.renovatebot.com/"),
@@ -39,9 +41,9 @@ export function productScorecard() {
     positioning: "AI workspace coordination and environment evidence layer; not a package manager, vulnerability scanner, or full SBOM generator.",
     marketResearch: {
       report: "MARKET.md",
-      observedAt: "2026-07-14",
+      observedAt: "2026-07-15",
       publicSignals: { githubStars: 0, githubForks: 0, independentOutcomeVerifiedCases: 0, npmDownloadsWindow: { requests: 116, start: "2026-06-14", end: "2026-07-13" } },
-      adjacentSignals: { observedAt: "2026-07-14", microsoftApmStars: 3219, microsoftApmRelease: "v0.25.0", devboxStars: 12166, floxStars: 4047, miseStars: 30724, miseAiWorktreeRelease: "v2026.7.5" },
+      adjacentSignals: { observedAt: "2026-07-15", microsoftApmStars: 3234, microsoftApmRelease: "v0.25.0", devboxStars: 12172, devboxRelease: "0.17.5", floxStars: 4049, floxRelease: "v1.13.2", miseStars: 30763, miseRelease: "v2026.7.6", syftStars: 9235, syftRelease: "v1.46.0", envinfoStars: 793, envinfoRelease: "v7.22.0" },
       interpretation: "npm downloads are requests, not unique users, retention, successful setups, or recommendation evidence.",
       scoreImpact: "none until independent outcome-verified evidence exists"
     },
@@ -51,7 +53,7 @@ export function productScorecard() {
     nextPriorities: [
       { priority: 1, outcome: "external problem evidence", proof: "at least three reproducible user environments, including one shared-server owner-verified report" },
       { priority: 2, outcome: "AI-host integration evidence", proof: "verified automatic-pickup and fallback examples for major coding-agent hosts" },
-      { priority: 3, outcome: "release authentication hardening", proof: "npm trusted publisher configured and verified before the next release; 0.1.1 provenance remains registry-verifiable" }
+      { priority: 3, outcome: "release authentication hardening", proof: "npm trusted publisher configured and verified for 0.2.0; no long-lived publish token accepted; 0.1.1 provenance remains registry-verifiable" }
     ],
     externalEvidenceRequirements: {
       guide: "examples/portable-environment-case-guide.md",
