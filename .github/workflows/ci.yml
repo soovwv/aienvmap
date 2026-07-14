@@ -28,6 +28,9 @@ jobs:
       - name: Preview cross-tool placement
         run: apm compile --dry-run --target agent-skills,claude
 
+      - name: Verify clean consumer install and onboarding coexistence
+        run: node scripts/apm-consumer-check.mjs
+
   test:
     name: Node ${{ matrix.node }} on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
