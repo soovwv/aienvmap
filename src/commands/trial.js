@@ -35,7 +35,7 @@ export async function trialWorkspace(args = {}) {
     next: "Technical testing is complete. Ask an AI to summarize case-summary.json. Public case evidence is optional and requires brief human confirmation and separate submission consent.",
     feedbackUrl: issueUrl,
     privacy: { automaticUpload: false, telemetry: false, pathsInCaseDraft: false, technicalResultReviewRequired: false, publicSubmissionReviewRequired: true },
-    safety: { environmentChanged: false, softwareRemoved: false, pathModified: false },
+    safety: { environmentChanged: false, softwareRemoved: false, pathModified: false, projectWrappersExecuted: false, runtimeVersionProbesExecuted: true },
     marketEvidence: false,
     rule: "Technical testing needs no human opinion; public market evidence requires independent human confirmation, privacy review, and explicit submission consent."
   };
@@ -53,7 +53,7 @@ export async function trialWorkspace(args = {}) {
 function renderNextSteps() {
   return `# aienvmap trial next steps
 
-The read-only trial is complete. There is no automatic upload. aienvmap did not remove software, install development tools, or modify PATH. The \`npx\` launcher may cache the aienvmap package itself.
+The non-mutating trial is complete. There is no automatic upload. aienvmap did not remove software, install development tools, modify PATH, or execute project Maven/Gradle wrappers. It did run bounded version probes for discovered runtime executables. The \`npx\` launcher may cache the aienvmap package itself.
 
 ## Technical test: no opinion required
 

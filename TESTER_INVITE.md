@@ -4,7 +4,7 @@ Use one of these messages in a community that permits project testing requests. 
 
 ## Short version
 
-> I am looking for external testers for aienvmap 0.1.1, a dependency-free environment map for AI coding agents. It reads existing Node, Python, Java, package-manager, and light SBOM state before an AI changes the environment. The trial does not modify PATH or remove development tools, and does not upload feedback automatically. In a disposable directory or disposable project copy, run `npx aienvmap@0.1.1 trial`, then let your AI summarize the local result. Published 0.1.1 may refresh existing `.aienvmap` manifest and timeline state, so do not run it in a workspace whose aienvmap state must be preserved. Honest reports of missed installations, false positives, and confusing output are especially useful.
+> I am looking for external testers for aienvmap 0.1.1, a dependency-free environment map for AI coding agents. It reads existing Node, Python, Java, package-manager, and light SBOM state before an AI changes the environment. The trial does not modify PATH or remove development tools, and does not upload feedback automatically. In a new empty disposable directory, run `npx aienvmap@0.1.1 trial`, then let your AI summarize the local result. Do not use a project copy: published 0.1.1 may refresh existing `.aienvmap` state and execute project Maven/Gradle wrappers. Honest reports of missed installations, false positives, and confusing output are especially useful.
 
 The AI can complete the technical test and summarize the result without asking you to write a review. A public environment case is optional; if you choose it, the AI asks for one compact confirmation, prepares the draft, and asks separately before anything is submitted.
 
