@@ -36,6 +36,7 @@ export async function commandResult(command, args = [], options = {}) {
       timeout: options.timeout || 5000,
       maxBuffer: options.maxBuffer || 2 * 1024 * 1024,
       cwd: options.cwd,
+      env: options.env,
       windowsHide: true
     });
     return { ok: true, code: 0, stdout: stdout.trim(), stderr: stderr.trim() };
@@ -43,10 +44,19 @@ export async function commandResult(command, args = [], options = {}) {
     return {
       ok: false,
       code: typeof error.code === "number" ? error.code : 1,
+      failure: commandFailure(error),
       stdout: String(error.stdout || "").trim(),
       stderr: String(error.stderr || error.message || "").trim()
     };
   }
+}
+
+export function commandFailure(error = {}) {
+  if (error.code === "ENOENT") return "command-not-found";
+  if (["EACCES", "EPERM"].includes(error.code)) return "permission-denied";
+  if (error.killed || error.signal || error.code === "ETIMEDOUT") return "timeout-or-terminated";
+  if (typeof error.code === "number") return "nonzero-exit";
+  return "execution-failed";
 }
 
 export async function portableCommandResult(command, args = [], options = {}) {
