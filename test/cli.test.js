@@ -128,7 +128,8 @@ test("package, README, and CLI help share the accurate environment-before-change
   assert.match(readmeTop, /Agent A records a planned dependency change/);
   assert.match(readmeTop, /Agent B starts later and sees the pending intent/);
   assert.match(readme, /no package is installed, removed, or switched/);
-  assert.match(readmeTop, /npx aienvmap reconcile --quick/);
+  assert.match(readmeTop, /npx aienvmap@0\.2\.0 start/);
+  assert.doesNotMatch(readmeTop, /npx aienvmap reconcile --quick/);
   assert.ok(readme.split(/\r?\n/).length <= 160);
   assert.ok(readme.indexOf("## Advanced environment evidence") > readme.indexOf("## What the AI gets"));
   assert.match(readme, /AI adoption guide/);
@@ -143,6 +144,8 @@ test("package, README, and CLI help share the accurate environment-before-change
   assert.match(readme, /nextStabilizationTasks/);
   assert.match(readme, /releaseReadiness\.currentBatch` is reviewed/);
   assert.match(readme, /several meaningful changes are batched/);
+  assert.match(readme, /local-only unless a human reviews them/);
+  assert.match(readme, /never edits the project's `\.gitignore`/);
   assert.match(stdout, /know the development environment before an AI changes it/);
   assert.match(stdout, /aienvmap start    one-command AI startup with a copy-paste fallback prompt/);
   assert.match(stdout, /aienvmap discover  read-only detection plus aiDiscovery\.decision and copy-paste prompt/);

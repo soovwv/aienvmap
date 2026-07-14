@@ -15,7 +15,7 @@ Do not include secrets, private environment dumps, access tokens, or production 
 - Normal warnings are advisory and non-blocking.
 - `aienvmap doctor --ci` is the explicit strict mode for automation.
 - `aienvmap` should not install, upgrade, downgrade, or remove software by itself.
-- Generated files should be reviewed before committing in sensitive repositories.
+- Generated files should be reviewed before committing in sensitive repositories. Treat raw manifests, reconciliation reports, SBOM files, dashboards, and trial portable evidence as local-only by default. Coordination logs can contain operator-supplied text. aienvmap does not edit `.gitignore`; use a project-specific ignore policy and share only reviewed portable evidence.
 
 ## Sensitive Data
 

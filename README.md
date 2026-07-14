@@ -16,9 +16,7 @@ Use it if several AI agents or sessions share environment-affecting work in one 
 ## 10-Second Use
 
 ```bash
-npx aienvmap start
-npx aienvmap reconcile --quick
-npx aienvmap status
+npx aienvmap@0.2.0 start
 ```
 
 `start` is the one-command AI preflight: it refreshes the environment map when needed, runs quick multi-install reconciliation, and returns the next safe command. To add project instruction pointers for supported AI hosts, preview with `npx aienvmap onboard --dry-run`, then run `npx aienvmap onboard` after review.
@@ -67,7 +65,7 @@ For the shared-server story, read [AI workspace coordination case study](example
 - Manager proof: explicit full scans use bounded Volta/fnm/nvm/mise, uv/pyenv, SDKMAN, and jenv evidence; even `ownershipProven: true` never authorizes removal.
 - Java routing: project Maven/Gradle wrappers take precedence; Launcher/Daemon JVM evidence and native discovery remain review-only.
 - SBOM bridge: `sbom --import <file> --write` retains a digest and bounded CycloneDX/SPDX summary and never runs the external scanner.
-- Drift gate: `reconcile --write` saves a reviewed baseline; `reconcile --check --json` returns exit `2` for review and never authorizes cleanup.
+- Drift gate: startup saves an automatic observation that is not check-eligible; after review, explicit `reconcile --write` accepts the current observation as a baseline, while `reconcile --check --json` returns exit `2` for drift and never authorizes cleanup.
 
 ## Outputs
 
@@ -85,6 +83,8 @@ AIENV.md                 # Markdown env map for AI agents
 .aienvmap/plan.md         # read-only action plan
 .aienvmap/dashboard.html  # human dashboard
 ```
+
+Sharing policy: treat `manifest*.json`, `reconcile.json`, raw SBOM files, `dashboard.html`, and `trial/portable.json` as local-only unless a human reviews them. Coordination files can contain operator-supplied text and also require review. Use `reconcile --portable --json` or the generated case draft for redacted sharing. aienvmap never edits the project's `.gitignore` automatically.
 
 ## AI Contract
 
@@ -123,7 +123,7 @@ aienvmap onboard --agents cursor,copilot
 ## CI
 The GitHub Action writes discovery, status, summary, schema, doctor, plan, SBOM, and dashboard artifacts. `strict: "off"` reports warnings without failing the job. See [examples/github-action.yml](examples/github-action.yml).
 
-`reconcile-check` defaults to `off`. Enable it only on a stable workstation or self-hosted runner with a reviewed `.aienvmap/reconcile.json`; ephemeral hosted runners can legitimately have different runtime inventories.
+`reconcile-check` defaults to `off`. Enable it only on a stable workstation or self-hosted runner after reviewing the automatic observation and explicitly running `aienvmap reconcile --write`; ephemeral hosted runners can legitimately have different runtime inventories.
 
 ```yaml
 - uses: soovwv/aienvmap@main

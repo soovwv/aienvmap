@@ -194,7 +194,7 @@ Before changing runtimes, package managers, Docker settings, global packages, de
 5. Never remove a runtime, package manager, or environment without explicit human approval and a rollback plan.
 6. After accepted environment changes, run \`aienvmap checkpoint --actor ${actor} --summary what-changed --target environment\`.
 
-Privacy: raw \`.aienvmap/\` artifacts may contain local paths, hostnames, runtime versions, and project package details. Review them before committing or sharing; use \`aienvmap reconcile --portable --json\` for redacted evidence.
+Privacy: treat raw manifests, reconciliation reports, SBOM files, dashboards, and \`trial/portable.json\` as local-only by default. Coordination files can contain operator text. Review before committing or sharing; use \`aienvmap reconcile --portable --json\` for redacted evidence. aienvmap never edits \`.gitignore\`.
 
 \`aienvmap\` does not replace this instruction file, the active shell, or owning-user verification. It provides observed environment evidence, a lightweight runtime SBOM, an intent log, a timeline, and a dashboard.`;
 }
