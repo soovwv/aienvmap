@@ -193,7 +193,7 @@ export function renderSummary(status = {}, manifest = {}) {
     `- target: ${releaseReadiness.target || "0.2.0"}`,
     `- status: ${releaseReadiness.status || "release-candidate"}`,
     `- default decision: ${publishDecision.default || "hold"}`,
-    `- publish gate: ${publishGate.status || "ready-for-final-check"} / ${publishGate.nextAction || "Run the final release checks and verify release authentication."}`,
+    `- publish gate: ${publishGate.status || "ready-for-final-check"} / ${publishGate.nextAction || "Run the final release checks and verify npm-side trusted publishing."}`,
     `- current batch: ${currentBatch.status || "reviewed"} / ${currentBatch.releaseType || "stability-batch"} / ${toList(currentBatch.themes).join(", ") || "AI contract, dashboard, SBOM, release gate"}`,
     `- next stabilization: ${nextStabilizationTasks[0] || "keep the reviewed JSON root-field freeze candidate unchanged"}`,
     `- contract review: ${contractReview.status || "freeze-candidate-verified"} / ${contractReview.command || "npm run contract:check"} / ${toList(contractReview.surfaces).join(", ") || "discover, start, status, context, handoff, sbom"}`,

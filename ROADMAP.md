@@ -58,17 +58,17 @@ Acceptance gates: cross-platform fixtures for every manager, no writes in defaul
 
 ## Near Term
 
-- Prepare `0.2.0` as one stabilized AI workspace contract release, not a per-commit npm stream
-- Keep the reviewed 15-surface JSON root-field freeze candidate guarded by `npm run contract:check` until `0.2.0`
+- Publish `0.2.0` as one stabilized AI workspace contract release, not a per-commit npm stream
+- Keep the reviewed 15-surface JSON root-field contract guarded by `npm run contract:check` from `0.2.0` onward
 - Use `releaseReadiness.contractReview` as the AI-readable checklist for root-field compatibility review
 - Keep `releaseReadiness.nextStabilizationTasks` current so AI agents can choose the next hardening step
 - Keep `releaseReadiness.evidenceCommands` current so AI/CI can prove the release gate before npm publish
 - Keep README, examples, schema, dashboard, and packaged skill aligned on AI workspace coordination
 - Treat `onboard.verification` as marker-file integrity only; it never proves that an AI host loaded the pointer
 - Validate actual start/onboard/discover fallback pickup across Codex, Claude, Gemini, Cursor, and Copilot surfaces
-- Keep APM consumer installation reproducible in CI, then validate actual host pickup in disposable Codex, Claude, Gemini, Cursor, and Copilot projects; publish the first immutable APM-compatible tag with the batched `0.2.0` release rather than pointing users at the old `v0.1.1` tag
+- Keep APM consumer installation reproducible in CI, publish the immutable `v0.2.0` skill reference with the release, then validate actual host pickup in disposable Codex, Claude, Gemini, Cursor, and Copilot projects
 - Keep JSON contracts additive after `0.2.0`; breaking changes require a contract version bump and migration notes
-- Keep release provenance fail-closed: current main, matching version tag, unpublished version, explicit confirmation, compatible Node/npm floors, OIDC attestation, and post-publish registry verification; trusted publishing receives no token and the token fallback remains an explicit security exception until trusted publisher configuration is verified
+- Keep release provenance fail-closed: current main, matching version tag, unpublished version, explicit confirmation, compatible Node/npm floors, OIDC trusted publishing, and post-publish registry verification; no long-lived publish token is accepted
 - Deprecate `0.1.x` prototype versions after `0.2.0` is published
 - Strengthen trust states: observed, planned, changed, review, verified, stale
 - Detect multi-agent environment intent conflicts

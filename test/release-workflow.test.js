@@ -27,13 +27,8 @@ test("manual release workflow is provenance-enabled and fail-closed", async () =
     "Published registry metadata did not verify"
   ]) assert.match(workflow, new RegExp(signal.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
   assert.match(workflow, /Prerelease versions must not use the latest dist-tag/);
-  assert.match(workflow, /NODE_AUTH_TOKEN: \$\{\{ secrets\.NPM_TOKEN \}\}/);
-  assert.match(workflow, /authentication:/);
-  assert.match(workflow, /default: "trusted-publisher"/);
-  assert.match(workflow, /authentication == 'trusted-publisher'/);
-  assert.match(workflow, /authentication == 'token-fallback'/);
-  const trustedStep = workflow.slice(workflow.indexOf("Publish to npm with trusted publisher"), workflow.indexOf("Publish to npm with explicit token fallback"));
-  assert.doesNotMatch(trustedStep, /NODE_AUTH_TOKEN/);
+  assert.match(workflow, /Publish to npm with trusted publisher/);
+  assert.doesNotMatch(workflow, /NODE_AUTH_TOKEN|NPM_TOKEN|token-fallback|authentication:/);
 });
 
 test("CI uses Node 24 based actions without implicit package-manager caching", async () => {
@@ -51,7 +46,7 @@ test("release workflow remains explicit and manually confirmed", async () => {
   assert.match(workflow, /workflow_dispatch:/);
   assert.match(workflow, /confirm_publish:/);
   assert.match(workflow, /github\.event\.inputs\.confirm_publish == 'publish'/);
-  assert.match(workflow, /type: choice\s+options:\s+- trusted-publisher\s+- token-fallback/);
+  assert.doesNotMatch(workflow, /type: choice|token-fallback/);
   assert.doesNotMatch(workflow, /on:\s*\n\s*push:\s*\n\s*tags:/);
 });
 

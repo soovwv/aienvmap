@@ -16,15 +16,6 @@ on:
         description: "Type publish to confirm npm publish"
         required: true
         type: string
-      authentication:
-        description: "Publishing authentication; prefer trusted publisher after npm configuration is verified"
-        required: true
-        default: "trusted-publisher"
-        type: choice
-        options:
-          - trusted-publisher
-          - token-fallback
-
 permissions:
   contents: read
   id-token: write
@@ -122,14 +113,7 @@ jobs:
         run: npm run release:check
 
       - name: Publish to npm with trusted publisher
-        if: ${{ github.event.inputs.authentication == 'trusted-publisher' }}
         run: npm publish --access public --tag "${{ github.event.inputs.npm_tag }}" --provenance
-
-      - name: Publish to npm with explicit token fallback
-        if: ${{ github.event.inputs.authentication == 'token-fallback' }}
-        run: npm publish --access public --tag "${{ github.event.inputs.npm_tag }}" --provenance
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: Verify published registry metadata
         shell: bash

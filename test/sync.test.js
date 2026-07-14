@@ -101,6 +101,8 @@ test("sync creates the AI-facing env map outputs with simple defaults", async ()
   assert.match(startHere, /Use aienvmap as the workspace env map/);
   assert.match(startHere, /\.aienvmap\/discovery\.json/);
   assert.match(startHere, /For AI agents: start here, then use `status\.json`, `summary\.md`, and `aienvmap context --json`/);
+  assert.match(startHere, /raw `\.aienvmap\/` artifacts may contain local paths, hostnames, runtime versions/);
+  assert.match(startHere, /aienvmap reconcile --portable --json/);
   const discovery = JSON.parse(await fs.readFile(path.join(dir, ".aienvmap", "discovery.json"), "utf8"));
   assert.equal(discovery.schemaName, "aienvmap.ai-discovery");
   assert.equal(discovery.decision, "fallback-required");

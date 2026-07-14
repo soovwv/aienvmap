@@ -5,8 +5,10 @@ import path from "node:path";
 
 test("cross-platform validation records redacted compatibility evidence without market overclaim", async () => {
   const validation = await fs.readFile(path.resolve("VALIDATION.md"), "utf8");
-  for (const environment of ["Windows 11 x64", "Alpine Linux x64", "Intel macOS 26.2"]) assert.match(validation, new RegExp(environment));
-  assert.match(validation, /314 tests/);
+  for (const environment of ["Windows 11 x64", "GitHub Ubuntu runner", "GitHub macOS runner", "GitHub Windows runners", "Alpine Linux x64", "Intel macOS 26.2"]) assert.match(validation, new RegExp(environment));
+  assert.match(validation, /full 0\.2\.0 `npm run release:check`/);
+  assert.match(validation, /full suite passed and one platform test was intentionally skipped/);
+  assert.match(validation, /historical pre-release[^\n]+314-test suite/);
   assert.match(validation, /published SHA-256 verification/);
   assert.match(validation, /not independent adoption/);
   assert.match(validation, /Removal authorized/);

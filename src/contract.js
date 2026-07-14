@@ -345,7 +345,6 @@ export function schemaContract() {
       localCommand: "npm run release:check",
       workflow: ".github/workflows/release.yml",
       publishWorkflow: "GitHub Actions Release workflow_dispatch",
-      npmTokenSecret: "NPM_TOKEN",
       provenance: {
         status: "0.1.1-verified-0.2.0-pending",
         oidcPermission: "id-token: write",
@@ -429,7 +428,7 @@ export function schemaContract() {
       publishGate: {
         status: "ready-for-final-check",
         reason: "The 0.2.0 stability batch is reviewed and versioned; publishing remains blocked until the final release check, exact tag, and npm trusted publisher are verified.",
-        nextAction: "Run npm run release:check, verify npm trusted publishing, tag the exact merged main commit, then use the manual release workflow.",
+        nextAction: "Run npm run release:check, verify npm-side trusted publishing, tag the exact merged main commit, then use the manual release workflow.",
         requiredEvidence: ["npm run release:check", "npm run pack:install-check", "node bin/aienvmap.js schema --json", "node bin/aienvmap.js demo --json", "npm pack --dry-run"],
         readyWhen: [
           "currentBatch changes are reviewed as one release note group",
