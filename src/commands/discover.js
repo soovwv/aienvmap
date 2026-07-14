@@ -2,6 +2,7 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import { aiDefaultReadOrder, aiDiscoveryEntry, aiEntryContract, aiEnvMap, aiSessionUseContract, aiStartHere, aiStatus, aiSummary, npxAiFallbackPrompt, npxAiMissingFallbackPrompt, npxAiStartupChecklist } from "../ai-contract.js";
 import { hasAgentPointer } from "../agent-pointer.js";
+import { agentSkillLocations, hasAienvmapAgentSkill } from "../agent-skill.js";
 import { readJson } from "../fsutil.js";
 import { aiEnvPath, dashboardPath, discoveryJsonPath, manifestPath, sbomJsonPath, stateDir, stateReadmePath, statusJsonPath, summaryMdPath, workspaceDir } from "../paths.js";
 
@@ -27,13 +28,20 @@ export async function discoverWorkspace(args = {}) {
   const status = await readJson(statusJsonPath(dir), null);
   const artifacts = await discoverArtifacts(dir);
   const pointers = await discoverPointers(dir);
+  const skills = await discoverAgentSkills(dir);
   const detected = artifacts.stateDir.exists || artifacts.discovery.exists || artifacts.aiEnv.exists || Boolean(status);
   const freshness = status?.artifactFreshness?.state || "unknown";
   const stale = ["stale", "unknown"].includes(freshness);
   const agentPointers = {
-    discovery: pointerDiscovery(pointers),
+    discovery: pointerDiscovery(pointers, skills),
     installed: pointers.filter((item) => item.hasPointer).map((item) => item.agent),
-    detected: pointers.filter((item) => item.exists).map((item) => item.agent)
+    detected: pointers.filter((item) => item.exists).map((item) => item.agent),
+    skills,
+    skillCovered: unique(skills.flatMap((item) => item.availableTo)),
+    covered: unique([
+      ...pointers.filter((item) => item.hasPointer).map((item) => item.agent),
+      ...skills.flatMap((item) => item.availableTo)
+    ])
   };
   const readOrder = aiDefaultReadOrder;
   const result = {
@@ -97,6 +105,24 @@ async function discoverPointers(dir) {
   return out;
 }
 
+async function discoverAgentSkills(dir) {
+  const out = [];
+  for (const location of agentSkillLocations) {
+    const text = await readText(path.join(dir, location.file));
+    if (!hasAienvmapAgentSkill(text)) continue;
+    out.push({
+      name: "aienvmap",
+      kind: location.kind,
+      file: toSlash(location.file),
+      distribution: "apm-compatible-agent-skill",
+      availableTo: location.availableTo,
+      bytes: Buffer.byteLength(text, "utf8"),
+      hostAutomaticPickupVerified: false
+    });
+  }
+  return out;
+}
+
 async function artifact(dir, name, fullPath) {
   return {
     path: name,
@@ -123,13 +149,17 @@ async function readText(file) {
   }
 }
 
-function pointerDiscovery(pointers = []) {
+function pointerDiscovery(pointers = [], skills = []) {
   const installed = pointers.filter((item) => item.hasPointer).map((item) => item.agent);
-  return installed.length ? `ready: ${installed.join(", ")}` : "missing: run aienvmap onboard";
+  const skillCovered = unique(skills.flatMap((item) => item.availableTo));
+  if (!skillCovered.length) return installed.length ? `ready: ${installed.join(", ")}` : "missing: run aienvmap onboard";
+  const covered = unique([...installed, ...skillCovered]);
+  const methods = [installed.length ? "marker" : null, skillCovered.length ? "agent-skill" : null].filter(Boolean).join("+");
+  return `ready: ${covered.join(", ")} via ${methods}`;
 }
 
 function aiDiscoverySummary({ detected = false, stale = true, agentPointers = {}, readOrder = [] } = {}) {
-  const installed = agentPointers.installed || [];
+  const installed = agentPointers.covered || agentPointers.installed || [];
   const safeStart = detected && !stale ? "npx aienvmap status" : "npx aienvmap sync";
   const fallbackRead = readOrder.slice(0, 5);
   const decision = installed.length ? "auto-ready" : "fallback-required";
@@ -194,6 +224,10 @@ function aiDiscoverySummary({ detected = false, stale = true, agentPointers = {}
     humanInstruction: "Paste copyPastePrompt into an AI session when the host did not auto-read an instruction-file pointer.",
     rule: "Do not assume automatic pickup. Verify discovery with aienvmap discover or status before shared environment changes."
   };
+}
+
+function unique(values = []) {
+  return [...new Set(values)];
 }
 
 function toSlash(value = "") {

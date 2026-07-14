@@ -14,14 +14,21 @@ export async function onboardWorkspace(args = {}) {
   const agents = selectedAgents(args);
   const discoveryTargets = agents.map((agent) => agent === "agents" ? "codex" : agent);
   const pointers = [];
+  const before = await discoverWorkspace({ ...args, json: false, quiet: true });
+  const skillCovered = before.agentPointers?.skillCovered || [];
 
   for (const agent of agents) {
+    const skill = before.agentPointers?.skills?.find((item) => item.availableTo.includes(agent));
+    if (skill && !args.uninstall) {
+      pointers.push(preservedSkillPointer(agent, skill, args.dry_run));
+      continue;
+    }
     pointers.push(await snippetWorkspace({ ...args, _: [agent], write: true, quiet: true }));
   }
 
   const synced = args.no_sync || args.dry_run ? null : await syncWorkspace({ ...args, json: false, quiet: true });
   const discovered = args.dry_run ? null : await discoverWorkspace({ ...args, json: false, quiet: true });
-  const verification = pointerVerification({ requested: discoveryTargets, discovered, preview: args.dry_run, uninstall: args.uninstall });
+  const verification = pointerVerification({ requested: discoveryTargets, discovered, preview: args.dry_run, uninstall: args.uninstall, skillCovered });
   const discoveryStatus = args.dry_run
     ? "preview"
     : args.uninstall
@@ -43,6 +50,8 @@ export async function onboardWorkspace(args = {}) {
     verification,
     next: verification.pass === false
       ? "Run aienvmap discover --json and review the requested instruction files; do not claim automatic discovery."
+      : args.uninstall && verification.skillCovered.length
+        ? "Selected marker blocks were removed. Recognized agent skills remain managed by their package distributor."
       : "Run aienvmap status; AI agents should read their instruction file pointer, then .aienvmap/discovery.json and .aienvmap/status.json."
   };
 
@@ -62,22 +71,40 @@ export async function onboardWorkspace(args = {}) {
   return result;
 }
 
-export function pointerVerification({ requested = [], discovered = null, preview = false, uninstall = false } = {}) {
+export function pointerVerification({ requested = [], discovered = null, preview = false, uninstall = false, skillCovered = null } = {}) {
   const installed = discovered?.agentPointers?.installed || [];
+  const discoveredSkillCovered = skillCovered || discovered?.agentPointers?.skillCovered || [];
   const requestedInstalled = requested.filter((agent) => installed.includes(agent));
-  const requestedMissing = requested.filter((agent) => !installed.includes(agent));
+  const requestedSkillCovered = requested.filter((agent) => discoveredSkillCovered.includes(agent));
+  const covered = [...new Set([...requestedInstalled, ...requestedSkillCovered])];
+  const requestedMissing = requested.filter((agent) => !covered.includes(agent));
   const pass = preview ? null : uninstall ? requestedInstalled.length === 0 : requestedMissing.length === 0;
   return {
-    status: preview ? "preview-only" : pass ? uninstall ? "removed" : "installed" : "review",
+    status: preview ? "preview-only" : pass ? uninstall ? "removed" : requestedSkillCovered.length ? "available" : "installed" : "review",
     pass,
-    scope: "instruction-pointer marker files only",
+    scope: uninstall ? "selected instruction-pointer marker files only" : "instruction-pointer markers and recognized aienvmap agent skills",
     requested,
     installed: requestedInstalled,
+    skillCovered: requestedSkillCovered,
+    covered,
     missing: requestedMissing,
-    otherInstalled: installed.filter((agent) => !requested.includes(agent)),
+    otherInstalled: [...new Set([...installed, ...discoveredSkillCovered])].filter((agent) => !requested.includes(agent)),
     hostAutomaticPickupVerified: false,
     proofCommand: "aienvmap discover --json",
-    rule: "A complete marker block verifies the project file write, not whether an AI host automatically loaded that file; use the fallback prompt when host pickup is uncertain."
+    rule: "A complete marker or recognized agent skill verifies project context availability, not whether an AI host automatically loaded it; use the fallback prompt when host pickup is uncertain."
+  };
+}
+
+function preservedSkillPointer(agent, skill, preview = false) {
+  return {
+    file: skill.file,
+    target: agent,
+    mode: preview ? "dry-run" : "preserve",
+    exists: true,
+    changed: false,
+    action: "preserve-agent-skill",
+    beforeBytes: skill.bytes,
+    afterBytes: skill.bytes
   };
 }
 
