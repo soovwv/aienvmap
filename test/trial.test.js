@@ -12,6 +12,13 @@ test("trial completes a local technical test without uploading or changing the e
   const dir = await fs.mkdtemp(path.join(os.tmpdir(), "aienvmap-trial-"));
   try {
     await fs.writeFile(path.join(dir, "package.json"), JSON.stringify({ name: "private-fixture", private: true }));
+    const wrapperSideEffect = path.join(dir, "wrapper-invoked.txt");
+    const wrapper = process.platform === "win32" ? "mvnw.cmd" : "mvnw";
+    const wrapperBody = process.platform === "win32"
+      ? `@echo off\r\necho invoked> "${wrapperSideEffect}"\r\necho Apache Maven 3.9.9\r\n`
+      : `#!/bin/sh\nprintf invoked > "${wrapperSideEffect}"\nprintf 'Apache Maven 3.9.9\\n'\n`;
+    await fs.writeFile(path.join(dir, wrapper), wrapperBody);
+    if (process.platform !== "win32") await fs.chmod(path.join(dir, wrapper), 0o755);
     await fs.mkdir(path.join(dir, ".aienvmap"));
     const manifestSentinel = "existing manifest must remain unchanged\n";
     const timelineSentinel = "existing timeline must remain unchanged\n";
@@ -28,6 +35,7 @@ test("trial completes a local technical test without uploading or changing the e
     assert.equal(result.marketEvidence, false);
     assert.deepEqual(result.artifacts, [".aienvmap/trial/portable.json", ".aienvmap/trial/case-summary.json", ".aienvmap/trial/case-draft.md", ".aienvmap/trial/NEXT.md"]);
     assert.equal(await fs.stat(path.join(dir, "AIENV.md")).then(() => true, () => false), false);
+    assert.equal(await fs.stat(wrapperSideEffect).then(() => true, () => false), false);
     assert.equal(await fs.readFile(path.join(dir, ".aienvmap", "manifest.json"), "utf8"), manifestSentinel);
     assert.equal(await fs.readFile(path.join(dir, ".aienvmap", "timeline.jsonl"), "utf8"), timelineSentinel);
     assert.deepEqual((await fs.readdir(path.join(dir, ".aienvmap"))).sort(), ["manifest.json", "timeline.jsonl", "trial"]);

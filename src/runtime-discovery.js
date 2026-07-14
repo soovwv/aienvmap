@@ -11,7 +11,7 @@ export async function inspectCommonRuntimes(options = {}) {
     const installations = (await Promise.all(candidates.map((candidate) => inspectRuntimeCandidate(definition, candidate, options)))).filter(Boolean);
     installations.forEach((item, index) => { item.active = options.executeCandidates === false ? false : index === 0; });
     const runtimeMetadata = definition.id === "java" ? summarizeJavaMetadata(installations) : null;
-    const buildTools = definition.id === "java" ? (options.executeCandidates === false ? { bindings: [], collection: "skipped-no-exec", rule: "Build tools are not invoked during explicit-home inspection." } : await inspectJavaBuildTools(installations, options)) : null;
+    const buildTools = definition.id === "java" ? await collectJavaBuildTools(installations, options) : null;
     return [definition.id, {
       label: definition.label,
       detailLevel: "path-and-version-only",
@@ -23,6 +23,20 @@ export async function inspectCommonRuntimes(options = {}) {
     }];
   }));
   return Object.fromEntries(entries);
+}
+
+async function collectJavaBuildTools(installations, options) {
+  if (options.executeCandidates === false) {
+    return { bindings: [], collection: "skipped-no-exec", rule: "Build tools are not invoked during explicit-home inspection." };
+  }
+  if (options.quick || options.inspectProjectWrappers === false) {
+    return {
+      bindings: [],
+      collection: options.quick ? "skipped-quick" : "skipped-by-policy",
+      rule: "Project Maven and Gradle wrappers are not invoked in quick or wrapper-disabled discovery. Use a standard explicitly approved reconciliation to inspect build-tool JVM bindings."
+    };
+  }
+  return { ...await inspectJavaBuildTools(installations, options), collection: "collected" };
 }
 
 export async function inspectJavaBuildTools(installations = [], options = {}) {
