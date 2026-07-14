@@ -321,7 +321,7 @@ test("schemaContract describes stable AI output contracts", () => {
   assert.match(schema.releaseReadiness.publishDecision.emergencyException, /Security/);
   assert.equal(schema.releaseReadiness.publishGate.status, "ready-for-final-check");
   assert.match(schema.releaseReadiness.publishGate.reason, /stability batch/);
-  assert.match(schema.releaseReadiness.publishGate.nextAction, /verify npm trusted publishing/);
+  assert.match(schema.releaseReadiness.publishGate.nextAction, /verify npm-side trusted publishing/);
   assert.ok(schema.releaseReadiness.publishGate.requiredEvidence.includes("npm run release:check"));
   assert.match(schema.releaseReadiness.publishGate.readyWhen.join(" "), /release note group/);
   assert.match(schema.releaseReadiness.publishGate.readyWhen.join(" "), /aiDiscovery\.decision, aiUse, and dependencyQuickCheck/);

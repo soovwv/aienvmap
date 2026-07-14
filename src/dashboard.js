@@ -46,7 +46,7 @@ export const dashboardReleaseDefaults = Object.freeze({
   target: "0.2.0",
   status: "release-candidate",
   decision: "hold",
-  next: "Run the final release checks and verify release authentication.",
+  next: "Run the final release checks and verify npm-side trusted publishing.",
   batchStatus: "reviewed",
   batchType: "stability-batch",
   gate: "npm run release:check passes locally",
