@@ -4,15 +4,18 @@ import { promisify } from "node:util";
 const execFileAsync = promisify(execFile);
 
 export async function commandVersion(command, args = ["--version"]) {
-  try {
-    const { stdout, stderr } = await execFileAsync(command, args, {
-      timeout: 2500,
-      windowsHide: true
-    });
-    return firstVersion(`${stdout}\n${stderr}`);
-  } catch {
-    return null;
-  }
+  return (await commandVersionResult(command, args)).version;
+}
+
+export async function commandVersionResult(command, args = ["--version"], options = {}) {
+  const result = await commandResult(command, args, { timeout: options.timeout || 2500, maxBuffer: options.maxBuffer, cwd: options.cwd, env: options.env });
+  const version = firstVersion(`${result.stdout}\n${result.stderr}`);
+  return {
+    ...result,
+    version,
+    verified: Boolean(version),
+    failure: version ? undefined : result.failure || "version-not-recognized"
+  };
 }
 
 export async function commandOutput(command, args = [], options = {}) {

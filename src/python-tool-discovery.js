@@ -43,14 +43,27 @@ export async function inspectPythonToolCandidates(candidates = [], pipCommands =
     }
     const result = await portableCommandResult(candidate.path, ["--version"], { timeout: 3500, platform: options.platform || process.platform });
     const version = result.ok ? firstVersion(`${result.stdout}\n${result.stderr}`) : null;
-    if (!version) return null;
     const shown = displayPath(candidate.path, options);
+    if (!version) return {
+      tool: candidate.tool,
+      version: "unverified-probe-failed",
+      versionVerified: false,
+      path: shown,
+      source: candidate.source,
+      scope: candidate.scope,
+      discovery: candidate.discovery,
+      routingEvidence: "unverified-probe-failed",
+      ownershipProven: false,
+      removalAuthorized: false,
+      evidence: "probe-failed",
+      probe: { status: "failed", reason: result.failure || "version-not-recognized" }
+    };
     const pipDirs = new Set(pipCommands.map((item) => path.dirname(item.path).toLowerCase()));
     return { tool: candidate.tool, version, path: shown, source: candidate.source, scope: candidate.scope, discovery: candidate.discovery, routingEvidence: pipDirs.has(path.dirname(shown).toLowerCase()) ? "co-located-with-pip" : "standalone-or-unknown", ownershipProven: false, removalAuthorized: false };
   }));
   return Object.fromEntries(["uv", "pipx"].map((tool) => {
     const installations = inspected.filter((item) => item?.tool === tool).map((item, index) => ({ ...item, active: options.executeCandidates === false ? false : index === 0 }));
-    return [tool, { installations, active: installations[0] || null, distinctVersions: [...new Set(installations.map((item) => item.version))] }];
+    return [tool, { installations, active: installations[0] || null, distinctVersions: [...new Set(installations.filter((item) => item.versionVerified !== false).map((item) => item.version))] }];
   }));
 }
 
@@ -88,7 +101,16 @@ export async function inspectCondaCandidates(candidates = [], options = {}) {
     }
     const versionResult = await portableCommandResult(candidate.path, ["--version"], { timeout: 4000, platform: options.platform || process.platform });
     const version = versionResult.ok ? firstVersion(`${versionResult.stdout}\n${versionResult.stderr}`) : null;
-    if (!version) continue;
+    if (!version) {
+      installations.push({
+        manager: "conda", version: "unverified-probe-failed", versionVerified: false,
+        path: displayPath(candidate.path, options), source: candidate.source, scope: candidate.scope, discovery: candidate.discovery,
+        environmentEvidence: { collection: "probe-failed", count: 0, activePrefix: "", prefixes: [], truncated: false },
+        ownershipProven: false, removalAuthorized: false, active: installations.length === 0,
+        evidence: "probe-failed", probe: { status: "failed", reason: versionResult.failure || "version-not-recognized" }
+      });
+      continue;
+    }
     let environmentEvidence = { collection: options.fullPackages ? "unsupported-or-failed" : "not-requested", count: 0, activePrefix: "", prefixes: [], truncated: false };
     if (options.fullPackages) {
       const envResult = await portableCommandResult(candidate.path, ["info", "--envs", "--json"], { timeout: 8000, maxBuffer: 2 * 1024 * 1024, platform: options.platform || process.platform });
@@ -96,7 +118,7 @@ export async function inspectCondaCandidates(candidates = [], options = {}) {
     }
     installations.push({ manager: "conda", version, path: displayPath(candidate.path, options), source: candidate.source, scope: candidate.scope, discovery: candidate.discovery, environmentEvidence, ownershipProven: false, removalAuthorized: false, active: installations.length === 0 });
   }
-  return { installations, active: installations[0] || null, distinctVersions: [...new Set(installations.map((item) => item.version))], collection: options.fullPackages ? "environment-summary-requested" : "version-only" };
+  return { installations, active: installations[0] || null, distinctVersions: [...new Set(installations.filter((item) => item.versionVerified !== false).map((item) => item.version))], collection: options.fullPackages ? "environment-summary-requested" : "version-only" };
 }
 
 export function parseCondaEnvironmentInfo(raw, options = {}) {

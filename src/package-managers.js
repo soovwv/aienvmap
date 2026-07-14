@@ -2,7 +2,7 @@ import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { createHash } from "node:crypto";
-import { commandOutput, commandVersion, firstVersion, portableCommandResult } from "./shell.js";
+import { commandOutput, commandVersion, commandVersionResult, firstVersion, portableCommandResult } from "./shell.js";
 import { exists } from "./fsutil.js";
 import { parseNpmGlobal } from "./inventory.js";
 import { analyzeCommonRuntimes, analyzeJavaBuildTools, inspectCommonRuntimes } from "./runtime-discovery.js";
@@ -45,7 +45,9 @@ export async function inspectPackageManagers(dir, options = {}) {
   const inspected = await Promise.all(candidates.map(async (candidate, index) => {
     if (options.executeCandidates === false) return unverifiedInstallation("npm", candidate, options, index);
     const version = await npmCandidateVersion(candidate.path);
-    if (!version) return null;
+    if (!version) return failedProbeInstallation("npm", candidate, options, "version-not-recognized", {
+      candidateOrder: index, prefix: "", globalRoot: "", globalPackages: [], packageCollection: "probe-failed"
+    });
     const [prefix, globalRoot, globalRaw] = await Promise.all([
       npmCandidateOutput(candidate.path, ["config", "get", "prefix"]),
       npmCandidateOutput(candidate.path, ["root", "-g"]),
@@ -737,7 +739,7 @@ async function inspectPipCandidates(candidates, options) {
       source: candidate.source,
       scope: candidate.scope,
       discovery: candidate.discovery
-    } : null;
+    } : failedProbeInstallation("pip", candidate, options, "version-not-recognized", { packageLocation: "", pythonVersion: "" });
   }));
   return inspected.filter(Boolean).map((item, index) => ({ ...item, active: options.executeCandidates === false ? false : index === 0 }));
 }
@@ -785,26 +787,26 @@ export async function findNodeCandidates(options = {}) {
 export async function inspectNodeCandidates(candidates, options) {
   const inspected = await Promise.all(candidates.map(async (candidate) => {
     if (options.executeCandidates === false) return unverifiedInstallation("node", candidate, options);
-    const [version, reportedExecutable] = await Promise.all([
-      commandVersion(candidate.path),
+    const [versionProbe, reportedExecutable] = await Promise.all([
+      commandVersionResult(candidate.path),
       commandOutput(candidate.path, ["-p", "process.execPath"], { timeout: 3500 })
     ]);
-    return version ? {
+    return versionProbe.version ? {
       runtime: "node",
-      version,
+      version: versionProbe.version,
       path: displayPath(candidate.path, options),
       reportedExecutable: displayPath(reportedExecutable, options),
       source: candidate.source,
       scope: candidate.scope,
       discovery: candidate.discovery
-    } : null;
+    } : failedProbeInstallation("node", candidate, options, versionProbe.failure);
   }));
   return inspected.filter(Boolean).map((item, index) => ({ ...item, active: options.executeCandidates === false ? false : index === 0 }));
 }
 
 export function analyzeNodeInstallations(installations, project = {}) {
   const findings = [];
-  const versions = [...new Set(installations.map((item) => item.version))];
+  const versions = [...new Set(installations.filter((item) => item.versionVerified !== false).map((item) => item.version))];
   if (installations.length > 1) findings.push({
     code: "multiple-node-installations",
     severity: versions.length > 1 ? "review" : "info",
@@ -854,8 +856,13 @@ export async function inspectPythonCandidates(candidates, options) {
       packageLocations: [], packages: [], installerEvidence: { collection: "not-requested", reason: "Executable invocation is disabled for explicit-home inspection." },
       packageSemantics: "not collected without executing the interpreter", packageCollection: "skipped-no-exec", pipAvailable: false
     };
-    const version = await commandVersion(candidate.path);
-    if (!version) return null;
+    const versionProbe = await commandVersionResult(candidate.path);
+    const version = versionProbe.version;
+    if (!version) return failedProbeInstallation("python", candidate, options, versionProbe.failure, {
+      prefix: "", basePrefix: "", virtualEnvironment: false, packageLocations: [], packages: [],
+      installerEvidence: { collection: "probe-failed", reason: "Interpreter version probe failed." },
+      packageSemantics: "not collected because the interpreter probe failed", packageCollection: "probe-failed", pipAvailable: false
+    });
     const probe = await commandOutput(candidate.path, ["-c", "import json,site,sys;print(json.dumps({'executable':sys.executable,'prefix':sys.prefix,'basePrefix':getattr(sys,'base_prefix',sys.prefix),'packages':site.getsitepackages() if hasattr(site,'getsitepackages') else [],'userSite':site.getusersitepackages()}))"], { timeout: 5000 });
     let details = {};
     try { details = JSON.parse(probe); } catch {}
@@ -895,7 +902,7 @@ export async function inspectPythonCandidates(candidates, options) {
 
 export function analyzePythonInstallations(installations, project = {}) {
   const findings = [];
-  const versions = [...new Set(installations.map((item) => item.version))];
+  const versions = [...new Set(installations.filter((item) => item.versionVerified !== false).map((item) => item.version))];
   if (installations.length > 1) findings.push({
     code: "multiple-python-installations",
     severity: versions.length > 1 ? "review" : "info",
@@ -1177,7 +1184,11 @@ export async function inspectNodePackageManagerCandidates(candidates = [], optio
     if (options.executeCandidates === false) return { ...unverifiedInstallation(candidate.manager, candidate, options), manager: candidate.manager, ownershipProven: false, removalAuthorized: false };
     const result = await portableCommandResult(candidate.path, ["--version"], { timeout: 3500, platform: options.platform || process.platform });
     const version = result.ok ? firstVersion(`${result.stdout}\n${result.stderr}`) : null;
-    if (!version) return null;
+    if (!version) return failedProbeInstallation(candidate.manager, candidate, options, "version-not-recognized", {
+      manager: candidate.manager,
+      ownershipProven: false,
+      removalAuthorized: false
+    });
     return { manager: candidate.manager, version, path: displayPath(candidate.path, options), source: candidate.source, scope: candidate.scope };
   }));
   const byManager = new Map();
@@ -1194,7 +1205,7 @@ export async function inspectNodePackageManagerCandidates(candidates = [], optio
       ownershipProven: false,
       removalAuthorized: false
     }));
-    return [manager, { installations, active: installations[0] || null, distinctVersions: [...new Set(installations.map((item) => item.version))] }];
+    return [manager, { installations, active: installations[0] || null, distinctVersions: [...new Set(installations.filter((item) => item.versionVerified !== false).map((item) => item.version))] }];
   }));
 }
 
@@ -1212,23 +1223,39 @@ function unverifiedInstallation(runtime, candidate, options, candidateOrder) {
   };
 }
 
+function failedProbeInstallation(runtime, candidate, options, reason = "execution-failed", extra = {}) {
+  return {
+    ...unverifiedInstallation(runtime, candidate, options),
+    version: "unverified-probe-failed",
+    evidence: "probe-failed",
+    probe: { status: "failed", reason },
+    ...extra
+  };
+}
+
 function unverifiedExecutableFindings(groups, options) {
-  if (options.executeCandidates !== false) return [];
   const direct = [groups.nodeInstallations, groups.installations, groups.pythonInstallations, groups.pipCommands, groups.conda?.installations];
   const nested = [groups.alternativeManagers, groups.toolEntryPoints, groups.commonRuntimes]
     .flatMap((group) => Object.values(group || {}).flatMap((item) => item?.installations || []));
-  const count = [...direct.flatMap((items) => items || []), ...nested].filter((item) => item.versionVerified === false).length;
-  return count ? [{
+  const unverified = [...direct.flatMap((items) => items || []), ...nested].filter((item) => item.versionVerified === false);
+  const failed = unverified.filter((item) => item.evidence === "probe-failed");
+  if (failed.length) return [{
+    code: "executable-probe-failed",
+    severity: "review",
+    message: `${failed.length} executable files were discovered but could not be verified; PATH routing and inventory completeness require review.`,
+    action: "Inspect probe reasons and the first PATH candidate before selecting a runtime; do not promote a later verified candidate automatically."
+  }];
+  return unverified.length ? [{
     code: "unverified-no-exec-evidence",
     severity: "review",
-    message: `${count} executable files were discovered without invocation; versions and active routing are unverified.`,
+    message: `${unverified.length} executable files were discovered without invocation; versions and active routing are unverified.`,
     action: "Have the owning user run a normal reconciliation or provide reviewed portable evidence before any consolidation decision."
   }] : [];
 }
 
 export function analyzeNpmInstallations(installations, project = {}) {
   const findings = [];
-  const versions = [...new Set(installations.map((item) => item.version))];
+  const versions = [...new Set(installations.filter((item) => item.versionVerified !== false).map((item) => item.version))];
   const roots = [...new Set(installations.map((item) => item.globalRoot).filter(Boolean))];
   if (installations.length > 1) findings.push({
     code: "multiple-npm-installations",
@@ -1457,7 +1484,7 @@ export function summarizePipInspect(raw, options = {}) {
 
 export function summarizePythonPackages(item, full) {
   const packages = item.packages || [];
-  if (item.packageCollection === "skipped-quick") return {
+  if (item.packageCollection === "skipped-quick" || item.versionVerified === false) return {
     ...item,
     packageCount: null,
     packageDigest: "",

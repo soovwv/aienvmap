@@ -1,12 +1,22 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { commandOutput, commandResult } from "../src/shell.js";
+import { commandOutput, commandResult, commandVersionResult } from "../src/shell.js";
 
 test("commandOutput forwards an explicit UTF-8 subprocess environment", async () => {
   const output = await commandOutput(process.execPath, ["-e", "process.stdout.write(process.env.AIENVMAP_TEST_UNICODE || '')"], {
     env: { ...process.env, AIENVMAP_TEST_UNICODE: "\uD658\uACBD\u2014\uC99D\uAC70" }
   });
   assert.equal(output, "\uD658\uACBD\u2014\uC99D\uAC70");
+});
+
+test("commandVersionResult separates execution failure from unrecognized output", async () => {
+  const missing = await commandVersionResult("aienvmap-version-command-that-does-not-exist");
+  assert.equal(missing.verified, false);
+  assert.equal(missing.failure, "command-not-found");
+
+  const unrecognized = await commandVersionResult(process.execPath, ["-e", "process.stdout.write('no version here')"]);
+  assert.equal(unrecognized.verified, false);
+  assert.equal(unrecognized.failure, "version-not-recognized");
 });
 
 test("commandResult forwards an explicit subprocess environment", async () => {
