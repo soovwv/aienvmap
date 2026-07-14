@@ -668,15 +668,15 @@ export function schemaContract() {
           introducedIn: "first release after 0.1.1",
           compatibility: "aienvmap 0.1.1 supports the trial command but does not expose outputs.trial from schema --json"
         },
-        mode: "read-only discovery with project-local reports and human-reviewed manual submission",
+        mode: "read-only technical testing with project-local reports; optional public evidence uses human-reviewed manual submission",
         writeScope: ".aienvmap/trial only; existing manifest, timeline, status, SBOM, AIENV.md, and agent instruction files remain unchanged; the npx launcher may cache the aienvmap package outside the project",
         rootFields: ["schemaName", "schemaVersion", "status", "decision", "inventoryCounts", "lightSbom", "artifacts", "next", "feedbackUrl", "privacy", "safety", "marketEvidence", "rule"],
-        privacyFields: ["automaticUpload", "telemetry", "pathsInCaseDraft", "reviewRequired"],
+        privacyFields: ["automaticUpload", "telemetry", "pathsInCaseDraft", "technicalResultReviewRequired", "publicSubmissionReviewRequired"],
         safetyFields: ["environmentChanged", "softwareRemoved", "pathModified"],
         artifactFiles: [".aienvmap/trial/portable.json", ".aienvmap/trial/case-summary.json", ".aienvmap/trial/case-draft.md", ".aienvmap/trial/NEXT.md"],
         shareOnly: ["case-summary.json", "case-draft.md after human review"],
         doNotShare: ["portable.json", "raw reconciliation output", "paths", "identities", "secrets", "private project or package names"],
-        rule: "A generated trial is not market evidence; an independent human must review, complete, consent to, and manually submit the draft."
+        rule: "Technical testing needs no human opinion; a generated draft is not market evidence until independent human confirmation, privacy review, and explicit submission consent."
       },
       reconcileCheck: {
         command: "aienvmap reconcile --check --json",

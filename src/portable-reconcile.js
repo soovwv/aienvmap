@@ -199,13 +199,19 @@ export function buildPortableCaseSummary(report = {}, comparison = null) {
 export function renderPortableCaseMarkdown(summary = {}) {
   if (summary?.schemaName !== "aienvmap.environment-case-summary" || summary?.schemaVersion !== 1) throw new Error("case Markdown requires an aienvmap.environment-case-summary v1 artifact");
   const safeSummary = JSON.stringify(summary, null, 2);
+  const findingCodes = summary.evidence?.findingCodes?.length ? summary.evidence.findingCodes.join(", ") : "none";
   return `# Portable environment case
 
-<!-- Public draft. Complete every placeholder, review the embedded summary, and remove any sensitive prose before submitting manually. -->
+<!-- AI-prepared public draft. Routine technical testing is already complete without this file. Publish only when a human chooses to provide case evidence. -->
 
-## Problem observed before aienvmap
+## Generated technical result
 
-<!-- Describe the real problem and user-visible impact. -->
+- Decision: ${summary.evidence?.decision || "unknown"}
+- Finding codes: ${findingCodes}
+- Platform category: ${summary.evidence?.platform || "unknown"}
+- Architecture category: ${summary.evidence?.architecture || "unknown"}
+
+These are generated observations, not the human's opinion and not proof that an environment change is needed.
 
 ## AI consumer and judgment
 
@@ -222,10 +228,8 @@ ${safeSummary}
 
 ## Human verification
 
-- Was the detected problem real? <!-- yes / partly / no -->
-- Was the AI judgment useful? <!-- 1 / 2 / 3 / 4 / 5 -->
-- False positive, false negative, or missing context: <!-- required -->
-- Outcome verified by: <!-- required; do not include a private identity -->
+- One-line confirmation: <!-- real=yes|partly|no; useful=1|2|3|4|5|skip; outcome=no-change|follow-up|change-made|other; independent=yes|no -->
+- Optional correction or context: <!-- optional; "none" is valid -->
 - Did aienvmap itself change or remove software? <!-- expected: no -->
 
 ## Privacy and evidence checklist
@@ -235,6 +239,8 @@ ${safeSummary}
 - [ ] I did not include raw reconciliation output, paths, usernames, hostnames, project/package names, secrets, tokens, or proprietary details.
 - [ ] I understand this generated draft is not market evidence until a human completes and manually submits it.
 - [ ] I authorize maintainers to cite the public issue as product evidence with a link.
+
+<!-- After the AI fills this draft, it must show the complete text and ask separately whether to submit. Silence is not consent. -->
 `;
 }
 
