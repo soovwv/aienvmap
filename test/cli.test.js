@@ -166,6 +166,7 @@ test("package publish allowlist stays small and intentional", async () => {
     "src",
     "scripts/performance-check.mjs",
     "scripts/contract-check.mjs",
+    "scripts/apm-consumer-check.mjs",
     "contracts",
     "README.md",
     "LICENSE",
@@ -182,8 +183,12 @@ test("package publish allowlist stays small and intentional", async () => {
     "TESTER_INVITE.md",
     "action.yml",
     "examples",
-    ".agents"
+    ".agents",
+    ".apm",
+    "apm.yml"
   ]);
   assert.equal(pkg.files.includes("test"), false);
   assert.equal(pkg.files.includes(".aienvmap"), false);
+  assert.equal(pkg.files.includes(".apm"), true);
+  assert.equal(pkg.files.includes("apm.yml"), true);
 });

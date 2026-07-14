@@ -32,6 +32,17 @@ test("APM package exposes one bounded, non-executing aienvmap skill", async () =
   assert.equal(hasAienvmapAgentSkill(skill.replace("<!-- aienvmap-agent-skill:v1 -->", "")), false);
 });
 
+test("CI performs a clean APM consumer install without claiming host pickup", async () => {
+  const workflow = await fs.readFile(path.resolve(".github/workflows/ci.yml"), "utf8");
+  const check = await fs.readFile(path.resolve("scripts/apm-consumer-check.mjs"), "utf8");
+  assert.match(workflow, /node scripts\/apm-consumer-check\.mjs/);
+  assert.match(check, /agent-skills,claude/);
+  assert.match(check, /preserve-agent-skill/);
+  assert.match(check, /hostAutomaticPickupVerified === false/);
+  assert.match(check, /not that an AI host automatically loaded the skill/);
+  assert.doesNotMatch(check, /npm install|npx |--global/);
+});
+
 test("discover recognizes APM-compatible cross-tool and Claude skills without claiming host pickup", async () => {
   const dir = await fs.mkdtemp(path.join(os.tmpdir(), "aienvmap-apm-discover-"));
   const skill = await fs.readFile(apmSkillFile, "utf8");

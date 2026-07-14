@@ -19,6 +19,7 @@
     "src",
     "scripts/performance-check.mjs",
     "scripts/contract-check.mjs",
+    "scripts/apm-consumer-check.mjs",
     "contracts",
     "README.md",
     "LICENSE",
@@ -35,7 +36,9 @@
     "TESTER_INVITE.md",
     "action.yml",
     "examples",
-    ".agents"
+    ".agents",
+    ".apm",
+    "apm.yml"
   ],
   "scripts": {
     "test": "node --test",

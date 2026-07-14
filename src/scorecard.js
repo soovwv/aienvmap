@@ -2,7 +2,7 @@ const technicalDimensions = [
   dimension("lightweight-runtime", 15, 15, ["package.json#dependencies", "npm pack --dry-run"], "Keep zero runtime dependencies and a bounded package."),
   dimension("ai-readable-contract", 14, 15, ["aienvmap schema --json", "src/ai-decision-envelope.js"], "Stabilize the additive contract at 0.2.0."),
   dimension("environment-inventory", 19, 20, ["aienvmap reconcile --json --full-packages", "aienvmap reconcile --portable --json", "test/reconcile.test.js"], "Validate portable reports and consolidation plans against external, mixed-manager environments."),
-  dimension("multi-ai-coordination", 13, 15, ["aienvmap demo --json", "test/multi-agent-demo.test.js"], "Validate the workflow in an external multi-user case study."),
+  dimension("multi-ai-coordination", 13, 15, ["aienvmap demo --json", "test/demo.test.js"], "Validate the workflow in an external multi-user case study."),
   dimension("sbom-interoperability", 12, 15, ["aienvmap sbom --json", "test/sbom.test.js"], "Validate imported CycloneDX and SPDX evidence against more generators."),
   dimension("safety-and-quality", 20, 20, ["npm test", "npm run perf:check", "test/reconcile.test.js", ".github/workflows/ci.yml", "aienvmap@0.1.1 dist.attestations"], "Validate performance budgets and release safety with more external environments.")
 ];
@@ -11,7 +11,7 @@ const marketDimensions = [
   dimension("differentiation", 15, 20, ["README.md#why", "examples/ai-workspace-case-study.md"], "Publish side-by-side workflows against adjacent tools."),
   dimension("problem-evidence", 7, 20, ["examples/multi-agent-conflict.md"], "Collect reproducible external environment-drift cases."),
   dimension("adoption-evidence", 2, 20, ["https://www.npmjs.com/package/aienvmap", "https://github.com/soovwv/aienvmap"], "Track real users, repeat usage, and external contributors."),
-  dimension("ecosystem-integration", 7, 20, [".agents/skills/aienvmap/SKILL.md", "action.yml"], "Publish verified host-specific AI integration examples."),
+  dimension("ecosystem-integration", 7, 20, [".apm/skills/aienvmap/SKILL.md", "scripts/apm-consumer-check.mjs", "action.yml"], "Publish verified host-specific AI integration examples."),
   dimension("onboarding-and-proof", 12, 20, ["aienvmap start --json", "aienvmap demo --json"], "Run first-use tests with users unfamiliar with the project.")
 ];
 
@@ -46,11 +46,11 @@ export function productScorecard() {
       scoreImpact: "none until independent outcome-verified evidence exists"
     },
     adjacentAlternatives,
-    strengths: ["zero-runtime-dependency local operation", "AI-readable environment and decision contracts", "read-only multi-install discovery", "no-exec evidence for explicit shared-server homes", "light SBOM interoperability", "explicit approval boundaries"],
-    weaknesses: ["limited independent adoption evidence", "few external case studies", "cross-user versions require owning-user verification", "adjacent tools increasingly combine AI context, agent worktrees, runtime setup, and reproducible environments", "information-only depth for several toolchains", "pre-0.2.0 contract stability"],
+    strengths: ["zero-runtime-dependency local operation", "AI-readable environment and decision contracts", "read-only multi-install discovery", "bounded APM skill distribution with consumer-install regression coverage", "light SBOM interoperability", "explicit approval boundaries"],
+    weaknesses: ["limited independent adoption evidence", "few external case studies", "AI-host automatic skill pickup remains unverified", "cross-user versions require owning-user verification", "adjacent tools increasingly combine AI context, agent worktrees, runtime setup, and reproducible environments", "pre-0.2.0 contract stability"],
     nextPriorities: [
       { priority: 1, outcome: "external problem evidence", proof: "at least three reproducible user environments, including one shared-server owner-verified report" },
-      { priority: 2, outcome: "AI-host integration evidence", proof: "verified examples for major coding-agent hosts" },
+      { priority: 2, outcome: "AI-host integration evidence", proof: "verified automatic-pickup and fallback examples for major coding-agent hosts" },
       { priority: 3, outcome: "release authentication hardening", proof: "npm trusted publisher configured and verified before the next release; 0.1.1 provenance remains registry-verifiable" }
     ],
     externalEvidenceRequirements: {

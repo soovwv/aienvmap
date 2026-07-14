@@ -8,7 +8,7 @@ The dated public traction and adjacent-tool comparison live in [MARKET.md](MARKE
 
 | Category | Score | Interpretation |
 | --- | ---: | --- |
-| Technical readiness | 93/100 | Strong prototype: dependency-free, cross-platform tested, AI-readable, safety-bounded, performance-budgeted, no-exec cross-user evidence, SBOM interoperability, signed npm provenance, and a fail-closed root-field freeze candidate; the contract is not released as stable until 0.2.0. |
+| Technical readiness | 93/100 | Strong prototype: dependency-free, cross-platform tested, AI-readable, safety-bounded, performance-budgeted, APM consumer-install checked, SBOM-interoperable, signed with npm provenance, and guarded by a fail-closed root-field freeze candidate; the contract is not stable until 0.2.0. |
 | Market validation | 43/100 | Differentiated position and usable proof flows exist, but independent users, external cases, and ecosystem verification remain limited. |
 | Weighted overall | 78/100 | 70% technical readiness and 30% market validation; never use this number alone as an adoption or release decision. |
 
@@ -17,6 +17,8 @@ The dated public traction and adjacent-tool comparison live in [MARKET.md](MARKE
 aienvmap is an AI workspace coordination and environment-evidence layer. It observes existing runtime installations, gives multiple AI agents a shared map and change protocol, and provides a light SBOM bridge. It does not replace a runtime manager, dependency update bot, vulnerability scanner, or full SBOM generator.
 
 Adjacent tools establish the boundaries: [Microsoft APM](https://github.com/microsoft/apm) packages agent context, [Devbox](https://github.com/jetify-com/devbox), [Flox](https://github.com/flox/flox), and [mise](https://mise.jdx.dev/) create or manage environments, [Renovate](https://docs.renovatebot.com/) automates dependency updates, and [Syft](https://github.com/anchore/syft) generates full inventories. aienvmap remains the observed mixed-host evidence and coordination layer.
+
+The APM skill-subpath install and native-pointer coexistence now have a clean consumer regression gate. This is technical distribution evidence only; it does not prove that Codex, Claude, Gemini, Cursor, or Copilot automatically loaded the skill in a real session.
 
 ## Evidence policy
 
