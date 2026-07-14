@@ -17,6 +17,29 @@ test("reconcile command preserves the portable helper compatibility exports", as
   assert.equal(reconcileCommand.portableEvidenceFingerprint, portableReconcile.portableEvidenceFingerprint);
 });
 
+test("failed Node and Python probes remain visible and keep PATH priority", async () => {
+  const missingNode = path.join(os.tmpdir(), "aienvmap-missing-node-executable");
+  const node = await inspectNodeCandidates([
+    { path: missingNode, source: "path", scope: "host", discovery: "PATH" },
+    { path: process.execPath, source: "system", scope: "host", discovery: "PATH" }
+  ], {});
+  assert.equal(node.length, 2);
+  assert.equal(node[0].active, true);
+  assert.equal(node[0].versionVerified, false);
+  assert.equal(node[0].evidence, "probe-failed");
+  assert.equal(node[0].probe.reason, "command-not-found");
+  assert.equal(node[1].active, false);
+  assert.equal(node[1].versionVerified, undefined);
+
+  const python = await inspectPythonCandidates([
+    { path: path.join(os.tmpdir(), "aienvmap-missing-python-executable"), source: "path", scope: "host", discovery: "PATH" }
+  ], { quick: true });
+  assert.equal(python.length, 1);
+  assert.equal(python[0].active, true);
+  assert.equal(python[0].versionVerified, false);
+  assert.equal(python[0].packageCollection, "probe-failed");
+});
+
 test("explicit home inspection validates the boundary and isolates invoking-user variables", async () => {
   const home = await fs.mkdtemp(path.join(os.tmpdir(), "aienvmap-inspected-home-"));
   assert.equal(await resolveInspectedHome(home), path.normalize(await fs.realpath(home)));
@@ -221,6 +244,21 @@ test("Python tool discovery and inspection stay bounded and advisory", async () 
     assert.equal(inspected.uv.active.version, "0.8.1");
     assert.equal(inspected.uv.active.ownershipProven, false);
   }
+});
+
+test("failed package-manager probes remain explicit", async () => {
+  const missing = path.join(os.tmpdir(), "aienvmap-missing-tool-executable");
+  const nodeManagers = await inspectNodePackageManagerCandidates([{ manager: "pnpm", path: missing, source: "PATH", scope: "user" }], { showPaths: true });
+  assert.equal(nodeManagers.pnpm.active.versionVerified, false);
+  assert.equal(nodeManagers.pnpm.active.evidence, "probe-failed");
+
+  const pythonTools = await inspectPythonToolCandidates([{ tool: "uv", path: missing, source: "PATH", scope: "user", discovery: "PATH" }], [], { showPaths: true });
+  assert.equal(pythonTools.uv.active.versionVerified, false);
+  assert.equal(pythonTools.uv.active.probe.reason, "command-not-found");
+
+  const conda = await inspectCondaCandidates([{ path: missing, source: "PATH", scope: "user", discovery: "PATH" }], { showPaths: true });
+  assert.equal(conda.active.versionVerified, false);
+  assert.equal(conda.active.environmentEvidence.collection, "probe-failed");
 });
 
 test("explicit home controls Node and Python PATH candidate scope", async () => {
@@ -1028,7 +1066,7 @@ test("reconcile CLI is read-only and returns machine-readable package-manager st
   assert.ok(json.aiDecision.runtimeLinkSummary);
   assert.equal(json.python.packageDetail.startsWith("summary"), true);
   assert.ok(json.python.installations.every((item) => item.packages === undefined));
-  assert.ok(json.python.installations.every((item) => item.installerEvidence.collection === "not-requested"));
+  assert.ok(json.python.installations.every((item) => ["not-requested", "probe-failed"].includes(item.installerEvidence.collection)));
   assert.ok(json.python.installations.every((item) => typeof item.packageDigest === "string"));
   assert.ok(["clear", "review"].includes(json.decision));
   assert.equal((await fs.readdir(dir)).sort().join(","), "package.json");
@@ -1159,8 +1197,9 @@ test("reconcile --full-packages exposes package-level evidence on demand", async
   assert.ok(["collected", "unavailable", "unsupported-or-failed"].includes(json.node.managerInventories.volta.collection));
   assert.ok(["collected", "unavailable", "unsupported-or-failed"].includes(json.node.managerInventories.mise.collection));
   assert.ok(["collected", "unavailable", "unsupported-or-failed"].includes(json.python.managerInventories.pyenv.collection));
-  assert.ok(json.python.installations.every((item) => Array.isArray(item.packages)));
-  assert.ok(json.python.installations.every((item) => ["collected", "unsupported-or-failed"].includes(item.installerEvidence.collection)));
+  assert.ok(json.python.installations.filter((item) => item.versionVerified !== false).every((item) => Array.isArray(item.packages)));
+  assert.ok(json.python.installations.filter((item) => item.versionVerified === false).every((item) => item.packageCollection === "probe-failed"));
+  assert.ok(json.python.installations.every((item) => ["collected", "unsupported-or-failed", "probe-failed"].includes(item.installerEvidence.collection)));
   assert.equal(json.aiDecision.pythonInstallerEvidence.notRequestedRuntimes, 0);
 });
 
@@ -1173,7 +1212,7 @@ test("reconcile --quick keeps startup evidence compact", async () => {
   assert.equal(json.scanMode, "quick");
   assert.match(json.python.packageDetail, /not collected/);
   assert.ok(json.python.installations.every((item) => item.packageCount === null));
-  assert.ok(json.python.installations.every((item) => item.packageCollection === "skipped-quick"));
+  assert.ok(json.python.installations.every((item) => ["skipped-quick", "probe-failed"].includes(item.packageCollection)));
 });
 
 test("reconcile --write saves only an aienvmap report", async () => {

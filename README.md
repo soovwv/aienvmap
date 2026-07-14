@@ -15,7 +15,7 @@ Use it if several AI agents or sessions share environment-affecting work in one 
 
 ## External Trial
 
-Run `npx aienvmap@0.1.1 trial` only in a disposable directory or disposable project copy on a real development machine. Published 0.1.1 creates the privacy-reviewed feedback bundle under `.aienvmap/trial/`, but it may also refresh existing `.aienvmap` manifest and timeline state; nothing is uploaded automatically. Current unreleased code isolates trial writes to `.aienvmap/trial/`. Follow [TESTING.md](TESTING.md), or give [AI_TESTING.md](AI_TESTING.md) to an AI agent. Technical testing needs no human review; optional public evidence uses one compact confirmation, complete-draft review, and separate submission consent. Community maintainers can reuse [TESTER_INVITE.md](TESTER_INVITE.md).
+Run `npx aienvmap@0.1.1 trial` only in a new empty disposable directory on a real development machine. Do not use a project copy: published 0.1.1 may refresh existing `.aienvmap` state and execute project Maven/Gradle wrappers while probing Java bindings; nothing is uploaded automatically. Current unreleased code isolates trial writes to `.aienvmap/trial/` and skips project wrappers in trial and quick mode. Both versions run bounded runtime version probes. Follow [TESTING.md](TESTING.md), or give [AI_TESTING.md](AI_TESTING.md) to an AI agent. Technical testing needs no human review; optional public evidence uses one compact confirmation, complete-draft review, and separate submission consent. Community maintainers can reuse [TESTER_INVITE.md](TESTER_INVITE.md).
 
 ## 10-Second Use
 

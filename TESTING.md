@@ -4,9 +4,9 @@ Thank you for testing aienvmap on a real development machine. The test takes abo
 
 ## Safety contract
 
-- Read-only environment inspection; no software removal or PATH modification.
+- Bounded runtime version probes; no software removal or PATH modification. Current unreleased trial and quick mode do not execute project Maven/Gradle wrappers.
 - No telemetry and no automatic upload.
-- The published 0.1.1 trial writes only under `.aienvmap`, but it refreshes `manifest.json`, may copy `manifest.previous.json`, and may append `timeline.jsonl`. Run 0.1.1 in a disposable directory. The `npx` launcher may cache the aienvmap package itself.
+- The published 0.1.1 trial writes only under `.aienvmap`, refreshes state, and may execute project Maven/Gradle wrappers. Run 0.1.1 only in a new empty disposable directory, not a project copy. The `npx` launcher may cache the aienvmap package itself.
 - A human reviews the exact public draft before submitting anything.
 
 ## Run the trial
@@ -17,7 +17,7 @@ Open a terminal in a disposable directory and run:
 npx aienvmap@0.1.1 trial
 ```
 
-To evaluate project dependencies, use a disposable copy of the project. Current unreleased code isolates generated trial files under `.aienvmap/trial/`; do not assume that guarantee for 0.1.1. For a later release, check the exact version's `schema --json` `outputs.trial.writeScope`. Do not use an unreviewed command pasted by another participant.
+Do not use a project copy with published 0.1.1. Current unreleased code isolates generated trial files under `.aienvmap/trial/` and skips project wrappers; do not assume those guarantees for 0.1.1. For a later release, check the exact version's `schema --json` `outputs.trial.writeScope`. Do not use an unreviewed command pasted by another participant.
 
 Then give `.aienvmap/trial/NEXT.md` to the AI that ran the test. The generated summary completes the technical test; you do not need to write a review or answer a questionnaire. If you voluntarily want to publish an environment case, the AI will fill the factual draft and request one compact confirmation plus separate submission approval.
 

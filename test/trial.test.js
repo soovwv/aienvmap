@@ -12,6 +12,13 @@ test("trial completes a local technical test without uploading or changing the e
   const dir = await fs.mkdtemp(path.join(os.tmpdir(), "aienvmap-trial-"));
   try {
     await fs.writeFile(path.join(dir, "package.json"), JSON.stringify({ name: "private-fixture", private: true }));
+    const wrapperSideEffect = path.join(dir, "wrapper-invoked.txt");
+    const wrapper = process.platform === "win32" ? "mvnw.cmd" : "mvnw";
+    const wrapperBody = process.platform === "win32"
+      ? `@echo off\r\necho invoked> "${wrapperSideEffect}"\r\necho Apache Maven 3.9.9\r\n`
+      : `#!/bin/sh\nprintf invoked > "${wrapperSideEffect}"\nprintf 'Apache Maven 3.9.9\\n'\n`;
+    await fs.writeFile(path.join(dir, wrapper), wrapperBody);
+    if (process.platform !== "win32") await fs.chmod(path.join(dir, wrapper), 0o755);
     await fs.mkdir(path.join(dir, ".aienvmap"));
     const manifestSentinel = "existing manifest must remain unchanged\n";
     const timelineSentinel = "existing timeline must remain unchanged\n";
@@ -25,9 +32,12 @@ test("trial completes a local technical test without uploading or changing the e
     assert.equal(result.privacy.technicalResultReviewRequired, false);
     assert.equal(result.privacy.publicSubmissionReviewRequired, true);
     assert.equal(result.safety.environmentChanged, false);
+    assert.equal(result.safety.projectWrappersExecuted, false);
+    assert.equal(result.safety.runtimeVersionProbesExecuted, true);
     assert.equal(result.marketEvidence, false);
     assert.deepEqual(result.artifacts, [".aienvmap/trial/portable.json", ".aienvmap/trial/case-summary.json", ".aienvmap/trial/case-draft.md", ".aienvmap/trial/NEXT.md"]);
     assert.equal(await fs.stat(path.join(dir, "AIENV.md")).then(() => true, () => false), false);
+    assert.equal(await fs.stat(wrapperSideEffect).then(() => true, () => false), false);
     assert.equal(await fs.readFile(path.join(dir, ".aienvmap", "manifest.json"), "utf8"), manifestSentinel);
     assert.equal(await fs.readFile(path.join(dir, ".aienvmap", "timeline.jsonl"), "utf8"), timelineSentinel);
     assert.deepEqual((await fs.readdir(path.join(dir, ".aienvmap"))).sort(), ["manifest.json", "timeline.jsonl", "trial"]);
@@ -71,16 +81,17 @@ test("tester guides keep human consent and AI safety explicit", async () => {
   assert.match(ai, /read and obey `outputs\.trial\.writeScope` only if/);
   assert.match(ai, /published 0\.1\.1 trial writes under `.aienvmap`/);
   assert.match(testing, /published 0\.1\.1 trial writes only under `.aienvmap`/i);
-  assert.match(testing, /Run 0\.1\.1 in a disposable directory/);
+  assert.match(testing, /Run 0\.1\.1 only in a new empty disposable directory/);
   assert.match(testing, /Current unreleased code isolates generated trial files under `.aienvmap\/trial\/`/);
   assert.match(testing, /do not need to write a review or answer a questionnaire/i);
   assert.match(invite, /Do not request positive reviews/);
   assert.match(invite, /npx aienvmap@0\.1\.1 trial/);
-  assert.match(invite, /disposable directory or disposable project copy/);
-  assert.match(invite, /may refresh existing `.aienvmap` manifest and timeline state/);
+  assert.match(invite, /new empty disposable directory/);
+  assert.match(invite, /Do not use a project copy/);
+  assert.match(invite, /may refresh existing `.aienvmap` state and execute project Maven\/Gradle wrappers/);
   assert.match(release, /signed npm provenance/);
   assert.match(release, /```bash\s+npx aienvmap@0\.1\.1 trial\s+```/);
   assert.match(release, /Run it in a disposable directory or disposable project copy/);
-  assert.match(readme, /Run `npx aienvmap@0\.1\.1 trial` only in a disposable directory or disposable project copy/);
+  assert.match(readme, /Run `npx aienvmap@0\.1\.1 trial` only in a new empty disposable directory/);
   assert.match(readme, /Current unreleased code isolates trial writes to `.aienvmap\/trial\/`/);
 });

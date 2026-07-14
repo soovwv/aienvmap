@@ -2,7 +2,8 @@ import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { exists } from "./fsutil.js";
-import { commandOutput, commandResult, commandVersion, portableCommandResult } from "./shell.js";
+import { commandOutput, commandResult, commandVersion, commandVersionResult, portableCommandResult } from "./shell.js";
+import { classifyScope as classifyPathScope } from "./path-evidence.js";
 
 export async function inspectCommonRuntimes(options = {}) {
   const definitions = runtimeDefinitions(options.env || process.env, options.home || os.homedir());
@@ -11,18 +12,32 @@ export async function inspectCommonRuntimes(options = {}) {
     const installations = (await Promise.all(candidates.map((candidate) => inspectRuntimeCandidate(definition, candidate, options)))).filter(Boolean);
     installations.forEach((item, index) => { item.active = options.executeCandidates === false ? false : index === 0; });
     const runtimeMetadata = definition.id === "java" ? summarizeJavaMetadata(installations) : null;
-    const buildTools = definition.id === "java" ? (options.executeCandidates === false ? { bindings: [], collection: "skipped-no-exec", rule: "Build tools are not invoked during explicit-home inspection." } : await inspectJavaBuildTools(installations, options)) : null;
+    const buildTools = definition.id === "java" ? await collectJavaBuildTools(installations, options) : null;
     return [definition.id, {
       label: definition.label,
       detailLevel: "path-and-version-only",
       installations,
       active: installations.find((item) => item.active) || null,
-      distinctVersions: [...new Set(installations.flatMap((item) => item.versions?.length ? item.versions : [item.version]).filter(Boolean))],
+      distinctVersions: [...new Set(installations.filter((item) => item.versionVerified !== false).flatMap((item) => item.versions?.length ? item.versions : [item.version]).filter(Boolean))],
       discoveryEvidence: summarizeDiscoveryEvidence(installations),
       ...(definition.id === "java" ? { runtimeMetadata, buildTools } : {})
     }];
   }));
   return Object.fromEntries(entries);
+}
+
+async function collectJavaBuildTools(installations, options) {
+  if (options.executeCandidates === false) {
+    return { bindings: [], collection: "skipped-no-exec", rule: "Build tools are not invoked during explicit-home inspection." };
+  }
+  if (options.quick || options.inspectProjectWrappers === false) {
+    return {
+      bindings: [],
+      collection: options.quick ? "skipped-quick" : "skipped-by-policy",
+      rule: "Project Maven and Gradle wrappers are not invoked in quick or wrapper-disabled discovery. Use a standard explicitly approved reconciliation to inspect build-tool JVM bindings."
+    };
+  }
+  return { ...await inspectJavaBuildTools(installations, options), collection: "collected" };
 }
 
 export async function inspectJavaBuildTools(installations = [], options = {}) {
@@ -249,8 +264,21 @@ async function inspectRuntimeCandidate(definition, candidate, options) {
     source: candidate.source, scope: candidate.scope, discovery: candidate.discovery, evidence: "file-presence-only",
     ...(definition.id === "java" ? { managerEvidence: javaManagerEvidence(candidate, {}, options) } : {})
   };
-  const version = await commandVersion(candidate.path, definition.versionArgs);
-  if (!version) return null;
+  const versionProbe = await commandVersionResult(candidate.path, definition.versionArgs);
+  const version = versionProbe.version;
+  if (!version) return {
+    runtime: definition.id,
+    version: "unverified-probe-failed",
+    versionVerified: false,
+    versions: [],
+    path: displayPath(candidate.path, options),
+    source: candidate.source,
+    scope: candidate.scope,
+    discovery: candidate.discovery,
+    evidence: "probe-failed",
+    probe: { status: "failed", reason: versionProbe.failure || "execution-failed" },
+    ...(definition.id === "java" ? { managerEvidence: javaManagerEvidence(candidate, {}, options) } : {})
+  };
   const versions = definition.listArgs
     ? parseVersionLines(await commandOutput(candidate.path, definition.listArgs, { timeout: 8000, maxBuffer: 2 * 1024 * 1024 }))
     : [];
@@ -484,7 +512,7 @@ function classifySource(value) {
 }
 
 function classifyScope(value, home = os.homedir()) {
-  return String(value).toLowerCase().startsWith(String(home).toLowerCase()) ? "user" : "host";
+  return classifyPathScope(value, home);
 }
 
 function displayPath(value, options) {

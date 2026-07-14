@@ -72,7 +72,10 @@ test("buildHandoff summarizes next-agent environment state", () => {
   assert.equal(handoff.preflight.state, "clear");
   assert.equal(handoff.preflight.artifacts.envMap, "AIENV.md");
   assert.equal(handoff.decision.mode, "project-local-work");
-  assert.equal(handoff.decision.canChangeEnvironmentWithoutReview, true);
+  assert.equal(handoff.decision.canChangeEnvironmentWithoutReview, false);
+  assert.equal(handoff.decision.clearDecisionGrantsEnvironmentAuthority, false);
+  assert.equal(handoff.decision.proceedScope, "project-local-work-only");
+  assert.equal(handoff.aiBootstrap.environmentChanges, "intent-first");
   assert.equal(handoff.trust.state, "observed");
   assert.equal(handoff.schemaVersion, 1);
   assert.equal(handoff.safeRuntime.node, "24.0.0");

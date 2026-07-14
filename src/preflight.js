@@ -105,7 +105,7 @@ export function buildPreflight(manifest = {}, warnings = [], intents = [], timel
       purpose: "First AI-readable environment preflight for this workspace.",
       rule: "Read status first, use context for details, record intent before environment changes.",
       projectLocalWork: decision.canContinueProjectLocalWork ? "allowed" : "review-first",
-      environmentChanges: decision.canChangeEnvironmentWithoutReview ? "allowed" : "intent-and-review-first"
+      environmentChanges: state === "clear" ? "intent-first" : "intent-and-review-first"
     },
     aiSession,
     aiBootstrap,
@@ -363,7 +363,7 @@ function aiBootstrapSummary({ state, decision, nextCommand, maintenanceLoop = {}
     nextSafeCommandReason: meta.reason,
     localMode: "advisory",
     projectLocalWork: decision.canContinueProjectLocalWork ? "allowed" : "review-first",
-    environmentChanges: decision.canChangeEnvironmentWithoutReview ? "intent-first" : "review-first",
+    environmentChanges: state === "clear" ? "intent-first" : "review-first",
     rule: state === "clear"
       ? "Continue project-local work; record intent before shared environment changes."
       : "Review context before shared environment changes; local checks remain non-blocking."
@@ -499,7 +499,7 @@ function collaborationSummary({ state, decision, coordination, agentActivity, fo
   const nextCommand = firstFollowUpCommand(followUps)
     || (multiActorTargets.length ? "aienvmap handoff --record --actor agent:id" : "")
     || (conflictTargets.length ? "aienvmap plan --write" : "")
-    || (decision?.canChangeEnvironmentWithoutReview
+    || (state === "clear"
       ? "aienvmap intent --actor agent:id --action planned-change --target environment"
       : "aienvmap context --json");
 
@@ -550,7 +550,7 @@ function aiReadinessSummary({ state, decision, coordination, agentActivity, agen
     level,
     requiresHumanReview: review.length > 0,
     projectLocalWork: decision?.canContinueProjectLocalWork ? "allowed" : "review-first",
-    environmentChanges: decision?.canChangeEnvironmentWithoutReview ? "allowed" : "intent-and-review-first",
+    environmentChanges: state === "clear" ? "intent-first" : "intent-and-review-first",
     safeProjectLocalActions,
     reviewOnlyEnvironmentChanges,
     signals: review,
