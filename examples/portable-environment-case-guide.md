@@ -49,7 +49,7 @@ After reviewing the portable report locally, create a smaller submission draft t
 npx aienvmap reconcile --case-summary portable.json --comparison comparison.json --json
 ```
 
-`--comparison` is optional. The generated draft is never market evidence by itself: a human must complete the problem, AI judgment, outcome, independence, and privacy fields before manually submitting it.
+`--comparison` is optional. Routine technical testing needs no human opinion. For an optional public case, the AI fills factual fields, asks once for the compact human confirmation documented in `AI_TESTING.md`, shows the complete draft, and obtains separate submission consent. The generated draft is never market evidence by itself.
 
 For a copyable GitHub issue draft generated only from the allowlisted summary, use:
 
