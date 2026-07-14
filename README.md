@@ -91,7 +91,7 @@ AIENV.md                 # Markdown env map for AI agents
 - `reconcile` also emits a proposal-only `consolidationPlan`: evidence, stop conditions, rollback requirements, and approval gates - never an apply or removal command.
 - `schemaVersion`, `contractVersion`, `stableFrom`, and compatibility rules are explicit.
 - `aiAdoptionDecision`, `recommendation.recommendWhen`, `doNotRecommendWhen`, and `evidenceDocs` tell AI when to use, suggest, or skip this tool.
-- `agentPointers.discovery`, `aiDiscovery.decision`, `sessionUse`, `startupChecklist`, `aiEntry`, and `copyPastePrompt` tell AI whether discovery is `auto-ready` or `fallback-required`.
+- `agentPointers.discovery`, `aiDiscovery.decision`, `sessionUse`, `startupChecklist`, `aiEntry`, and `copyPastePrompt` tell AI whether discovery is `auto-ready` or `fallback-required`; `onboard --json` returns a reviewed 12-field contract, where `verification` proves marker integrity but never AI-host pickup.
 - `.aienvmap/discovery.json`, `discovery.json.maintenance`, `agentDiscovery.sessionStart`, and `readOrder` give the fallback start path for schema-only or Markdown-first agents.
 - `environmentChangeProtocol`, `operationalSafety`, `followUpPlan`, `collaboration`, `coordination`, and `agentActivity` keep shared changes advisory; `followUpPlan` points to sync, status, or handoff when needed.
 - `coordinationRevision` enables optional compare-and-swap protection for intent and resolution writes without a daemon, database, or runtime dependency.

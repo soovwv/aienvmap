@@ -11,7 +11,8 @@ test("reviewed AI JSON root fields match the 0.2.0 freeze candidate", async () =
   const result = verifyContractFreeze(schemaContract(), baseline);
   assert.equal(result.pass, true);
   assert.equal(result.status, "frozen-and-verified");
-  assert.equal(result.surfaces.length, 14);
+  assert.equal(result.surfaces.length, 15);
+  assert.equal(result.surfaceFieldCounts.onboard, 12);
   assert.equal(result.surfaceFieldCounts.trial, 13);
 });
 

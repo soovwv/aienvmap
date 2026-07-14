@@ -484,7 +484,7 @@ export function schemaContract() {
         command: "npm run contract:check",
         baseline: "contracts/ai-json-root-fields.v1.json",
         digestAlgorithm: "sha256(JSON.stringify(ordered surface-to-rootFields map))",
-        surfaces: ["discover", "start", "discovery", "status", "context", "handoff", "plan", "manifest", "reconcile", "reconcileCheck", "trial", "sbom", "cyclonedxLite", "demo"],
+        surfaces: ["discover", "start", "discovery", "onboard", "status", "context", "handoff", "plan", "manifest", "reconcile", "reconcileCheck", "trial", "sbom", "cyclonedxLite", "demo"],
         reviewFields: ["outputs.*.rootFields", "outputs.*Fields", "compatibility.additiveRule", "stableContractRule"],
         rule: "Before 0.2.0, review documented rootFields as the compatibility floor; after 0.2.0, add fields only additively unless contractVersion changes."
       },
@@ -541,6 +541,16 @@ export function schemaContract() {
         rootFields: ["schemaVersion", "schemaName", "decision", "automatic", "pointerStatus", "startCommand", "statusCommand", "contextCommand", "nextSetupCommand", "readOrder", "maintenance", "startupChecklist", "resume", "sessionUse", "aiEntry", "fallbackPrompt", "copyPastePrompt", "promptUse", "rule"],
         maintenanceFields: ["status", "nextCommand", "source", "freshness", "followUp", "dependencyQuickCheck", "beforeEnvironmentChange", "afterEnvironmentChange", "rule"],
         purpose: "Smallest generated fallback entry artifact for AI hosts that did not auto-load an instruction-file pointer."
+      },
+      onboard: {
+        command: "aienvmap onboard --json",
+        modes: ["write", "dry-run", "uninstall"],
+        writeScope: "Selected marker blocks in supported project instruction files plus normal aienvmap artifacts when sync is enabled; dry-run writes nothing and uninstall removes only selected marker blocks.",
+        rootFields: ["status", "mode", "pointers", "sync", "startHere", "readFirst", "nextCommands", "sessionStart", "freshnessRule", "aiDiscovery", "verification", "next"],
+        pointerFields: ["file", "target", "mode", "exists", "changed", "action", "beforeBytes", "afterBytes"],
+        verificationFields: ["status", "pass", "scope", "requested", "installed", "missing", "otherInstalled", "hostAutomaticPickupVerified", "proofCommand", "rule"],
+        hostProofBoundary: "hostAutomaticPickupVerified is always false because project-file evidence cannot prove that an AI host loaded its instruction file.",
+        rule: "Read verification first. A failed marker check requires review; a passed check proves file integrity only, not AI-host automatic pickup."
       },
       startHere: {
         file: ".aienvmap/README.md",

@@ -3,11 +3,12 @@
   "schemaVersion": 1,
   "targetRelease": "0.2.0",
   "algorithm": "sha256(JSON.stringify(ordered surface-to-rootFields map))",
-  "digest": "553d5cda2e9fb5189972b5441fbf299eb7fcdceb241dd22b744d3201d692bceb",
+  "digest": "8fc10f941be14836e94843776c6ae02910c0b5735f9b8ddab533e6fd917672b7",
   "surfaceFieldCounts": {
     "discover": 10,
     "start": 24,
     "discovery": 19,
+    "onboard": 12,
     "status": 26,
     "context": 29,
     "handoff": 15,

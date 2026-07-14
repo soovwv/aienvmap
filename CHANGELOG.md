@@ -7,6 +7,7 @@
 
 ## Unreleased
 
+- Added `onboard --json` to the reviewed 0.2.0 root-field freeze and made its runtime root keys match the documented AI contract exactly.
 - Added post-onboard marker verification while explicitly refusing to treat project-file presence as proof that an AI host automatically loaded the pointer.
 - Refreshed the evidence-bounded market snapshot and recorded mise's explicit AI-agent worktree and Codex-install adjacency without raising the market score.
 - Required one complete ordered marker block for AI instruction-pointer discovery and made `discover` prefer current file evidence over stale generated status.
