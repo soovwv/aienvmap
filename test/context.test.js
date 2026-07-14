@@ -180,6 +180,8 @@ test("contextWorkspace JSON includes compact step summary", async () => {
   assert.equal(json.decision.mode, "review-first");
   assert.equal(json.decision.canContinueProjectLocalWork, true);
   assert.equal(json.decision.canChangeEnvironmentWithoutReview, false);
+  assert.equal(json.decision.clearDecisionGrantsEnvironmentAuthority, false);
+  assert.equal(json.decision.proceedScope, "project-local-work-only");
   assert.deepEqual(json.decision.warningCodes, ["node-version-mismatch", "handoff-stale"]);
   assert.equal(json.decision.requiredCommands.checkpointAfterChange, "aienvmap checkpoint --actor agent:id --summary what-changed --target environment");
   assert.equal(json.decision.requiredCommands.reviewPlan, "aienvmap plan");

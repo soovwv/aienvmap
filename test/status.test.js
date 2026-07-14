@@ -47,7 +47,7 @@ test("buildStatus returns a compact clear state", () => {
   assert.ok(status.contract.aiEntryFields.includes("dependencyQuickCheck"));
   assert.equal(status.counts.runtimes, 1);
   assert.equal(status.counts.dependencies, 2);
-  assert.equal(status.agentUse.environmentChanges, "allowed");
+  assert.equal(status.agentUse.environmentChanges, "intent-first");
   assert.equal(status.aiBootstrap.readFirst, ".aienvmap/status.json");
   assert.equal(status.aiBootstrap.detailCommand, "aienvmap context --json");
   assert.equal(status.aiBootstrap.nextSafeCommand, status.nextCommand);
@@ -74,7 +74,7 @@ test("buildStatus returns a compact clear state", () => {
   assert.equal(status.artifactFreshness.staleAfterHours, 24);
   assert.equal(status.aiReadiness.level, "ready");
   assert.equal(status.aiReadiness.requiresHumanReview, false);
-  assert.equal(status.aiReadiness.environmentChanges, "allowed");
+  assert.equal(status.aiReadiness.environmentChanges, "intent-first");
   assert.equal(status.collaboration.status, "clear");
   assert.equal(status.collaboration.environmentChanges, "intent-first");
   assert.equal(status.collaboration.nextCommand, "aienvmap intent --actor agent:id --action planned-change --target environment");
