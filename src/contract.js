@@ -375,6 +375,7 @@ export function schemaContract() {
         changes: [
           "APM-compatible bounded agent skill with no hooks, MCP server, executable deployment, or automatic install behavior",
           "discovery, sync, status, and onboarding recognize APM skill coverage and avoid duplicate native pointer writes",
+          "clean APM consumer install gate verifies skill placement and native-pointer coexistence without claiming AI-host pickup",
           "best-effort AI discovery with aiDiscovery.decision, discovery.json, startupChecklist, and fallback prompt contract",
           "onboard re-reads requested marker files and reports fail-closed verification without claiming AI-host automatic pickup",
           "copyPastePrompt, promptUse, and aiEntry recovery fields for AI hosts that miss instruction-file automatic discovery",

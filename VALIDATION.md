@@ -18,6 +18,12 @@ Observed 2026-07-12. This record contains redacted maintainer-run compatibility 
 
 Counts are visible-command evidence from quick read-only scans, not proof of complete machine inventory or installation ownership.
 
+## APM consumer integration
+
+Observed 2026-07-14 with pinned APM CLI 0.25.0. A clean temporary consumer project installed the local skill subpath for `agent-skills,claude`, producing the shared and Claude-native skill roots. `discover` reported all five supported AI tools as skill-covered, while `onboard --no-sync` preserved the skills and created no `AGENTS.md`, `CLAUDE.md`, or `GEMINI.md`. No hook, MCP, executable, or Claude plugin configuration was produced.
+
+The dependency-free `scripts/apm-consumer-check.mjs` reproduces this check in CI and always reports `hostAutomaticPickupVerified: false`. It proves package placement and aienvmap coexistence, not automatic loading by an AI host or independent adoption.
+
 ## Maintainer scenario validation
 
 The dependency-free `scripts/scenario-check.mjs` runner was executed on the Windows host, Ubuntu WSL2 with a checksum-verified temporary official Node 20.20.2 archive, and the guarded macOS host with the same verified temporary runtime approach. It creates an isolated workspace, runs first-start artifact generation, portable reconciliation, light SBOM generation, CycloneDX preview import, privacy-safe case-draft rendering, and then deletes the workspace.

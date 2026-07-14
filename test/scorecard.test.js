@@ -1,5 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import fs from "node:fs";
+import path from "node:path";
 import { productScorecard } from "../src/scorecard.js";
 
 test("product scorecard separates technical readiness from market validation", () => {
@@ -30,4 +32,11 @@ test("product scorecard gives AI consumers evidence and bounded competitor categ
   assert.match(result.weaknesses.join(" "), /reproducible environments/);
   assert.match(result.marketResearch.interpretation, /not unique users/);
   assert.match(result.marketResearch.scoreImpact, /none until/);
+  assert.match(result.strengths.join(" "), /bounded APM skill distribution/);
+  assert.match(result.weaknesses.join(" "), /automatic skill pickup remains unverified/);
+  const localEvidence = [...result.technicalReadiness.dimensions, ...result.marketValidation.dimensions]
+    .flatMap((item) => item.evidence)
+    .filter((item) => !item.startsWith("http") && !item.startsWith("aienvmap") && !item.startsWith("npm "))
+    .map((item) => item.split("#")[0]);
+  assert.deepEqual(localEvidence.filter((item) => !fs.existsSync(path.resolve(item))), []);
 });
