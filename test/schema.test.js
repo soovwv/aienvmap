@@ -240,7 +240,7 @@ test("schemaContract describes stable AI output contracts", () => {
   assert.match(schema.agentDiscovery.promptUse.when, /did not auto-read/);
   assert.ok(schema.agentDiscovery.optionalFiles.includes(".github/copilot-instructions.md"));
   assert.ok(schema.agentDiscovery.skillFiles.includes(".agents/skills/aienvmap/SKILL.md"));
-  assert.equal(schema.agentDiscovery.apmInstallCommand, "apm install soovwv/aienvmap#main");
+  assert.equal(schema.agentDiscovery.apmInstallCommand, "apm install soovwv/aienvmap/.apm/skills/aienvmap#main --target agent-skills,claude");
   assert.match(schema.agentDiscovery.apmReleaseRule, /v0\.1\.1 tag predates APM support/);
   assert.deepEqual(schema.agentDiscovery.files, ["AGENTS.md", "CLAUDE.md", "GEMINI.md"]);
   assert.match(schema.agentDiscovery.startupChecklist.join(" "), /dependencyQuickCheck/);
