@@ -107,6 +107,12 @@ test("schemaContract describes stable AI output contracts", () => {
   assert.ok(schema.outputs.reconcile.nodePackageManagerDeliveryEvidence.includes("co-located-with-corepack"));
   assert.ok(schema.releaseReadiness.contractReview.surfaces.includes("reconcileCheck"));
   assert.ok(schema.releaseReadiness.contractReview.surfaces.includes("trial"));
+  assert.ok(schema.releaseReadiness.contractReview.surfaces.includes("onboard"));
+  assert.equal(schema.outputs.onboard.command, "aienvmap onboard --json");
+  assert.deepEqual(schema.outputs.onboard.rootFields, ["status", "mode", "pointers", "sync", "startHere", "readFirst", "nextCommands", "sessionStart", "freshnessRule", "aiDiscovery", "verification", "next"]);
+  assert.ok(schema.outputs.onboard.verificationFields.includes("hostAutomaticPickupVerified"));
+  assert.match(schema.outputs.onboard.hostProofBoundary, /always false/);
+  assert.match(schema.outputs.onboard.rule, /file integrity only/);
   assert.ok(schema.outputs.status.rootFields.includes("coordinationRevision"));
   assert.match(schema.outputs.status.compareAndSwap, /--if-revision/);
   assert.ok(schema.outputs.status.intentLeaseFields.includes("lease.state"));

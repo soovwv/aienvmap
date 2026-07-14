@@ -57,7 +57,7 @@ Acceptance gates: cross-platform fixtures for every manager, no writes in defaul
 ## Near Term
 
 - Prepare `0.2.0` as one stabilized AI workspace contract release, not a per-commit npm stream
-- Keep the reviewed 14-surface JSON root-field freeze candidate guarded by `npm run contract:check` until `0.2.0`
+- Keep the reviewed 15-surface JSON root-field freeze candidate guarded by `npm run contract:check` until `0.2.0`
 - Use `releaseReadiness.contractReview` as the AI-readable checklist for root-field compatibility review
 - Keep `releaseReadiness.nextStabilizationTasks` current so AI agents can choose the next hardening step
 - Keep `releaseReadiness.evidenceCommands` current so AI/CI can prove the release gate before npm publish

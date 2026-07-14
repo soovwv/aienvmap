@@ -4,6 +4,7 @@ import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { onboardWorkspace, pointerVerification } from "../src/commands/onboard.js";
+import { schemaContract } from "../src/contract.js";
 
 test("onboard verification fails closed when requested marker evidence is missing", () => {
   const missing = pointerVerification({
@@ -30,6 +31,7 @@ test("onboard writes Codex, Claude, and Gemini pointers then syncs", async () =>
 
   const result = await onboardWorkspace({ dir, quiet: true });
 
+  assert.deepEqual(Object.keys(result), schemaContract().outputs.onboard.rootFields);
   assert.equal(result.status, "ok");
   assert.equal(result.sync, "ok");
   assert.equal(result.aiDiscovery, "ready: codex, claude, gemini");
