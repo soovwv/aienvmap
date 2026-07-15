@@ -18,7 +18,7 @@ Run the trial in a disposable directory or disposable project copy. It writes on
 - Machine-readable `uniqueJob`, `chooseInstead`, and composition order for correct use with APM, runtime managers, and full scanners.
 - Windows PowerShell guidance uses the existing `.cmd` launchers when `.ps1` shims are policy-blocked and explicitly forbids execution-policy weakening.
 - Test and demo temporary workspaces are tracked and removed after use, with regression coverage for cleanup-helper adoption.
-- Multi-agent intent, checkpoint, handoff, and compare-and-swap coordination for shared workspaces and hosts.
+- Multi-agent intent, checkpoint, handoff, and compare-and-swap coordination for shared workspaces and hosts, verified with competing independent Node processes and stale-lock recovery.
 - Light SBOM summaries with CycloneDX/SPDX import and optional full-scanner handoff.
 - Bounded APM skill distribution without hooks, MCP configuration, executable deployment, or automatic tool installation.
 - Privacy-reviewed trial artifacts and optional public-case drafting without telemetry or automatic submission.
