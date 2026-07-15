@@ -45,7 +45,7 @@ npx aienvmap@0.2.0 start --json
 
 Then:
 
-1. Read `aiDecisionEnvelope`, `discoveryDecision`, `aiEntry`, `artifactFreshness`, and `nextSafeCommand`.
+1. Read `aiDecisionEnvelope`, `discoveryDecision`, `aiEntry`, `artifactFreshness`, and `nextSafeCommand`. When `questionRequired` is true, ask the provided `userQuestion` without inferring intent; treat `observationAuthority: observed-not-approved` and `neverDo` as hard interpretation boundaries.
 2. Use `aienvmap discover --json` when instruction or skill pickup is uncertain.
 3. Use `aienvmap reconcile --quick --json` before judging mixed runtime or package-manager routing.
 4. Ask whether multiple versions are intentional. Duplication alone never authorizes cleanup.
@@ -67,6 +67,7 @@ aienvmap handoff --record --actor agent:id
 
 ## Interoperability
 
+- Read `schema --json` `aiAdoptionDecision.uniqueJob`, `chooseInstead`, and `compositionOrder` before recommending aienvmap or an adjacent tool.
 - APM distributes this skill; aienvmap observes the host.
 - mise, Flox, Devbox, native installers, or version managers may perform a separately approved change.
 - Syft, Trivy, Grype, or Dependency-Track may provide authoritative SBOM or vulnerability evidence.

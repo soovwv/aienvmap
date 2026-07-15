@@ -38,7 +38,7 @@ Run `npx aienvmap@0.2.0 trial` in a disposable directory or disposable project c
 - observed Node, npm, pnpm, Yarn, Corepack, Python, pip, uv, pipx, Conda, and Java state;
 - information-only .NET, Ruby, Go, and Rust presence;
 - project expectations, routing conflicts, light SBOM context, and pending change intent;
-- one bounded `aiDecisionEnvelope` with the next safe command and approval boundaries.
+- one bounded `aiDecisionEnvelope` with the next safe action, evidence-derived `userQuestion`, `observed-not-approved` authority, and approval boundaries.
 
 `start` creates the env map, light SBOM, AI status, discovery entry, and human dashboard when missing or stale. `reconcile` is read-only by default. Removal, PATH edits, runtime switching, global installs, and lockfile rewrites always require review.
 
@@ -92,7 +92,7 @@ Sharing policy: treat `manifest*.json`, `reconcile.json`, raw SBOM files, `dashb
 - `start`, `status`, `context`, `reconcile`, and SBOM outputs share `aiDecisionEnvelope`; read it first, while `requiresHumanApprovalBefore` keeps destructive action classes review-only even when clear.
 - `reconcile` also emits a proposal-only `consolidationPlan`: evidence, stop conditions, rollback requirements, and approval gates - never an apply or removal command.
 - `schemaVersion`, `contractVersion`, `stableFrom`, and compatibility rules are explicit.
-- `aiAdoptionDecision`, `recommendation.recommendWhen`, `doNotRecommendWhen`, and `evidenceDocs` tell AI when to use, suggest, or skip this tool.
+- `aiAdoptionDecision.uniqueJob`, `chooseInstead`, `compositionOrder`, recommendation criteria, and evidence docs tell AI when to use aienvmap, compose it with another tool, or skip it.
 - `agentPointers.discovery`, `aiDiscovery.decision`, `sessionUse`, `startupChecklist`, `aiEntry`, and `copyPastePrompt` tell AI whether discovery is `auto-ready` or `fallback-required`; `onboard --json` returns a reviewed 12-field contract, where `verification` proves marker integrity but never AI-host pickup.
 - `.aienvmap/discovery.json`, `discovery.json.maintenance`, `agentDiscovery.sessionStart`, and `readOrder` give the fallback start path for schema-only or Markdown-first agents.
 - `environmentChangeProtocol`, `operationalSafety`, `followUpPlan`, `collaboration`, `coordination`, and `agentActivity` keep shared changes advisory; `followUpPlan` points to sync, status, or handoff when needed.
