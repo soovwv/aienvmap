@@ -21,6 +21,8 @@ npx aienvmap@0.2.0 start
 
 `start` is the one-command AI preflight: it refreshes the environment map when needed, runs quick multi-install reconciliation, and returns the next safe command. To add project instruction pointers for supported AI hosts, preview with `npx aienvmap onboard --dry-run`, then run `npx aienvmap onboard` after review.
 
+Windows PowerShell may select a blocked `npx.ps1` shim. In that case use `npx.cmd aienvmap@0.2.0 start`; do not change the machine execution policy. The same rule applies to `npm.cmd` and an installed `aienvmap.cmd` shim.
+
 Try `npx aienvmap demo` for an isolated conflict example. It shows one agent's dependency intent becoming visible to the next agent; environment changes are never inferred automatically and remain approval-gated.
 
 ![aienvmap terminal demo showing a review-first dependency conflict](examples/aienvmap-terminal-demo.svg)

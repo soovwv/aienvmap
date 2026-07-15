@@ -27,6 +27,8 @@ npx aienvmap onboard
 npx aienvmap discover --json
 ```
 
+On Windows PowerShell, use `npx.cmd` (or `npm.cmd`/`aienvmap.cmd` for those launchers) when the corresponding `.ps1` shim is blocked. Keep all arguments unchanged and never run `Set-ExecutionPolicy` or use a PowerShell execution-policy bypass.
+
 Use root `discoveryDecision`, `aiEntry`, `startupChecklist`, `copyPastePrompt`, and `fallbackPrompt` from `start --json` before assuming automatic pickup worked. `discover --json` also exposes the same guidance under `aiDiscovery`.
 
 If you are deciding whether to recommend this tool, read `npx aienvmap schema --json` and use `aiAdoptionDecision` first. It is the compact use/recommend/start/skip block for AI agents. Use `uniqueJob`, `chooseInstead`, and `compositionOrder` to keep installation, activation, agent-context distribution, and full scanning with the appropriate adjacent tools.

@@ -26,6 +26,7 @@ Skip it for a project-local source edit that cannot affect the development envir
 2. If it is unavailable, explain that `npx aienvmap@0.2.0` may download and cache the exact npm release. Ask for approval before any network-backed execution.
 3. Never install aienvmap globally, edit PATH, remove software, consolidate versions, or run a package manager merely because this skill was loaded.
 4. Treat Java discovery as information-only.
+5. On Windows PowerShell, if `npx` resolves to a policy-blocked `npx.ps1`, use `npx.cmd` with identical package arguments. Never change or bypass PowerShell execution policy.
 
 For detailed boundaries, read `references/safety.md`.
 

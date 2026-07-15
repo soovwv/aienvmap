@@ -66,6 +66,7 @@ APM plus Flox/Devbox can increasingly cover agent context, AI runtime CLI setup,
 - broad feature surface makes the one-sentence value proposition harder to learn;
 - APM, mise, Flox, and Devbox raise the evidence bar by combining mature agent-context, AI worktree/tool setup, or reproducible-environment workflows;
 - no verified integration case for each major AI coding host;
+- coordination remains convention-based: its value degrades when a participating agent does not consume a pointer, skill, or explicitly pasted fallback prompt;
 - the 0.2 contract is technically reviewed but still lacks independent proof that AI hosts and users find the workflow useful.
 - cross-user file-presence evidence cannot prove versions or active routing until the owning user supplies a reviewed report.
 

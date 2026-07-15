@@ -24,7 +24,7 @@ const marketValidationDimensions = [
 
 const releaseAxes = [
   releaseAxis("coreFeatureCompleteness", 92, 90, ["aienvmap start --json", "aienvmap reconcile --json", "aienvmap sbom --json"]),
-  releaseAxis("stabilityAndTesting", 94, 90, ["npm run release:check", ".github/workflows/ci.yml", "VALIDATION.md"]),
+  releaseAxis("stabilityAndTesting", 94, 90, ["npm run release:check", ".github/workflows/ci.yml", "VALIDATION.md", "test/temp-hygiene.test.js", "test/windows-launcher-guidance.test.js"]),
   releaseAxis("lightweight", 93, 90, ["package.json#dependencies", "npm run pack:install-check", "src/performance-budget.js"]),
   releaseAxis("aiUsability", 92, 90, ["README.md#10-second-use", "src/ai-decision-envelope.js", "test/ai-decision-envelope.test.js", "aienvmap schema --json"], "One compact envelope now supplies an evidence-backed action, bounded user question, explicit non-authority, and next safe command without adding another command.", "Real automatic pickup still needs host-specific external proof."),
   releaseAxis("differentiation", 91, 90, ["MARKET.md#competitive-position", "aienvmap schema --json", "examples/ai-workspace-case-study.md"], "The machine-readable unique job, choose-instead map, and composition order distinguish observation and handoff from installation, activation, context packaging, and full scanning.", "Independent users must still prove that this combined workflow is valuable in practice."),
@@ -81,7 +81,7 @@ export function productScorecard() {
     },
     adjacentAlternatives,
     strengths: ["zero-runtime-dependency local operation", "AI-readable environment and decision contracts", "read-only multi-install discovery", "bounded APM skill distribution with consumer-install regression coverage", "light SBOM interoperability", "explicit approval boundaries"],
-    weaknesses: ["limited independent adoption evidence", "few external case studies", "AI-host automatic skill pickup remains unverified", "cross-user versions require owning-user verification", "third-party runtime version probes cannot guarantee side-effect-free executables", "adjacent tools increasingly combine AI context, agent worktrees, runtime setup, and reproducible environments"],
+    weaknesses: ["limited independent adoption evidence", "few external case studies", "coordination value depends on participating agents consuming a pointer, skill, or explicit fallback prompt", "AI-host automatic skill pickup remains unverified", "cross-user versions require owning-user verification", "third-party runtime version probes cannot guarantee side-effect-free executables", "adjacent tools increasingly combine AI context, agent worktrees, runtime setup, and reproducible environments"],
     nextPriorities: [
       { priority: 1, outcome: "external problem evidence", proof: "at least three reproducible user environments, including one shared-server owner-verified report" },
       { priority: 2, outcome: "AI-host integration evidence", proof: "verified automatic-pickup and fallback examples for major coding-agent hosts" },

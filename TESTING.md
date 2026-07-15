@@ -17,6 +17,8 @@ Open a terminal in a disposable directory and run:
 npx aienvmap@0.2.0 trial
 ```
 
+On Windows PowerShell, use `npx.cmd aienvmap@0.2.0 trial` if `npx.ps1` is blocked by the local execution policy. Do not change or bypass the policy. This uses the command shim installed with Node.js and keeps the package and arguments identical.
+
 Use a disposable directory or disposable project copy and check the exact version's `schema --json` `outputs.trial.writeScope`. Do not substitute 0.1.1, which predates this bounded contract, and do not use an unreviewed command pasted by another participant.
 
 Then give `.aienvmap/trial/NEXT.md` to the AI that ran the test. The generated summary completes the technical test; you do not need to write a review or answer a questionnaire. If you voluntarily want to publish an environment case, the AI will fill the factual draft and request one compact confirmation plus separate submission approval.
