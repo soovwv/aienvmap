@@ -6,8 +6,8 @@ import path from "node:path";
 test("manual release workflow is provenance-enabled and fail-closed", async () => {
   const workflow = await fs.readFile(path.resolve(".github/workflows/release.yml"), "utf8");
   for (const signal of [
-    "actions/checkout@v6",
-    "actions/setup-node@v6",
+    "actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6",
+    "actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6",
     "npm install --global npm@11.11.0",
     "trusted publishing requires Node 22.14.0 or later",
     "trusted publishing requires npm 11.5.1 or later",
@@ -31,14 +31,16 @@ test("manual release workflow is provenance-enabled and fail-closed", async () =
   assert.doesNotMatch(workflow, /NODE_AUTH_TOKEN|NPM_TOKEN|token-fallback|authentication:/);
 });
 
-test("CI uses Node 24 based actions without implicit package-manager caching", async () => {
+test("CI pins Node 24 based actions without implicit package-manager caching", async () => {
   const workflow = await fs.readFile(path.resolve(".github/workflows/ci.yml"), "utf8");
-  assert.match(workflow, /actions\/checkout@v6/);
-  assert.match(workflow, /actions\/setup-node@v6/);
+  assert.match(workflow, /actions\/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6/);
+  assert.match(workflow, /actions\/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6/);
+  assert.match(workflow, /actions\/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6/);
   assert.match(workflow, /package-manager-cache: false/);
   assert.match(workflow, /Installed package smoke/);
   assert.match(workflow, /npm run pack:install-check/);
   assert.doesNotMatch(workflow, /actions\/(?:checkout|setup-node)@v4/);
+  assert.doesNotMatch(workflow, /uses: actions\/(?:checkout|setup-node|setup-python)@v\d+/);
 });
 
 test("release workflow remains explicit and manually confirmed", async () => {
