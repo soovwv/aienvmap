@@ -13,6 +13,10 @@
 - Added bounded APM skill distribution without hooks, MCP configuration, runtime installation, or automatic execution.
 - Added cross-platform verification of the installed npm tarball and kept zero runtime dependencies.
 - Added a one-command trial flow and AI-assisted testing guides with explicit human consent and redaction rules.
+- Reduced normal first use to one `start` command and made startup reconciliation an automatic observation that cannot be used as a drift baseline until an explicit `reconcile --write`.
+- Added AI-readable local-only sharing guidance for raw environment artifacts without silently editing project `.gitignore` files.
+- Separated market readiness from independent market validation, added six thresholded 0.2.0 quality axes, and preserved the official API snapshot behind the public counts.
+- Pinned CI and release GitHub Actions to reviewed commit SHAs and removed every long-lived npm token fallback from the trusted-publishing path.
 
 - Added an APM-compatible, non-executing agent skill and safe coexistence with native onboarding pointers; APM distributes guidance while aienvmap retains explicit, review-first environment authority.
 - Prefer the APM skill-subpath install so consumers do not retain the full repository as the installed package payload.
@@ -32,11 +36,11 @@
 - Added an explicit AI clarification contract for intentional multi-version environments and a redacted cross-platform maintainer scenario runner covering first start, reconciliation, light/external SBOM, and case drafting.
 - Reordered the README around the user problem, 10-second trial, and concrete two-agent outcome before advanced environment evidence.
 - Replaced authoritative "source of truth" and "live env map" wording in generated AI pointers and schema guidance with observed-evidence and owning-user verification boundaries.
-- Made trusted-publisher authentication the token-free default for manual npm releases, with explicit Node/npm floors and a separately selected token fallback.
+- Made trusted-publisher authentication the only supported path for manual npm releases, with explicit Node/npm floors and no long-lived token fallback.
 - Added privacy-safe Markdown environment-case drafts generated only from the allowlisted public summary, without files, uploads, or automatic submissions.
 - Added validated per-alias extraction from bounded multi-home evidence for the administrator-to-owner verification handoff.
 - Fixed candidate scope and path redaction to honor an explicit inspected-user home across Node, npm, Python, pip, uv, pipx, Conda, and information-only runtimes on shared hosts.
-- Upgraded GitHub checkout/setup-node actions to their Node 24 based v6 majors and explicitly disabled unused automatic package-manager caching in CI and release workflows.
+- Upgraded GitHub checkout/setup actions to their Node 24 based v6 majors, pinned them to reviewed commit SHAs, and explicitly disabled unused automatic package-manager caching in CI and release workflows.
 - Centralized path redaction/source/scope evidence and isolated uv, pipx, and Conda discovery from the main package-manager orchestrator while preserving compatibility exports.
 - Updated the evidence-bounded competitive map for Microsoft APM, Devbox, and Flox, narrowing the product wedge to observed mixed-host runtime evidence and review-first multi-AI coordination.
 - Isolated Node/Python/Conda routing judgment rules from discovery I/O while preserving package-manager compatibility exports and findings.
@@ -44,7 +48,7 @@
 - Added bounded uv and pipx entry-point/version discovery plus duplicate pip/uv/pipx findings, portable evidence, and drift tracking while leaving tool package enumeration opt-in.
 - Added bounded read-only pnpm, Yarn, and Corepack executable/version discovery across PATH and known Node roots, including duplicate/project mismatch findings, portable evidence, and drift tracking without claiming shim ownership.
 - Added optional actor/session intent ownership and bounded advisory leases so concurrent sessions sharing one AI label conflict correctly; expiry never resolves an intent or authorizes environment changes.
-- Added a fail-closed 0.2.0 root-field contract freeze candidate across 13 AI JSON surfaces, with an intentional-review baseline and release-check integration.
+- Added a fail-closed 0.2.0 root-field contract freeze across 15 AI JSON surfaces, with an intentional-review baseline and release-check integration.
 - Isolated portable report construction, validation, fingerprinting, artifact loading, and comparison from the reconcile CLI while preserving command-module exports and JSON contracts.
 - Hardened the manual npm provenance workflow to require current main, a matching version tag, an unpublished version, explicit confirmation, OIDC provenance, and post-publish registry version/integrity verification.
 - Restored the canonical Apache-2.0 license text, added a dated market/traction snapshot with adjacent-tool boundaries, exposed its caveats in the scorecard, and aligned GitHub description/topics with the product position.

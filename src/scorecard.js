@@ -50,8 +50,15 @@ export function productScorecard() {
   const releaseAssessment = {
     target: "0.2.0",
     qualified: releaseAxes.every((axis) => axis.pass),
+    qualificationScope: "code-and-repository release candidate",
+    publishReady: false,
+    publishBlockers: [
+      { id: "exposed-token-revocation", status: "external-confirmation-required", rule: "Revoke the npm token previously exposed outside the repository and remove any copied secret." },
+      { id: "npm-trusted-publisher", status: "external-confirmation-required", rule: "Confirm npm-side trusted publisher configuration for .github/workflows/release.yml before creating the release tag." },
+      { id: "immutable-release-source", status: "pending-release-action", rule: "Create v0.2.0 only from the protected, CI-passing main commit." }
+    ],
     axes: releaseAxes,
-    rule: "Every axis must meet its threshold. Market readiness measures release preparation; independent market validation remains separate and is not required to publish an honest early release."
+    rule: "Every code-quality axis must meet its threshold. Qualified code is not publish-ready until every external blocker is explicitly cleared; independent market validation remains separate."
   };
   return {
     schemaName: "aienvmap-product-scorecard",

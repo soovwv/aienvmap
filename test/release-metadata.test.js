@@ -24,6 +24,8 @@ test("0.2.0 release metadata stays aligned across package, APM, contracts, and d
   assert.match(scorecard, new RegExp(`\\| Market validation \\| ${result.marketValidation.score}/100 \\|`));
   assert.match(scorecard, new RegExp(`\\| Weighted release readiness \\| ${result.overall.score}/100 \\|`));
   assert.equal(result.releaseAssessment.qualified, true);
+  assert.equal(result.releaseAssessment.publishReady, false);
+  assert.match(scorecard, /npm publishing remains on hold/);
   assert.match(readme, new RegExp(`${surfaceCount} documented AI JSON root-field surfaces`));
   assert.equal(surfaceCount, 15);
   assert.doesNotMatch(scorecard, /Strong prototype|contract is not stable until 0\.2\.0/);

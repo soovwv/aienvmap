@@ -24,7 +24,7 @@ The dated public traction and adjacent-tool comparison live in [MARKET.md](MARKE
 | Differentiation | 82 | 75 | pass |
 | Market readiness | 73 | 70 | pass |
 
-All axes must pass. This qualifies an honest early 0.2.0 release; it does not claim product-market fit or independent adoption.
+All axes must pass. The code qualifies as an honest early 0.2.0 release candidate; it does not claim product-market fit or independent adoption. npm publishing remains on hold until the previously exposed token is confirmed revoked, npm-side trusted publishing is configured, and `v0.2.0` points to the protected CI-passing main commit.
 
 ## Position
 

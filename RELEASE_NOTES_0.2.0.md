@@ -18,6 +18,9 @@ Run the trial in a disposable directory or disposable project copy. It writes on
 - Light SBOM summaries with CycloneDX/SPDX import and optional full-scanner handoff.
 - Bounded APM skill distribution without hooks, MCP configuration, executable deployment, or automatic tool installation.
 - Privacy-reviewed trial artifacts and optional public-case drafting without telemetry or automatic submission.
+- A one-command `start` path that creates an automatic environment observation without silently accepting it as a CI drift baseline.
+- Explicit artifact-sharing guidance that treats raw manifests, reconciliation, SBOM, dashboards, and portable trial evidence as local-only by default.
+- Separate market-readiness and independent market-validation scores, backed by a timestamped official-API snapshot.
 
 ## Compatibility and verification
 
@@ -25,6 +28,7 @@ Run the trial in a disposable directory or disposable project copy. It writes on
 - Zero runtime dependencies and Node.js 18 or newer.
 - CI covers Windows, Ubuntu, and macOS across the supported Node.js matrix.
 - The release gate packs the exact npm artifact, installs it in a clean consumer, and runs its installed CLI and isolated trial.
-- npm publishing remains a separate manual action requiring an exact matching tag, explicit confirmation, and verified authentication.
+- GitHub Actions used by CI and release are pinned to reviewed commit SHAs.
+- npm publishing remains a separate manual action requiring an exact matching tag, explicit confirmation, trusted-publisher authentication, and confirmation that the previously exposed token was revoked.
 
 Independent adoption and AI-host automatic-pickup evidence remain limited. This release should not be presented as proof of market adoption or as a package manager, vulnerability scanner, or full SBOM generator.
