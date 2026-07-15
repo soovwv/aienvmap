@@ -4,8 +4,19 @@ import { execFile } from "node:child_process";
 import fs from "node:fs/promises";
 import path from "node:path";
 import { promisify } from "node:util";
+import os from "node:os";
 
 const execFileAsync = promisify(execFile);
+
+test("CLI demo removes its disposable workspace after printing the result", async () => {
+  const { stdout } = await execFileAsync(process.execPath, [path.resolve("bin/aienvmap.js"), "demo", "--json"], {
+    cwd: path.resolve("."),
+    maxBuffer: 5 * 1024 * 1024
+  });
+  const result = JSON.parse(stdout);
+  assert.equal(path.dirname(result.workspace), os.tmpdir());
+  await assert.rejects(fs.access(result.workspace));
+});
 
 test("multi-agent conflict demo detects dependency coordination", async () => {
   const { stdout } = await execFileAsync(process.execPath, [
