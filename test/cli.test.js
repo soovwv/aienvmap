@@ -90,6 +90,9 @@ test("CLI scorecard keeps technical and market evidence separate", async () => {
   const json = JSON.parse(stdout);
   assert.equal(json.schemaName, "aienvmap-product-scorecard");
   assert.ok(json.technicalReadiness.score > json.marketValidation.score);
+  assert.ok(json.marketReadiness.score > json.marketValidation.score);
+  assert.equal(json.releaseAssessment.qualified, true);
+  assert.equal(json.releaseAssessment.publishReady, false);
   assert.match(json.rule, /not use overall score alone/);
 });
 
@@ -128,7 +131,8 @@ test("package, README, and CLI help share the accurate environment-before-change
   assert.match(readmeTop, /Agent A records a planned dependency change/);
   assert.match(readmeTop, /Agent B starts later and sees the pending intent/);
   assert.match(readme, /no package is installed, removed, or switched/);
-  assert.match(readmeTop, /npx aienvmap reconcile --quick/);
+  assert.match(readmeTop, /npx aienvmap@0\.2\.0 start/);
+  assert.doesNotMatch(readmeTop, /npx aienvmap reconcile --quick/);
   assert.ok(readme.split(/\r?\n/).length <= 160);
   assert.ok(readme.indexOf("## Advanced environment evidence") > readme.indexOf("## What the AI gets"));
   assert.match(readme, /AI adoption guide/);
@@ -143,9 +147,12 @@ test("package, README, and CLI help share the accurate environment-before-change
   assert.match(readme, /nextStabilizationTasks/);
   assert.match(readme, /releaseReadiness\.currentBatch` is reviewed/);
   assert.match(readme, /several meaningful changes are batched/);
+  assert.match(readme, /local-only unless a human reviews them/);
+  assert.match(readme, /never edits the project's `\.gitignore`/);
   assert.match(stdout, /know the development environment before an AI changes it/);
   assert.match(stdout, /aienvmap start    one-command AI startup with a copy-paste fallback prompt/);
   assert.match(stdout, /aienvmap discover  read-only detection plus aiDiscovery\.decision and copy-paste prompt/);
+  assert.match(stdout, /aienvmap scorecard separate release-readiness and independent market-validation evidence/);
 });
 
 test("package stays runtime dependency-free for lightweight shared machines", async () => {
@@ -170,6 +177,7 @@ test("package publish allowlist stays small and intentional", async () => {
     "scripts/apm-consumer-check.mjs",
     "scripts/installed-package-check.mjs",
     "contracts",
+    "evidence",
     "README.md",
     "LICENSE",
     "CHANGELOG.md",

@@ -175,7 +175,7 @@ async function writeStateReadme(dir, status = {}) {
     "For humans: open `dashboard.html`.",
     "For AI agents: start here, then use `status.json`, `summary.md`, and `aienvmap context --json`.",
     "Default mode is advisory. Use strict checks only in CI or when a human asks.",
-    "Privacy: raw `.aienvmap/` artifacts may contain local paths, hostnames, runtime versions, and project package details. Review before committing or sharing; use `aienvmap reconcile --portable --json` for redacted evidence.",
+    "Privacy: treat raw manifests, reconciliation reports, SBOM files, dashboards, and `trial/portable.json` as local-only by default. Coordination files can contain operator text. Review before committing or sharing; use `aienvmap reconcile --portable --json` for redacted evidence. aienvmap never edits `.gitignore`.",
     ""
   ];
   await fs.writeFile(out, lines.join("\n"), "utf8");

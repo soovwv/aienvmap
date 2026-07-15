@@ -16,7 +16,7 @@ export async function startWorkspace(args = {}) {
 
   let reconciliation = await readJson(reconcileJsonPath(dir), null);
   if (needsSync || !reconciliationFresh(reconciliation)) {
-    reconciliation = await reconcileWorkspace({ ...args, dir, quiet: true, json: false, write: true, quick: true });
+    reconciliation = await reconcileWorkspace({ ...args, dir, quiet: true, json: false, write: true, quick: true, automatic_snapshot: true });
   }
 
   const status = await statusWorkspace({ ...args, quiet: true, json: false, write: true });

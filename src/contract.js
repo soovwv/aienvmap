@@ -597,7 +597,7 @@ export function schemaContract() {
         file: ".aienvmap/reconcile.json",
         command: "aienvmap reconcile --json --write",
         mode: "non-mutating-by-design environment inspection; writes only the report when --write is explicit",
-        rootFields: ["schemaName", "schemaVersion", "generatedAt", "platform", "architecture", "mode", "scanMode", "scope", "limitations", "project", "node", "npm", "python", "otherRuntimes", "findings", "decision", "aiDecision", "aiDecisionEnvelope", "written"],
+        rootFields: ["schemaName", "schemaVersion", "generatedAt", "platform", "architecture", "mode", "scanMode", "scope", "limitations", "project", "node", "npm", "python", "otherRuntimes", "findings", "decision", "aiDecision", "aiDecisionEnvelope", "baselineUse", "written"],
         probeFields: ["status", "reason"],
         probeStatusValues: ["failed"],
         probeFailureValues: ["command-not-found", "permission-denied", "timeout-or-terminated", "nonzero-exit", "version-not-recognized", "execution-failed"],
@@ -723,7 +723,7 @@ export function schemaContract() {
       },
       scorecard: {
         command: "aienvmap scorecard --json",
-        rootFields: ["schemaName", "schemaVersion", "status", "overall", "technicalReadiness", "marketValidation", "positioning", "marketResearch", "adjacentAlternatives", "strengths", "weaknesses", "nextPriorities", "externalEvidenceRequirements", "limitations", "rule"],
+        rootFields: ["schemaName", "schemaVersion", "status", "overall", "technicalReadiness", "marketReadiness", "marketValidation", "releaseAssessment", "positioning", "marketResearch", "adjacentAlternatives", "strengths", "weaknesses", "nextPriorities", "externalEvidenceRequirements", "limitations", "rule"],
         rule: "Keep technical readiness separate from market validation and require cited evidence before increasing either score."
       },
       demo: {
