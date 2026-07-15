@@ -1,5 +1,5 @@
 import { diagnose } from "../doctor.js";
-import { readJson } from "../fsutil.js";
+import { readJsonStrict } from "../fsutil.js";
 import { openIntents, readJsonl, readTimeline } from "../timeline.js";
 import { intentsPath, manifestPath, timelinePath, workspaceDir } from "../paths.js";
 import { renderContext } from "../render.js";
@@ -13,7 +13,7 @@ import { externalSbomWarnings, loadExternalSbomStartupSignal } from "../external
 
 export async function contextWorkspace(args) {
   const dir = workspaceDir(args);
-  const manifest = await readJson(manifestPath(dir));
+  const manifest = await readJsonStrict(manifestPath(dir));
   if (!manifest) throw new Error("missing manifest; run `aienvmap sync` first");
   const timeline = await readTimeline(timelinePath(dir));
   const intents = openIntents(await readJsonl(intentsPath(dir)));

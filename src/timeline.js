@@ -1,16 +1,36 @@
 import fs from "node:fs/promises";
+import path from "node:path";
 
 export async function readTimeline(file) {
   return readJsonl(file);
 }
 
 export async function readJsonl(file) {
+  let raw;
   try {
-    const raw = await fs.readFile(file, "utf8");
-    return raw.split(/\r?\n/).filter(Boolean).map((line) => JSON.parse(line));
-  } catch {
-    return [];
+    raw = await fs.readFile(file, "utf8");
+  } catch (error) {
+    if (error?.code === "ENOENT") return [];
+    throw error;
   }
+  const events = [];
+  for (const [index, source] of raw.split(/\r?\n/).entries()) {
+    const line = index === 0 ? source.replace(/^\uFEFF/, "").trim() : source.trim();
+    if (!line) continue;
+    try {
+      const event = JSON.parse(line);
+      if (!event || typeof event !== "object" || Array.isArray(event)) throw new TypeError("coordination event must be an object");
+      events.push(event);
+    } catch (cause) {
+      const error = new Error(`${path.basename(file)} contains invalid JSON on line ${index + 1}; repair or restore the coordination artifact before continuing`);
+      error.code = "AIENVMAP_INVALID_JSONL";
+      error.file = file;
+      error.line = index + 1;
+      error.cause = cause;
+      throw error;
+    }
+  }
+  return events;
 }
 
 export function openIntents(events = [], now = new Date()) {

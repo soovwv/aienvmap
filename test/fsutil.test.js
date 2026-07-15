@@ -6,7 +6,7 @@ import os from "node:os";
 import path from "node:path";
 import { spawn } from "node:child_process";
 import { fileURLToPath } from "node:url";
-import { appendJsonLine, appendJsonLinesChecked, jsonlRevision, readJson, stripBom, writeJson } from "../src/fsutil.js";
+import { appendJsonLine, appendJsonLinesChecked, assertWritePathInsideWorkspace, jsonlRevision, readJson, readJsonStrict, stripBom, writeJson } from "../src/fsutil.js";
 
 const casWriter = fileURLToPath(new URL("../test-support/cas-writer.mjs", import.meta.url));
 
@@ -24,6 +24,18 @@ test("stripBom leaves normal JSON unchanged", () => {
   assert.equal(stripBom("{\"ok\":true}"), "{\"ok\":true}");
 });
 
+test("readJsonStrict distinguishes missing state from malformed state", async () => {
+  const dir = await fs.mkdtemp(path.join(os.tmpdir(), "aienvmap-json-strict-"));
+  const file = path.join(dir, "state.json");
+  assert.equal(await readJsonStrict(file, null), null);
+  await fs.writeFile(file, "{private-value", "utf8");
+  await assert.rejects(readJsonStrict(file), (error) => {
+    assert.equal(error.code, "AIENVMAP_INVALID_JSON");
+    assert.doesNotMatch(error.message, /private-value/);
+    return true;
+  });
+});
+
 test("writeJson replaces artifacts without leaving temporary files", async () => {
   const dir = await fs.mkdtemp(path.join(os.tmpdir(), "aienvmap-atomic-json-"));
   const file = path.join(dir, "state.json");
@@ -31,6 +43,34 @@ test("writeJson replaces artifacts without leaving temporary files", async () =>
   await writeJson(file, { revision: 2 });
   assert.deepEqual(await readJson(file), { revision: 2 });
   assert.deepEqual(await fs.readdir(dir), ["state.json"]);
+});
+
+test("workspace writes reject state and instruction directories redirected by symbolic links", async (t) => {
+  const workspace = await fs.mkdtemp(path.join(os.tmpdir(), "aienvmap-boundary-workspace-"));
+  const outside = await fs.mkdtemp(path.join(os.tmpdir(), "aienvmap-boundary-outside-"));
+  const state = path.join(workspace, ".aienvmap");
+  try {
+    await fs.symlink(outside, state, process.platform === "win32" ? "junction" : "dir");
+  } catch (error) {
+    if (["EPERM", "EACCES", "ENOSYS"].includes(error?.code)) {
+      t.skip(`symbolic links unavailable: ${error.code}`);
+      return;
+    }
+    throw error;
+  }
+
+  await assert.rejects(
+    writeJson(path.join(state, "status.json"), { unsafe: true }),
+    (error) => error.code === "AIENVMAP_WRITE_OUTSIDE_WORKSPACE"
+  );
+  await assert.rejects(fs.access(path.join(outside, "status.json")));
+
+  const redirected = path.join(workspace, ".cursor");
+  await fs.symlink(outside, redirected, process.platform === "win32" ? "junction" : "dir");
+  await assert.rejects(
+    assertWritePathInsideWorkspace(workspace, path.join(redirected, "rules", "environment.md")),
+    (error) => error.code === "AIENVMAP_WRITE_OUTSIDE_WORKSPACE"
+  );
 });
 
 test("appendJsonLine serializes concurrent AI event writes", async () => {

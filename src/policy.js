@@ -1,23 +1,32 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 
+const supportedPolicyKeys = new Set([
+  "globalInstalls", "intentionalJavaVersions", "intentionalNodeVersions", "intentionalPythonVersions",
+  "node", "packageManager", "python", "runtimeChanges"
+]);
+
 export async function loadPolicy(dir) {
   try {
     const raw = await fs.readFile(path.join(dir, ".aienvmap", "policy.yml"), "utf8");
     return parseSimplePolicy(raw);
-  } catch {
-    return {};
+  } catch (error) {
+    if (error?.code === "ENOENT") return {};
+    throw error;
   }
 }
 
 export function parseSimplePolicy(raw) {
   const policy = {};
-  for (const line of String(raw).split(/\r?\n/)) {
+  for (const [index, line] of String(raw).split(/\r?\n/).entries()) {
     const trimmed = line.trim();
     if (!trimmed || trimmed.startsWith("#")) continue;
     const match = trimmed.match(/^([A-Za-z][\w-]*)\s*:\s*(.+)$/);
-    if (!match) continue;
-    policy[normalizeKey(match[1])] = unquote(match[2].trim());
+    if (!match) throw policyError(`policy.yml contains invalid syntax on line ${index + 1}`, index + 1);
+    const key = normalizeKey(match[1]);
+    if (!supportedPolicyKeys.has(key)) throw policyError(`policy.yml contains unsupported key on line ${index + 1}`, index + 1);
+    if (Object.hasOwn(policy, key)) throw policyError(`policy.yml contains duplicate key on line ${index + 1}`, index + 1);
+    policy[key] = unquote(match[2].trim());
   }
   return policy;
 }
@@ -82,4 +91,11 @@ function normalizeKey(key) {
 
 function unquote(value) {
   return value.replace(/^["']|["']$/g, "");
+}
+
+function policyError(message, line) {
+  const error = new Error(message);
+  error.code = "AIENVMAP_INVALID_POLICY";
+  error.line = line;
+  return error;
 }

@@ -2,7 +2,7 @@ import { discoverWorkspace } from "./discover.js";
 import { statusWorkspace, renderStatusText } from "./status.js";
 import { syncWorkspace } from "./sync.js";
 import { reconcileWorkspace, summarizeReconciliation } from "./reconcile.js";
-import { readJson } from "../fsutil.js";
+import { readJsonStrict } from "../fsutil.js";
 import { reconcileJsonPath, workspaceDir } from "../paths.js";
 
 export async function startWorkspace(args = {}) {
@@ -14,7 +14,7 @@ export async function startWorkspace(args = {}) {
     await syncWorkspace({ ...args, quiet: true, json: false });
   }
 
-  let reconciliation = await readJson(reconcileJsonPath(dir), null);
+  let reconciliation = await readJsonStrict(reconcileJsonPath(dir), null);
   if (needsSync || !reconciliationFresh(reconciliation)) {
     reconciliation = await reconcileWorkspace({ ...args, dir, quiet: true, json: false, write: true, quick: true, automatic_snapshot: true });
   }

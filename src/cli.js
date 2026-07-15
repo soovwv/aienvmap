@@ -57,6 +57,19 @@ const commands = new Map([
 
 const version = JSON.parse(readFileSync(new URL("../package.json", import.meta.url), "utf8")).version;
 const globalValueOptions = new Set(["--dir"]);
+const booleanOptions = new Set([
+  "all", "check", "ci", "clear_import", "deep", "dry_run", "full_packages", "inspect_project_wrappers",
+  "json", "markdown", "no_sync", "open", "owner_verification", "portable", "quick", "quiet", "record",
+  "security", "show_paths", "uninstall", "verbose"
+]);
+const requiredValueOptions = new Set([
+  "action", "actor", "after", "against", "agent", "agents", "alias", "baseline", "before", "case_summary",
+  "change", "comparison", "dir", "evidence", "format", "home_evidence", "id", "if_revision", "import",
+  "inspect_home", "inspect_homes", "lease_minutes", "portable_compare", "portable_from", "reason", "ref",
+  "review", "scenario", "session", "status", "strict", "summary", "target", "type"
+]);
+const knownOptions = new Set([...booleanOptions, ...requiredValueOptions, "write"]);
+const positionalCommands = new Set(["demo", "onboard", "snippet"]);
 
 export async function main(argv) {
   const { command, rest, globalArgs } = splitCommand(argv);
@@ -73,10 +86,24 @@ export async function main(argv) {
     printUsage();
     throw new Error(`unknown command "${command}"`);
   }
-  await run({ ...globalArgs, ...parseArgs(rest) });
+  if (rest.includes("--help") || rest.includes("-h")) {
+    printUsage();
+    return;
+  }
+  const args = { ...globalArgs, ...parseArgs(rest) };
+  if (!positionalCommands.has(command) && args._.length) {
+    throw new Error(`${command}: unexpected argument "${args._[0]}"`);
+  }
+  if (["demo", "snippet"].includes(command) && args._.length > 1) {
+    throw new Error(`${command}: unexpected argument "${args._[1]}"`);
+  }
+  await run(args);
 }
 
 function splitCommand(argv) {
+  if (["-h", "--help", "-v", "--version", "version"].includes(argv[0])) {
+    return { command: argv[0], rest: argv.slice(1), globalArgs: { _: [] } };
+  }
   const leading = [];
   for (let i = 0; i < argv.length; i++) {
     const arg = argv[i];
@@ -109,10 +136,15 @@ export function parseArgs(argv) {
     }
     const [rawKey, inline] = arg.slice(2).split("=", 2);
     const key = rawKey.replaceAll("-", "_");
+    if (!knownOptions.has(key)) throw new Error(`unknown option "--${rawKey}"`);
     if (inline !== undefined) {
       out[key] = inline;
+    } else if (booleanOptions.has(key)) {
+      out[key] = true;
     } else if (argv[i + 1] && !argv[i + 1].startsWith("--")) {
       out[key] = argv[++i];
+    } else if (requiredValueOptions.has(key)) {
+      throw new Error(`--${rawKey} requires a value`);
     } else {
       out[key] = true;
     }

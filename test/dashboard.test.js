@@ -4,7 +4,7 @@ import assert from "node:assert/strict";
 import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
-import { dashWorkspace } from "../src/commands/dash.js";
+import { dashWorkspace, dashboardOpenCommand, openDashboardFile } from "../src/commands/dash.js";
 import { writeJson } from "../src/fsutil.js";
 import { dashboardAgentClientScript, dashboardAiUseClientScript, dashboardAiUseHtmlClientScript, dashboardCardClientScript, dashboardCardPriority, dashboardDependencyCoordinationClientScript, dashboardDependencyHintsClientScript, dashboardDependencyProtocolClientScript, dashboardDependencyReadSetClientScript, dashboardDependencyReviewClientScript, dashboardDiscoveryFallback, dashboardDiscoveryFallbackClientScript, dashboardDocument, dashboardEnvironmentProtocolClientScript, dashboardEssentialCards, dashboardEssentialSurfaceClientScript, dashboardEssentialSurfaces, dashboardLayoutClientScripts, dashboardMainCardsClientScript, dashboardOperationalCardsClientScript, dashboardPayload, dashboardQualityDefaults, dashboardReleaseClientScripts, dashboardReleaseDefaults, dashboardStyle, dashboardSurfaceBudget, dashboardPackageManagerPolicyClientScript, dashboardPriorityClientScript, dashboardQualitySignalsClientScript, dashboardReleaseReadinessClientScript, dashboardReviewPlanClientScript, dashboardReviewPlanHtmlClientScript, dashboardRiskSummaryClientScript, dashboardSbomClientScripts, dashboardScannerGuidanceClientScript, dashboardScannerGuidanceHtmlClientScript, dashboardStateCardsClientScript, dashboardSupportCardsClientScript, renderDashboard } from "../src/render.js";
 
@@ -899,4 +899,15 @@ test("dashWorkspace links written plan artifacts", async () => {
   assert.match(html, /requirements\.txt/);
   assert.match(html, /uv\.lock/);
   assert.match(html, /django/);
+});
+
+test("dashboard opener avoids a command shell and reports launch failure", async () => {
+  const file = "C:\\workspace & shared\\.aienvmap\\dashboard.html";
+  assert.deepEqual(dashboardOpenCommand(file, "win32"), { command: "explorer.exe", args: [file] });
+  assert.deepEqual(dashboardOpenCommand("/tmp/dashboard.html", "darwin"), { command: "open", args: ["/tmp/dashboard.html"] });
+  assert.deepEqual(dashboardOpenCommand("/tmp/dashboard.html", "linux"), { command: "xdg-open", args: ["/tmp/dashboard.html"] });
+  await assert.rejects(
+    openDashboardFile("/tmp/dashboard.html", { platform: "linux", run: async () => { throw new Error("missing opener"); } }),
+    (error) => error.code === "AIENVMAP_DASHBOARD_OPEN_FAILED" && /could not be opened with xdg-open/.test(error.message)
+  );
 });

@@ -1,5 +1,5 @@
 import { diagnose } from "../doctor.js";
-import { jsonlRevision, readJson, writeJson } from "../fsutil.js";
+import { jsonlRevision, readJsonStrict, writeJson } from "../fsutil.js";
 import { loadPolicy, policyWarnings } from "../policy.js";
 import { intentsPath, manifestPath, reconcileJsonPath, statusJsonPath, timelinePath, workspaceDir } from "../paths.js";
 import { openIntents, readJsonl, readTimeline } from "../timeline.js";
@@ -9,7 +9,7 @@ import { externalSbomWarnings, loadExternalSbomStartupSignal } from "../external
 
 export async function statusWorkspace(args) {
   const dir = workspaceDir(args);
-  const manifest = await readJson(manifestPath(dir));
+  const manifest = await readJsonStrict(manifestPath(dir));
   if (!manifest) throw new Error("missing manifest; run `aienvmap sync` first");
   const policy = await loadPolicy(dir);
   const timeline = await readTimeline(timelinePath(dir));
@@ -27,7 +27,7 @@ export async function statusWorkspace(args) {
       compareAndSwap: "Pass --if-revision <coordinationRevision> to intent or resolve when acting on a previously read state."
     }
   };
-  const reconciliation = await readJson(reconcileJsonPath(dir), null);
+  const reconciliation = await readJsonStrict(reconcileJsonPath(dir), null);
   const status = reconciliation ? { ...baseStatus, reconciliation: summarizeReconciliation(reconciliation) } : {
     ...baseStatus,
     reconciliation: { decision: "missing", artifact: ".aienvmap/reconcile.json", nextCommand: "aienvmap reconcile --write", rule: "Generate read-only reconciliation evidence before runtime or package-manager changes." }

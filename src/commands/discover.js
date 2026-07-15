@@ -3,7 +3,7 @@ import path from "node:path";
 import { aiDefaultReadOrder, aiDiscoveryEntry, aiEntryContract, aiEnvMap, aiSessionUseContract, aiStartHere, aiStatus, aiSummary, npxAiFallbackPrompt, npxAiMissingFallbackPrompt, npxAiStartupChecklist } from "../ai-contract.js";
 import { hasAgentPointer } from "../agent-pointer.js";
 import { agentSkillLocations, hasAienvmapAgentSkill } from "../agent-skill.js";
-import { readJson } from "../fsutil.js";
+import { readJsonStrict } from "../fsutil.js";
 import { aiEnvPath, dashboardPath, discoveryJsonPath, manifestPath, sbomJsonPath, stateDir, stateReadmePath, statusJsonPath, summaryMdPath, workspaceDir } from "../paths.js";
 
 const pointerFiles = [
@@ -25,7 +25,7 @@ const sessionStart = [
 
 export async function discoverWorkspace(args = {}) {
   const dir = workspaceDir(args);
-  const status = await readJson(statusJsonPath(dir), null);
+  const status = await readJsonStrict(statusJsonPath(dir), null);
   const artifacts = await discoverArtifacts(dir);
   const pointers = await discoverPointers(dir);
   const skills = await discoverAgentSkills(dir);

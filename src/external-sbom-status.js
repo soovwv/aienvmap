@@ -1,9 +1,9 @@
-import { readJson } from "./fsutil.js";
+import { readJsonStrict } from "./fsutil.js";
 import { externalSbomEvidencePath } from "./paths.js";
 import { verifySbomEvidence } from "./sbom-evidence.js";
 
 export async function loadExternalSbomStartupSignal(workspace) {
-  const persisted = await readJson(externalSbomEvidencePath(workspace), null);
+  const persisted = await readJsonStrict(externalSbomEvidencePath(workspace), null);
   if (!persisted) return noExternalSbomSignal();
   const evidence = await verifySbomEvidence(workspace, persisted);
   const stale = evidence?.status === "stale";

@@ -1359,14 +1359,8 @@ async function npmCandidateOutput(file, args) {
   if (await exists(siblingNode) && await exists(npmCli)) {
     return commandOutput(siblingNode, [npmCli, ...args], { timeout: 5000 });
   }
-  const comspec = process.env.ComSpec || "cmd.exe";
-  const commandLine = `""${file.replaceAll('"', '""')}" ${args.map(quoteCmdArg).join(" ")}"`;
-  return commandOutput(comspec, ["/d", "/s", "/c", commandLine], { timeout: 5000 });
-}
-
-function quoteCmdArg(value) {
-  const text = String(value);
-  return /^[A-Za-z0-9._@:/=-]+$/.test(text) ? text : `"${text.replaceAll('"', '""')}"`;
+  const result = await portableCommandResult(file, args, { timeout: 5000, platform: "win32" });
+  return result.ok ? result.stdout : "";
 }
 
 function knownNodeRoots(env, home) {

@@ -54,3 +54,14 @@ test("external SBOM startup signal detects source digest drift", async () => {
     assert.equal(externalSbomWarnings(signal)[0].code, "external-sbom-stale");
   } finally { await fs.rm(dir, { recursive: true, force: true }); }
 });
+
+test("external SBOM startup signal fails closed on malformed persisted evidence", async () => {
+  const dir = await fs.mkdtemp(path.join(os.tmpdir(), "aienvmap-external-status-invalid-"));
+  await fs.mkdir(path.join(dir, ".aienvmap"), { recursive: true });
+  await fs.writeFile(path.join(dir, ".aienvmap", "external-sbom-evidence.json"), "{invalid-private-data", "utf8");
+  await assert.rejects(loadExternalSbomStartupSignal(dir), (error) => {
+    assert.equal(error.code, "AIENVMAP_INVALID_JSON");
+    assert.doesNotMatch(error.message, /invalid-private-data/);
+    return true;
+  });
+});
