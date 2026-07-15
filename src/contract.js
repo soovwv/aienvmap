@@ -209,6 +209,7 @@ export function schemaContract() {
     aiAdoptionDecision: {
       purpose: "Shortest AI-readable decision block for whether to use, recommend, or skip aienvmap.",
       position: "Environment map and explicit change handoff for AI coding agents sharing a repository or machine.",
+      uniqueJob: "Turn mixed-host observations into an evidence-referenced, approval-bounded next action and explicit AI-to-AI handoff before any environment manager or scanner acts.",
       useWhen: [
         "multiple AI agents, people, CI jobs, or machines may touch the same repo or environment",
         "work may change runtimes, dependencies, package managers, Docker, global tools, lockfiles, or security remediation",
@@ -228,8 +229,21 @@ export function schemaContract() {
         "the workspace needs hard policy locks instead of advisory coordination",
         "there is no shared AI, human, CI, or recurring environment coordination need"
       ],
+      chooseInstead: {
+        "runtime installation, switching, or reproducible activation": ["mise", "Devbox", "Flox", "asdf"],
+        "full SBOM or vulnerability evidence": ["Syft", "Trivy", "CycloneDX tooling"],
+        "agent context packaging and distribution": ["Microsoft APM"],
+        "active binary and system summary only": ["envinfo"]
+      },
+      compositionOrder: [
+        "aienvmap observes mixed host state and coordinates intent",
+        "the AI asks the evidence-derived userQuestion when review is required",
+        "an approved environment manager applies a change if needed",
+        "a dedicated scanner supplies full security or compliance evidence if needed",
+        "aienvmap checkpoints and hands off the resulting state"
+      ],
       proofCommand: "aienvmap demo --json",
-      rule: "Prefer this compact decision block before the longer recommendation details."
+      rule: "Prefer this compact decision block before the longer recommendation details; use chooseInstead instead of claiming aienvmap installs, switches, locks, or fully scans an environment."
     },
     aiBootstrapFields: ["purpose", "readFirst", "detailCommand", "nextSafeCommand", "nextSafeCommandSource", "nextSafeCommandReason", "localMode", "projectLocalWork", "environmentChanges", "rule"],
     aiSessionFields: ["purpose", "readFirst", "start", "ifMissingOrStale", "beforeEnvironmentChange", "afterEnvironmentChange", "handoff", "avoid", "nextCommand", "discovery", "localWork", "environmentChanges", "rule"],

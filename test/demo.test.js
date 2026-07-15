@@ -98,6 +98,9 @@ test("CLI demo JSON gives AI consumers the same conflict signal", async () => {
   assert.deepEqual(json.recommendationDecision.firstCommands, ["aienvmap start", "aienvmap onboard", "aienvmap context --json"]);
   assert.deepEqual(json.recommendationDecision.startWith, ["aienvmap start", "aienvmap onboard", "aienvmap context --json"]);
   assert.equal(json.recommendationDecision.source, "schema.aiAdoptionDecision");
+  assert.match(json.recommendationDecision.uniqueJob, /approval-bounded next action/);
+  assert.ok(json.recommendationDecision.chooseInstead["runtime installation, switching, or reproducible activation"].includes("mise"));
+  assert.match(json.recommendationDecision.compositionOrder.join(" "), /checkpoints and hands off/);
   assert.equal(json.recommendationDecision.fallbackWhenDiscoveryMissed.pastePromptField, "copyPastePrompt");
   assert.equal(json.recommendationDecision.proofCommand, "aienvmap demo --json");
 });
