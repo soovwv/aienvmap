@@ -47,8 +47,9 @@ test("commandResult distinguishes missing commands, nonzero exits, and timeouts"
 });
 
 test("Windows batch invocation quotes paths and rejects expandable command input", async () => {
-  assert.equal(windowsCmdCommandLine("C:\\Program Files (x86)\\tool & sdk\\tool.cmd", ["--version"]), `""C:\\Program Files (x86)\\tool & sdk\\tool.cmd" --version"`);
+  assert.equal(windowsCmdCommandLine("C:\\Program Files (x86)\\tool & sdk\\tool.cmd", ["--output", "C:\\pack destination\\result"]), `""C:\\Program Files (x86)\\tool & sdk\\tool.cmd" --output "C:\\pack destination\\result""`);
   assert.equal(windowsCmdCommandLine("C:\\%TEMP%\\tool.cmd", ["--version"]), "");
+  assert.equal(windowsCmdCommandLine("C:\\safe\\tool.cmd", ["%TEMP%"]), "");
   assert.equal(windowsCmdCommandLine("C:\\safe\\tool.cmd", ["&", "whoami"]), "");
 
   const refused = await portableCommandResult("C:\\%TEMP%\\tool.cmd", ["--version"], { platform: "win32" });
@@ -62,5 +63,19 @@ test("Windows batch invocation quotes paths and rejects expandable command input
     const result = await portableCommandResult(file, ["--version"], { platform: "win32" });
     assert.equal(result.ok, true);
     assert.equal(result.stdout, "1.2.3");
+
+    const argumentsFile = path.join(dir, "arguments.cmd");
+    await fs.writeFile(argumentsFile, "@echo [%~1] [%~2]\r\n", "utf8");
+    const destination = path.join(os.tmpdir(), "aienvmap pack destination");
+    const argumentsResult = await portableCommandResult(argumentsFile, ["--output", destination], { platform: "win32" });
+    assert.equal(argumentsResult.ok, true);
+    assert.equal(argumentsResult.stdout, `[--output] [${destination}]`);
+
+    const pathResolved = await portableCommandResult("version.cmd", ["--version"], {
+      platform: "win32",
+      env: { ...process.env, PATH: dir }
+    });
+    assert.equal(pathResolved.ok, true);
+    assert.equal(pathResolved.stdout, "1.2.3");
   }
 });

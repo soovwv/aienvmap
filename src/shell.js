@@ -68,7 +68,14 @@ export async function portableCommandResult(command, args = [], options = {}) {
   const platform = options.platform || process.platform;
   if (platform !== "win32" || !/\.(?:cmd|bat)$/i.test(command)) return commandResult(command, args, options);
   const comspec = options.comspec || process.env.ComSpec || "cmd.exe";
-  const commandLine = windowsCmdCommandLine(command, args);
+  let batchCommand = command;
+  if (!/[\\/]/.test(batchCommand)) {
+    const systemRoot = process.env.SystemRoot || process.env.WINDIR || "C:\\Windows";
+    const where = `${systemRoot.replace(/[\\/]+$/, "")}\\System32\\where.exe`;
+    const located = await commandResult(where, [batchCommand], options);
+    batchCommand = located.ok ? located.stdout.split(/\r?\n/).find(Boolean) || "" : "";
+  }
+  const commandLine = windowsCmdCommandLine(batchCommand, args);
   if (!commandLine) return {
     ok: false,
     code: 1,
@@ -83,8 +90,9 @@ export function windowsCmdCommandLine(command, args = []) {
   const file = String(command || "");
   const values = args.map((item) => String(item));
   if (!file || /[\r\n"%!]/.test(file)) return "";
-  if (values.some((item) => !/^[A-Za-z0-9._@:/=+,-]+$/.test(item))) return "";
-  return `""${file}"${values.length ? ` ${values.join(" ")}` : ""}"`;
+  if (values.some((item) => /[\r\n"%!&|<>^()]/.test(item))) return "";
+  const renderedValues = values.map((item) => /^[A-Za-z0-9._@:/=+,-]+$/.test(item) ? item : `"${item}"`);
+  return `""${file}"${renderedValues.length ? ` ${renderedValues.join(" ")}` : ""}"`;
 }
 
 export function firstVersion(text) {
