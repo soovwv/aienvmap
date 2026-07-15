@@ -68,8 +68,8 @@ The command prints Markdown to standard output. It does not create an issue, upl
 | outcome-verified | human confirms detection/judgment and actual outcome | eligible |
 | longitudinal | verified before/after evidence or repeated sessions over time | strongest |
 
-Repository fixtures, maintainer-only examples, copied reports, unreviewed JSON, and feature count are not independent market evidence. Maintain separate counts for submitted, reproducible, outcome-verified, and longitudinal cases; never count one case twice because it has multiple reports.
+Repository fixtures, maintainer-only examples, copied reports, unreviewed JSON, and feature count are not independent market evidence. Each case keeps exactly one maturity label; maintainers replace it as evidence advances. Maintain separate counts for submitted, reproducible, outcome-verified, and longitudinal cases, and never count one case twice because it has multiple reports.
 
 ## Submission
 
-Open a GitHub issue using the **Portable environment case** template. Public issues must not contain raw paths, usernames, hostnames, project/package names, secrets, tokens, or proprietary details. Do not infer missing sensitive details from a fingerprint or combine it with external tracking data.
+Open a GitHub issue using the **Portable environment case** template. Do not choose or pass labels; the template and maintainers manage them. If a client reports a label error, retry the approved issue body without label arguments. Public issues must not contain raw paths, usernames, hostnames, project/package names, secrets, tokens, or proprietary details. Do not infer missing sensitive details from a fingerprint or combine it with external tracking data.

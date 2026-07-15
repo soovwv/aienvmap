@@ -75,7 +75,7 @@ If you want the result to become public product evidence, let the AI fill all fa
 
 An optional correction may follow the same reply. The AI must not infer an answer from silence. It must then remove private details, show the complete draft, and ask separately for explicit public submission approval. Do not paste \`portable.json\` publicly because it retains versions and a linkable comparison fingerprint.
 
-Open ${issueUrl} only after that approval. Negative results, a usefulness value of \`skip\`, and a no-change outcome are valid. A report without the required human confirmation may be useful technical feedback but is not independent market evidence.
+Open ${issueUrl} only after that approval. Do not ask the tester to choose labels and do not pass label arguments through a CLI, API, connector, or generated URL. The repository template applies intake labels; if a client omits them or reports a label permission error, submit the approved body without label arguments and let a maintainer apply labels. Negative results, a usefulness value of \`skip\`, and a no-change outcome are valid. A report without the required human confirmation may be useful technical feedback but is not independent market evidence.
 
 If the result is wrong or the command failed, open a normal bug report instead. Never include secrets, environment-variable values, usernames, hostnames, paths, or private project/package names.
 `;

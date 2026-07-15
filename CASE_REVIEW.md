@@ -6,7 +6,7 @@ A completed local technical trial needs no user opinion and is useful for produc
 
 ## Intake
 
-New environment-case issues receive `evidence` and `environment-case` automatically. Before investigating:
+New environment-case issues opened through the repository template receive `evidence`, `environment-case`, and `submitted` automatically. A tester or their AI must not be asked to select, create, or pass labels. If an API or alternate client omits template labels, accept the issue and let a maintainer apply them; label handling must never block evidence submission. Before investigating:
 
 1. Confirm the author used a real environment rather than a repository fixture or copied demo.
 2. Confirm the public body contains the allowlisted case summary, not raw `portable.json` or reconciliation output.
@@ -14,11 +14,11 @@ New environment-case issues receive `evidence` and `environment-case` automatica
 4. Confirm the human completed every verification field and explicitly authorized citation.
 5. Treat unverifiable independence, identity, and ownership as limitations; do not infer them from the evidence fingerprint.
 
-Keep the default labels only while the case is submitted and awaiting review.
+Keep `evidence` and `environment-case` throughout review. Keep exactly one evidence-maturity label: `submitted`, `reproducible`, `outcome-verified`, or `longitudinal`. Begin with `submitted`; when a case advances, replace the prior maturity label rather than stacking labels.
 
 ## Reproducible
 
-Add `reproducible` only when a maintainer can reproduce the reported behavior or evidence shape with a sanitized fixture or equivalent host state. Record:
+Replace `submitted` with `reproducible` only when a maintainer can reproduce the reported behavior or evidence shape with a sanitized fixture or equivalent host state. Record:
 
 - a minimal reproduction that contains no submitter data;
 - the tested aienvmap version and platform category;
@@ -29,7 +29,7 @@ Reproduction does not prove the submitter's identity, machine ownership, or real
 
 ## Outcome verified
 
-Add `outcome-verified` only when all of these are present:
+Replace the current maturity label with `outcome-verified` only when all of these are present:
 
 - the independent tester confirms whether the detected problem was real;
 - the tester records the AI's judgment and whether it was useful;
@@ -42,7 +42,7 @@ Do not add this label for downloads, stars, repository fixtures, maintainer-only
 
 ## Longitudinal
 
-Add `longitudinal` only after a later reviewed report shows whether the environment remained intentional, drifted again, or benefited from the recorded decision. Link the follow-up without publishing a raw fingerprint or using it as an identity.
+Replace the current maturity label with `longitudinal` only after a later reviewed report shows whether the environment remained intentional, drifted again, or benefited from the recorded decision. Link the follow-up without publishing a raw fingerprint or using it as an identity.
 
 ## Counting rule
 
