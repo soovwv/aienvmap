@@ -6,8 +6,48 @@ import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { promisify } from "node:util";
+import { parseArgs } from "../src/cli.js";
 
 const execFileAsync = promisify(execFile);
+
+test("CLI parser keeps positional values after boolean flags", () => {
+  assert.deepEqual(parseArgs(["--dry-run", "codex", "--json"]), { _: ["codex"], dry_run: true, json: true });
+});
+
+test("CLI parser rejects missing required option values", () => {
+  assert.throws(() => parseArgs(["--dir"]), /--dir requires a value/);
+  assert.throws(() => parseArgs(["--import", "--write"]), /--import requires a value/);
+});
+
+test("CLI rejects hallucinated options and unused positional arguments", async () => {
+  assert.throws(() => parseArgs(["--jsoon"]), /unknown option "--jsoon"/);
+  await assert.rejects(
+    execFileAsync(process.execPath, [path.resolve("bin/aienvmap.js"), "schema", "unexpected"], { cwd: path.resolve(".") }),
+    /schema: unexpected argument "unexpected"/
+  );
+});
+
+test("CLI command help does not execute the command", async () => {
+  const { stdout } = await execFileAsync(process.execPath, [path.resolve("bin/aienvmap.js"), "status", "--help"], { cwd: path.resolve(".") });
+  assert.match(stdout, /Usage:/);
+  assert.match(stdout, /aienvmap status/);
+});
+
+test("CLI onboard accepts a target after a boolean option", async () => {
+  const dir = await fs.mkdtemp(path.join(os.tmpdir(), "aienvmap-cli-boolean-order-"));
+  const { stdout } = await execFileAsync(process.execPath, [
+    path.resolve("bin/aienvmap.js"),
+    "onboard",
+    "--dry-run",
+    "codex",
+    "--json",
+    "--dir",
+    dir
+  ], { cwd: path.resolve(".") });
+  const json = JSON.parse(stdout);
+  assert.deepEqual(json.verification.requested, ["codex"]);
+  assert.equal(json.mode, "dry-run");
+});
 
 test("CLI context reads a workspace passed with --dir", async () => {
   const dir = await fs.mkdtemp(path.join(os.tmpdir(), "aienvmap-cli-dir-"));
