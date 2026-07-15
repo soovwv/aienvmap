@@ -8,8 +8,8 @@ The dated public traction and adjacent-tool comparison live in [MARKET.md](MARKE
 
 | Category | Score | Interpretation |
 | --- | ---: | --- |
-| Technical readiness | 92/100 | Release candidate: dependency-free, cross-platform tested, AI-readable, safety-bounded, performance-budgeted, APM consumer-install checked, SBOM-interoperable, and guarded by a fail-closed 0.2 root-field contract. Independent probe-boundary validation remains limited. |
-| Market readiness | 73/100 | Positioning, distribution, one-command onboarding, release gates, and privacy-reviewed external proof flows are present; npm-side authentication and real host pickup still need release-time verification. |
+| Technical readiness | 92/100 | Released 0.2.0: dependency-free, cross-platform tested, AI-readable, safety-bounded, performance-budgeted, APM consumer-install checked, SBOM-interoperable, and guarded by a fail-closed 0.2 root-field contract. Independent probe-boundary validation remains limited. |
+| Market readiness | 73/100 | Positioning, distribution, one-command onboarding, release gates, privacy-reviewed external proof flows, and npm trusted publishing are present; real AI-host pickup still needs external verification. |
 | Market validation | 2/100 | Public package requests exist, but there are no independent outcome-verified cases, retention signals, or external contributions. |
 | Weighted release readiness | 86/100 | 70% technical readiness and 30% market readiness. Independent market validation is deliberately excluded and shown separately. |
 
@@ -24,7 +24,7 @@ The dated public traction and adjacent-tool comparison live in [MARKET.md](MARKE
 | Differentiation | 91 | 90 | pass |
 | Market readiness | 73 | 70 | pass |
 
-All axes must pass. The code qualifies as an honest early 0.2.0 release candidate; it does not claim product-market fit or independent adoption. npm publishing remains on hold until the previously exposed token is confirmed revoked, npm-side trusted publishing is configured, and `v0.2.0` points to the protected CI-passing main commit.
+All axes pass for the published 0.2.0 engineering release; this does not claim product-market fit or independent adoption. The release was published from the matching CI-passing `v0.2.0` source through npm trusted publishing with provenance. Future npm releases remain batched and must pass the same release controls.
 
 AI usability is supported by a compact decision envelope that states the next safe action, evidence references, whether a user question is required, a reason-derived question, and explicit non-authority boundaries. Differentiation is supported by the machine-readable `aiAdoptionDecision.uniqueJob`, `chooseInstead`, and composition order so an AI can combine aienvmap with environment managers and scanners without misrepresenting its role. These are technical readiness scores, not independent adoption evidence.
 
@@ -51,4 +51,4 @@ The APM gate is pinned to the observed v0.25.0 release. A future pin update requ
 
 1. Document at least three reproducible external runtime-drift environments with before/after evidence, including one shared-server case verified by the owning user.
 2. Verify integration examples on major coding-agent hosts.
-3. Preserve reproducible release evidence and verify npm trusted publishing before the 0.2.0 release; do not reuse long-lived publish tokens.
+3. Preserve reproducible release evidence and keep npm trusted publishing as the only supported release path; do not introduce long-lived publish credentials.

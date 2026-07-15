@@ -50,15 +50,16 @@ export function productScorecard() {
   const releaseAssessment = {
     target: "0.2.0",
     qualified: releaseAxes.every((axis) => axis.pass),
-    qualificationScope: "code-and-repository release candidate",
-    publishReady: false,
-    publishBlockers: [
-      { id: "exposed-token-revocation", status: "external-confirmation-required", rule: "Revoke the npm token previously exposed outside the repository and remove any copied secret." },
-      { id: "npm-trusted-publisher", status: "external-confirmation-required", rule: "Confirm npm-side trusted publisher configuration for .github/workflows/release.yml before creating the release tag." },
-      { id: "immutable-release-source", status: "pending-release-action", rule: "Create v0.2.0 only from the protected, CI-passing main commit." }
+    qualificationScope: "published code-and-repository release",
+    publishReady: true,
+    publishBlockers: [],
+    releaseEvidence: [
+      { id: "npm-trusted-publisher", status: "verified", rule: "Publish through the configured npm trusted publisher without long-lived publish credentials." },
+      { id: "immutable-release-source", status: "verified", rule: "v0.2.0 identifies the CI-passing release source." },
+      { id: "npm-provenance", status: "verified", rule: "Registry attestations include npm publish and SLSA provenance statements." }
     ],
     axes: releaseAxes,
-    rule: "Every code-quality axis must meet its threshold. Qualified code is not publish-ready until every external blocker is explicitly cleared; independent market validation remains separate."
+    rule: "Every code-quality axis must meet its threshold. Published engineering readiness and independent market validation remain separate."
   };
   return {
     schemaName: "aienvmap-product-scorecard",
@@ -85,7 +86,7 @@ export function productScorecard() {
     nextPriorities: [
       { priority: 1, outcome: "external problem evidence", proof: "at least three reproducible user environments, including one shared-server owner-verified report" },
       { priority: 2, outcome: "AI-host integration evidence", proof: "verified automatic-pickup and fallback examples for major coding-agent hosts" },
-      { priority: 3, outcome: "release authentication hardening", proof: "npm trusted publisher configured and verified for 0.2.0; no long-lived publish token accepted; 0.1.1 provenance remains registry-verifiable" }
+      { priority: 3, outcome: "release authentication maintenance", proof: "npm trusted publishing remains the only supported release path and provenance stays registry-verifiable" }
     ],
     externalEvidenceRequirements: {
       guide: "examples/portable-environment-case-guide.md",
