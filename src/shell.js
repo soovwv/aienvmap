@@ -25,6 +25,7 @@ export async function commandOutput(command, args = [], options = {}) {
       maxBuffer: options.maxBuffer || 1024 * 1024,
       cwd: options.cwd,
       env: options.env,
+      windowsVerbatimArguments: options.windowsVerbatimArguments === true,
       windowsHide: true
     });
     return stdout.trim();
@@ -40,6 +41,7 @@ export async function commandResult(command, args = [], options = {}) {
       maxBuffer: options.maxBuffer || 2 * 1024 * 1024,
       cwd: options.cwd,
       env: options.env,
+      windowsVerbatimArguments: options.windowsVerbatimArguments === true,
       windowsHide: true
     });
     return { ok: true, code: 0, stdout: stdout.trim(), stderr: stderr.trim() };
@@ -66,7 +68,23 @@ export async function portableCommandResult(command, args = [], options = {}) {
   const platform = options.platform || process.platform;
   if (platform !== "win32" || !/\.(?:cmd|bat)$/i.test(command)) return commandResult(command, args, options);
   const comspec = options.comspec || process.env.ComSpec || "cmd.exe";
-  return commandResult(comspec, ["/d", "/c", command, ...args], options);
+  const commandLine = windowsCmdCommandLine(command, args);
+  if (!commandLine) return {
+    ok: false,
+    code: 1,
+    failure: "unsafe-command-input",
+    stdout: "",
+    stderr: "refused unsafe Windows command path or argument"
+  };
+  return commandResult(comspec, ["/d", "/v:off", "/s", "/c", commandLine], { ...options, windowsVerbatimArguments: true });
+}
+
+export function windowsCmdCommandLine(command, args = []) {
+  const file = String(command || "");
+  const values = args.map((item) => String(item));
+  if (!file || /[\r\n"%!]/.test(file)) return "";
+  if (values.some((item) => !/^[A-Za-z0-9._@:/=+,-]+$/.test(item))) return "";
+  return `""${file}"${values.length ? ` ${values.join(" ")}` : ""}"`;
 }
 
 export function firstVersion(text) {

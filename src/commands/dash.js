@@ -1,8 +1,7 @@
-import fs from "node:fs/promises";
 import { execFile } from "node:child_process";
-import path from "node:path";
+import { promisify } from "node:util";
 import { diagnose } from "../doctor.js";
-import { exists, readJson } from "../fsutil.js";
+import { exists, readJsonStrict, writeTextAtomic } from "../fsutil.js";
 import { openIntents, readJsonl, readTimeline } from "../timeline.js";
 import { dashboardPath, intentsPath, manifestPath, planJsonPath, planMdPath, timelinePath, workspaceDir } from "../paths.js";
 import { renderDashboard } from "../render.js";
@@ -11,9 +10,11 @@ import { recommendedActions } from "../actions.js";
 import { strictResult } from "../enforcement.js";
 import { buildPreflight } from "../preflight.js";
 
+const execFileAsync = promisify(execFile);
+
 export async function dashWorkspace(args) {
   const dir = workspaceDir(args);
-  const manifest = await readJson(manifestPath(dir));
+  const manifest = await readJsonStrict(manifestPath(dir));
   if (!manifest) throw new Error("missing manifest; run `aienvmap sync` first");
   const timeline = await readTimeline(timelinePath(dir));
   const intents = openIntents(await readJsonl(intentsPath(dir)));
@@ -32,10 +33,9 @@ export async function dashWorkspace(args) {
     ciReadiness: ciReadiness(warnings)
   }, timeline, warnings, intents, policy);
   const out = dashboardPath(dir);
-  await fs.mkdir(path.dirname(out), { recursive: true });
-  await fs.writeFile(out, html, "utf8");
+  await writeTextAtomic(out, html);
   if (!args.quiet) console.log(`dashboard: ${out}`);
-  if (args.open) openFile(out);
+  if (args.open) await openDashboardFile(out);
   return { dashboard: out };
 }
 
@@ -60,7 +60,7 @@ async function detectedPlanArtifacts(dir) {
 }
 
 async function detectedPlanRemediation(dir) {
-  const plan = await readJson(planJsonPath(dir), {});
+  const plan = await readJsonStrict(planJsonPath(dir), {});
   return (plan.remediationSteps || []).slice(0, 5).map((item) => ({
     package: item.package || "unknown",
     severity: item.severity || "unknown",
@@ -71,7 +71,7 @@ async function detectedPlanRemediation(dir) {
 }
 
 async function detectedPlanEnvironment(dir) {
-  const plan = await readJson(planJsonPath(dir), {});
+  const plan = await readJsonStrict(planJsonPath(dir), {});
   return (plan.environmentSteps || []).slice(0, 5).map((item) => ({
     code: item.code || "unknown",
     category: item.category || "environment",
@@ -79,12 +79,21 @@ async function detectedPlanEnvironment(dir) {
   }));
 }
 
-function openFile(file) {
-  if (process.platform === "win32") {
-    execFile("cmd", ["/c", "start", "", file], { windowsHide: true });
-  } else if (process.platform === "darwin") {
-    execFile("open", [file]);
-  } else {
-    execFile("xdg-open", [file]);
+export function dashboardOpenCommand(file, platform = process.platform) {
+  if (platform === "win32") return { command: "explorer.exe", args: [file] };
+  if (platform === "darwin") return { command: "open", args: [file] };
+  return { command: "xdg-open", args: [file] };
+}
+
+export async function openDashboardFile(file, options = {}) {
+  const launch = dashboardOpenCommand(file, options.platform || process.platform);
+  const run = options.run || execFileAsync;
+  try {
+    await run(launch.command, launch.args, { windowsHide: true, timeout: 10000 });
+  } catch (cause) {
+    const error = new Error(`dashboard was written but could not be opened with ${launch.command}`);
+    error.code = "AIENVMAP_DASHBOARD_OPEN_FAILED";
+    error.cause = cause;
+    throw error;
   }
 }

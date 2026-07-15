@@ -1,6 +1,10 @@
+import "./temp-cleanup.js";
 import test from "node:test";
 import assert from "node:assert/strict";
-import { commandOutput, commandResult, commandVersionResult } from "../src/shell.js";
+import fs from "node:fs/promises";
+import os from "node:os";
+import path from "node:path";
+import { commandOutput, commandResult, commandVersionResult, portableCommandResult, windowsCmdCommandLine } from "../src/shell.js";
 
 test("commandOutput forwards an explicit UTF-8 subprocess environment", async () => {
   const output = await commandOutput(process.execPath, ["-e", "process.stdout.write(process.env.AIENVMAP_TEST_UNICODE || '')"], {
@@ -40,4 +44,23 @@ test("commandResult distinguishes missing commands, nonzero exits, and timeouts"
   const timeout = await commandResult(process.execPath, ["-e", "setTimeout(() => {}, 10000)"], { timeout: 20 });
   assert.equal(timeout.ok, false);
   assert.equal(timeout.failure, "timeout-or-terminated");
+});
+
+test("Windows batch invocation quotes paths and rejects expandable command input", async () => {
+  assert.equal(windowsCmdCommandLine("C:\\Program Files (x86)\\tool & sdk\\tool.cmd", ["--version"]), `""C:\\Program Files (x86)\\tool & sdk\\tool.cmd" --version"`);
+  assert.equal(windowsCmdCommandLine("C:\\%TEMP%\\tool.cmd", ["--version"]), "");
+  assert.equal(windowsCmdCommandLine("C:\\safe\\tool.cmd", ["&", "whoami"]), "");
+
+  const refused = await portableCommandResult("C:\\%TEMP%\\tool.cmd", ["--version"], { platform: "win32" });
+  assert.equal(refused.ok, false);
+  assert.equal(refused.failure, "unsafe-command-input");
+
+  if (process.platform === "win32") {
+    const dir = await fs.mkdtemp(path.join(os.tmpdir(), "aienvmap-cmd & quoted-"));
+    const file = path.join(dir, "version.cmd");
+    await fs.writeFile(file, "@echo 1.2.3\r\n", "utf8");
+    const result = await portableCommandResult(file, ["--version"], { platform: "win32" });
+    assert.equal(result.ok, true);
+    assert.equal(result.stdout, "1.2.3");
+  }
 });
