@@ -1,5 +1,5 @@
 import { diagnose } from "../doctor.js";
-import { readJson } from "../fsutil.js";
+import { readJsonStrict } from "../fsutil.js";
 import { openIntents, readJsonl, readTimeline } from "../timeline.js";
 import { intentsPath, manifestPath, timelinePath, workspaceDir } from "../paths.js";
 import { loadPolicy, policyWarnings } from "../policy.js";
@@ -11,7 +11,7 @@ export { strictResult } from "../enforcement.js";
 
 export async function doctorWorkspace(args) {
   const dir = workspaceDir(args);
-  const manifest = await readJson(manifestPath(dir));
+  const manifest = await readJsonStrict(manifestPath(dir));
   if (!manifest) throw new Error("missing manifest; run `aienvmap sync` first");
   const policy = await loadPolicy(dir);
   const timeline = await readTimeline(timelinePath(dir));

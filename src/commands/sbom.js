@@ -1,5 +1,5 @@
 import { sbomReadOrder } from "../ai-contract.js";
-import { readJson, writeJson } from "../fsutil.js";
+import { readJsonStrict, writeJson } from "../fsutil.js";
 import fs from "node:fs/promises";
 import { cyclonedxSbomPath, externalSbomEvidencePath, manifestPath, sbomJsonPath, workspaceDir } from "../paths.js";
 import { compareSbomEvidence, importSbomEvidence, verifySbomEvidence } from "../sbom-evidence.js";
@@ -7,13 +7,13 @@ import { buildAiDecisionEnvelope } from "../ai-decision-envelope.js";
 
 export async function sbomWorkspace(args = {}) {
   const dir = workspaceDir(args);
-  const manifest = await readJson(manifestPath(dir));
+  const manifest = await readJsonStrict(manifestPath(dir));
   if (!manifest) throw new Error("missing manifest; run `aienvmap sync` first");
   if (args.import && args.clear_import) throw new Error("use either --import or --clear-import, not both");
   if (args.clear_import && !args.write) throw new Error("--clear-import requires --write");
   const evidenceFile = externalSbomEvidencePath(dir);
   if (args.clear_import) await fs.rm(evidenceFile, { force: true });
-  const previousEvidence = !args.clear_import ? await readJson(evidenceFile, null) : null;
+  const previousEvidence = !args.clear_import ? await readJsonStrict(evidenceFile, null) : null;
   const imported = args.import ? await importSbomEvidence(dir, args.import) : null;
   const importedEvidence = imported ? {
     ...imported,

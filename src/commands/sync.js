@@ -1,4 +1,4 @@
-import fs from "node:fs/promises";
+import { writeTextAtomic } from "../fsutil.js";
 import { aiDefaultReadOrder, aiDiscoveryEntry, aiEntryContract, aiFallbackPrompt, aiSessionUseContract, aiStartupChecklist, npxAiContextCommand } from "../ai-contract.js";
 import { initWorkspace } from "./init.js";
 import { scanWorkspace } from "./scan.js";
@@ -129,7 +129,7 @@ async function writeDiscoveryArtifact(dir, status = {}) {
     humanInstruction: "Paste copyPastePrompt into an AI session when automatic instruction-file discovery did not happen.",
     rule: "Do not assume automatic pickup worked. Read discovery/status first, keep local operation advisory, and record intent before shared environment changes."
   };
-  await fs.writeFile(out, JSON.stringify(artifact, null, 2), "utf8");
+  await writeTextAtomic(out, `${JSON.stringify(artifact, null, 2)}\n`);
   return out;
 }
 
@@ -178,6 +178,6 @@ async function writeStateReadme(dir, status = {}) {
     "Privacy: treat raw manifests, reconciliation reports, SBOM files, dashboards, and `trial/portable.json` as local-only by default. Coordination files can contain operator text. Review before committing or sharing; use `aienvmap reconcile --portable --json` for redacted evidence. aienvmap never edits `.gitignore`.",
     ""
   ];
-  await fs.writeFile(out, lines.join("\n"), "utf8");
+  await writeTextAtomic(out, lines.join("\n"));
   return out;
 }

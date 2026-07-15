@@ -1,6 +1,6 @@
 import path from "node:path";
 import { markerBegin, markerEnd, renderAgentPointer } from "../render.js";
-import { previewMarkerBlock, removeMarkerBlock, replaceMarkerBlock } from "../fsutil.js";
+import { assertWritePathInsideWorkspace, previewMarkerBlock, removeMarkerBlock, replaceMarkerBlock } from "../fsutil.js";
 import { workspaceDir } from "../paths.js";
 
 const defaultTargets = {
@@ -28,6 +28,7 @@ export async function snippetWorkspace(args) {
     if (relative.startsWith("..") || path.isAbsolute(relative)) {
       throw new Error("instruction pointer target must stay inside the workspace");
     }
+    await assertWritePathInsideWorkspace(dir, file);
     if (args.dry_run) {
       const preview = await previewMarkerBlock(file, markerBegin, markerEnd, block);
       if (!args.quiet) console.log(`snippet preview: ${relative} ${preview.action} ${preview.beforeBytes}->${preview.afterBytes} bytes`);

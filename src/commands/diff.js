@@ -1,11 +1,11 @@
 import { diffManifests } from "../diff.js";
-import { readJson } from "../fsutil.js";
+import { readJsonStrict } from "../fsutil.js";
 import { manifestPath, previousManifestPath, workspaceDir } from "../paths.js";
 
 export async function diffWorkspace(args) {
   const dir = workspaceDir(args);
-  const previous = await readJson(previousManifestPath(dir));
-  const current = await readJson(manifestPath(dir));
+  const previous = await readJsonStrict(previousManifestPath(dir));
+  const current = await readJsonStrict(manifestPath(dir));
   if (!current) throw new Error("missing manifest; run `aienvmap sync` first");
   const changes = diffManifests(previous, current);
   if (!changes.length) {

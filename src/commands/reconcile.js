@@ -1,7 +1,7 @@
 import { inspectPackageManagers } from "../package-managers.js";
 import { reconcileJsonPath, workspaceDir } from "../paths.js";
 import { writeJson } from "../fsutil.js";
-import { readJson } from "../fsutil.js";
+import { readJsonStrict } from "../fsutil.js";
 import { compareReconciliation } from "../reconcile-drift.js";
 import path from "node:path";
 import { buildPortableCaseSummary, buildPortableReconciliation, comparePortableReconciliations, readPortableEvidence, renderPortableCaseMarkdown } from "../portable-reconcile.js";
@@ -42,7 +42,7 @@ export async function reconcileWorkspace(args = {}) {
     if (args.case_summary === true) throw new Error("--case-summary requires a portable reconciliation JSON file");
     if (args.portable || args.portable_from || args.portable_compare || args.home_evidence || args.inspect_homes || args.write || args.check || args.quick || args.full_packages || args.show_paths || args.inspect_home || args.baseline) throw new Error("--case-summary cannot be combined with scanning, writing, checking, baseline, or path options");
     const report = await readPortableEvidence(path.resolve(dir, String(args.case_summary)));
-    const comparison = args.comparison ? await readJson(path.resolve(dir, String(args.comparison)), null) : null;
+    const comparison = args.comparison ? await readJsonStrict(path.resolve(dir, String(args.comparison)), null) : null;
     const summary = buildPortableCaseSummary(report, comparison);
     if (args.markdown && args.json) throw new Error("use either --markdown or --json, not both");
     if (args.markdown) console.log(renderPortableCaseMarkdown(summary));
@@ -65,7 +65,7 @@ export async function reconcileWorkspace(args = {}) {
   if (args.portable_from) {
     if (args.portable || args.write || args.check || args.quick || args.full_packages || args.show_paths || args.inspect_home || args.baseline) throw new Error("--portable-from cannot be combined with scanning, writing, checking, baseline, or path options");
     if (args.portable_from === true) throw new Error("--portable-from requires a reconciliation JSON file");
-    const source = await readJson(path.resolve(dir, String(args.portable_from)), null);
+    const source = await readJsonStrict(path.resolve(dir, String(args.portable_from)), null);
     if (source?.schemaName !== "aienvmap.reconcile" || source?.schemaVersion !== 1) throw new Error("--portable-from requires an aienvmap.reconcile v1 JSON artifact");
     const portable = buildPortableReconciliation(source, { sourceMode: "artifact" });
     if (args.json) console.log(JSON.stringify(portable, null, 2));
@@ -73,7 +73,7 @@ export async function reconcileWorkspace(args = {}) {
     return portable;
   }
   const baselinePath = args.baseline ? path.resolve(dir, String(args.baseline)) : reconcileJsonPath(dir);
-  const baseline = args.check ? await readJson(baselinePath, null) : null;
+  const baseline = args.check ? await readJsonStrict(baselinePath, null) : null;
   if (args.check && !baseline) throw new Error(`missing reconciliation baseline at ${baselinePath}; run \`aienvmap reconcile --write\` first`);
   if (args.check && baseline?.baselineUse?.checkEligible !== true) {
     throw new Error(`reconciliation snapshot at ${baselinePath} was created automatically and is not an accepted drift baseline; review the environment, then run \`aienvmap reconcile --write\``);

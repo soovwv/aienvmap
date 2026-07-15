@@ -1,5 +1,5 @@
 import { diagnose } from "../doctor.js";
-import { appendJsonLine, readJson } from "../fsutil.js";
+import { appendJsonLine, readJsonStrict } from "../fsutil.js";
 import { loadPolicy, policyWarnings } from "../policy.js";
 import { intentsPath, manifestPath, timelinePath, workspaceDir } from "../paths.js";
 import { renderHandoff } from "../render.js";
@@ -11,7 +11,7 @@ import { buildPreflight } from "../preflight.js";
 
 export async function handoffWorkspace(args) {
   const dir = workspaceDir(args);
-  const manifest = await readJson(manifestPath(dir));
+  const manifest = await readJsonStrict(manifestPath(dir));
   if (!manifest) throw new Error("missing manifest; run `aienvmap sync` first");
   const timeline = await readTimeline(timelinePath(dir));
   const intents = openIntents(await readJsonl(intentsPath(dir)));

@@ -1,17 +1,15 @@
-import fs from "node:fs/promises";
-import path from "node:path";
 import { schemaContract } from "../contract.js";
-import { readJson } from "../fsutil.js";
+import { readJsonStrict, writeTextAtomic } from "../fsutil.js";
 import { manifestPath, statusJsonPath, summaryMdPath, workspaceDir } from "../paths.js";
 import { statusWorkspace } from "./status.js";
 
 export async function summaryWorkspace(args) {
   const dir = workspaceDir(args);
-  let status = await readJson(statusJsonPath(dir));
+  let status = await readJsonStrict(statusJsonPath(dir));
   if (!status) {
     status = await statusWorkspace({ ...args, dir, json: false, write: true, quiet: true });
   }
-  const manifest = await readJson(manifestPath(dir), {});
+  const manifest = await readJsonStrict(manifestPath(dir), {});
   const markdown = renderSummary(status, manifest);
   const artifact = args.write ? await writeSummaryArtifact(dir, markdown) : "";
   const output = { artifact, summary: markdown, state: status.state || "unknown", sbomRisk: status.sbomRisk || {}, nextCommand: status.nextCommand || "" };
@@ -28,8 +26,7 @@ export async function summaryWorkspace(args) {
 
 export async function writeSummaryArtifact(dir, markdown) {
   const out = summaryMdPath(dir);
-  await fs.mkdir(path.dirname(out), { recursive: true });
-  await fs.writeFile(out, `${markdown.trimEnd()}\n`, "utf8");
+  await writeTextAtomic(out, `${markdown.trimEnd()}\n`);
   return out;
 }
 

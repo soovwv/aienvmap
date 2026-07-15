@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import { readJson } from "./fsutil.js";
+import { readJsonStrict } from "./fsutil.js";
 
 export function buildPortableReconciliation(value = {}, runtime = {}) {
   const administratorNoExec = String(runtime.sourceMode || "").startsWith("administrator-") || (value.findings || []).some((item) => item.code === "unverified-no-exec-evidence");
@@ -163,7 +163,7 @@ function verificationCounts(inventory = {}) {
 }
 
 export async function readPortableEvidence(file) {
-  const value = await readJson(file, null);
+  const value = await readJsonStrict(file, null);
   if (value?.schemaName === "aienvmap.reconcile-portable" && value?.schemaVersion === 1) {
     validatePortableReconciliation(value);
     return value;

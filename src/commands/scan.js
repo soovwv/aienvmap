@@ -1,13 +1,14 @@
 import fs from "node:fs/promises";
 import { buildManifest } from "../manifest.js";
 import { diffManifests } from "../diff.js";
-import { appendJsonLine, exists, readJson, writeJson } from "../fsutil.js";
+import { appendJsonLine, assertWritePathInsideWorkspace, exists, readJsonStrict, writeJson } from "../fsutil.js";
 import { manifestPath, previousManifestPath, timelinePath, workspaceDir } from "../paths.js";
 
 export async function scanWorkspace(args) {
   const dir = workspaceDir(args);
   const currentPath = manifestPath(dir);
-  const previous = await readJson(currentPath, null);
+  await assertWritePathInsideWorkspace(dir, currentPath);
+  const previous = await readJsonStrict(currentPath, null);
   if (previous && await exists(currentPath)) {
     await fs.copyFile(currentPath, previousManifestPath(dir));
   }

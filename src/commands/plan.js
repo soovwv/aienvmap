@@ -1,6 +1,5 @@
-import fs from "node:fs/promises";
 import { diagnose } from "../doctor.js";
-import { readJson, writeJson } from "../fsutil.js";
+import { readJsonStrict, writeJson, writeTextAtomic } from "../fsutil.js";
 import { loadPolicy, policyWarnings } from "../policy.js";
 import { intentsPath, manifestPath, planJsonPath, planMdPath, timelinePath, workspaceDir } from "../paths.js";
 import { renderPlan } from "../render.js";
@@ -12,7 +11,7 @@ import { buildPreflight } from "../preflight.js";
 
 export async function planWorkspace(args) {
   const dir = workspaceDir(args);
-  const manifest = await readJson(manifestPath(dir));
+  const manifest = await readJsonStrict(manifestPath(dir));
   if (!manifest) throw new Error("missing manifest; run `aienvmap sync` first");
   const timeline = await readTimeline(timelinePath(dir));
   const intents = openIntents(await readJsonl(intentsPath(dir)));
@@ -22,7 +21,7 @@ export async function planWorkspace(args) {
 
   if (args.write) {
     await writeJson(planJsonPath(dir), plan);
-    await fs.writeFile(planMdPath(dir), renderPlan(plan), "utf8");
+    await writeTextAtomic(planMdPath(dir), renderPlan(plan));
   }
 
   if (args.json) {

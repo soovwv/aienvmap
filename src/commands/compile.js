@@ -1,6 +1,5 @@
-import fs from "node:fs/promises";
 import { diagnose } from "../doctor.js";
-import { readJson } from "../fsutil.js";
+import { assertWritePathInsideWorkspace, readJsonStrict, writeTextAtomic } from "../fsutil.js";
 import { openIntents, readJsonl, readTimeline } from "../timeline.js";
 import { aiEnvPath, intentsPath, manifestPath, timelinePath, workspaceDir } from "../paths.js";
 import { renderAIEnv } from "../render.js";
@@ -9,7 +8,7 @@ import { buildPreflight } from "../preflight.js";
 
 export async function compileWorkspace(args) {
   const dir = workspaceDir(args);
-  const manifest = await readJson(manifestPath(dir));
+  const manifest = await readJsonStrict(manifestPath(dir));
   if (!manifest) throw new Error("missing manifest; run `aienvmap sync` first");
   const timeline = await readTimeline(timelinePath(dir));
   const intents = openIntents(await readJsonl(intentsPath(dir)));
@@ -19,7 +18,8 @@ export async function compileWorkspace(args) {
     ...manifest,
     preflight: buildPreflight(manifest, warnings, intents)
   }, timeline, warnings, intents, policy);
-  await fs.writeFile(aiEnvPath(dir), rendered, "utf8");
+  await assertWritePathInsideWorkspace(dir, aiEnvPath(dir));
+  await writeTextAtomic(aiEnvPath(dir), rendered);
   if (!args.quiet) {
     console.log(`compiled ${aiEnvPath(dir)}`);
   }
