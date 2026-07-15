@@ -2,6 +2,39 @@
 
 Known operational issues and quick fixes for `aienvmap`.
 
+## Windows PowerShell blocks `npm.ps1` or `npx.ps1`
+
+Symptom:
+
+```text
+npx.ps1 cannot be loaded because running scripts is disabled on this system
+```
+
+Cause:
+
+- A Node.js installation commonly provides both PowerShell (`.ps1`) and command (`.cmd`) shims.
+- PowerShell may select the `.ps1` shim first even when local or organization policy blocks PowerShell scripts.
+- This happens before aienvmap starts and is not an aienvmap runtime failure.
+
+Safe workaround:
+
+```powershell
+npx.cmd aienvmap@0.2.0 start
+npx.cmd aienvmap@0.2.0 trial
+npm.cmd --version
+```
+
+For an already installed package shim:
+
+```powershell
+aienvmap.cmd start
+```
+
+Safety rule:
+
+- Keep the package name, version, and arguments unchanged when replacing only the launcher suffix.
+- Do not run `Set-ExecutionPolicy`, use `-ExecutionPolicy Bypass`, or weaken machine or organization policy for aienvmap.
+
 ## npm publish succeeds but `npm view` still shows the old version
 
 Symptom:

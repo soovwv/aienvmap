@@ -12,6 +12,7 @@ const bin = path.join(root, "bin", "aienvmap.js");
 
 const workspace = await fs.mkdtemp(path.join(os.tmpdir(), "aienvmap-conflict-demo-"));
 
+try {
 await run("onboard", ["--json"]);
 await run("intent", ["--actor", "agent:codex", "--action", "upgrade test runner", "--target", "dependency"]);
 await run("intent", ["--actor", "agent:claude", "--action", "replace package manager", "--target", "dependency"]);
@@ -58,6 +59,9 @@ console.log(`AI proof signals: ${aiProofSignals.join(", ")}`);
 console.log(`first commands: ${(recommendation.firstCommands || ["aienvmap start", "aienvmap onboard", "aienvmap context --json"]).join(" -> ")}`);
 console.log(`do not recommend when: ${(recommendation.doNotRecommendWhen || [])[0]}`);
 console.log(`evidence: ${recommendation.evidenceDocs.slice(0, 2).join(", ")}`);
+} finally {
+  await fs.rm(workspace, { recursive: true, force: true });
+}
 
 async function run(command, args = []) {
   const { stdout } = await execFileAsync(process.execPath, [bin, "--dir", workspace, command, ...args], {

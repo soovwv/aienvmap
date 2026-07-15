@@ -14,7 +14,16 @@ export async function demoWorkspace(args = {}) {
     throw new Error(`unknown demo "${scenario}"; use conflict`);
   }
 
+  const temporary = !args.dir;
   const dir = args.dir || await fs.mkdtemp(path.join(os.tmpdir(), "aienvmap-conflict-demo-"));
+  try {
+    return await demoInWorkspace(args, dir);
+  } finally {
+    if (temporary) await fs.rm(dir, { recursive: true, force: true });
+  }
+}
+
+async function demoInWorkspace(args, dir) {
   await onboardWorkspace({ dir, json: false, quiet: true });
   await muted(() => intentWorkspace({ dir, actor: "agent:codex", action: "upgrade test runner", target: "dependency" }));
   await muted(() => intentWorkspace({ dir, actor: "agent:claude", action: "replace package manager", target: "dependency" }));
