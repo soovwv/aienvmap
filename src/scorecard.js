@@ -49,9 +49,11 @@ export function productScorecard() {
   const overall = Math.round(technical.score * 0.7 + marketReadiness.score * 0.3);
   const releaseAssessment = {
     target: "0.2.0",
+    releaseStatus: "published",
     qualified: releaseAxes.every((axis) => axis.pass),
     qualificationScope: "published code-and-repository release",
-    publishReady: true,
+    publishReady: false,
+    publishEligibility: "not-applicable-already-published",
     publishBlockers: [],
     releaseEvidence: [
       { id: "npm-trusted-publisher", status: "verified", rule: "Publish through the configured npm trusted publisher without long-lived publish credentials." },
@@ -59,7 +61,7 @@ export function productScorecard() {
       { id: "npm-provenance", status: "verified", rule: "Registry attestations include npm publish and SLSA provenance statements." }
     ],
     axes: releaseAxes,
-    rule: "Every code-quality axis must meet its threshold. Published engineering readiness and independent market validation remain separate."
+    rule: "Every code-quality axis must meet its threshold. An already-published version is not publish-ready again; published engineering readiness and independent market validation remain separate."
   };
   return {
     schemaName: "aienvmap-product-scorecard",

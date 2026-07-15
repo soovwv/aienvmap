@@ -24,7 +24,7 @@ The dated public traction and adjacent-tool comparison live in [MARKET.md](MARKE
 | Differentiation | 91 | 90 | pass |
 | Market readiness | 73 | 70 | pass |
 
-All axes pass for the published 0.2.0 engineering release; this does not claim product-market fit or independent adoption. The release was published from the matching CI-passing `v0.2.0` source through npm trusted publishing with provenance. Future npm releases remain batched and must pass the same release controls.
+All release engineering gates passed for v0.2.0. The package was published from the CI-verified tag through npm Trusted Publishing with provenance. This confirms release integrity, not product-market fit or independent adoption. Future npm releases remain batched and must pass the same release controls.
 
 AI usability is supported by a compact decision envelope that states the next safe action, evidence references, whether a user question is required, a reason-derived question, and explicit non-authority boundaries. Differentiation is supported by the machine-readable `aiAdoptionDecision.uniqueJob`, `chooseInstead`, and composition order so an AI can combine aienvmap with environment managers and scanners without misrepresenting its role. These are technical readiness scores, not independent adoption evidence.
 

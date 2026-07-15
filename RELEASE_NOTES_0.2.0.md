@@ -33,6 +33,6 @@ Run the trial in a disposable directory or disposable project copy. It writes on
 - CI covers Windows, Ubuntu, and macOS across the supported Node.js matrix.
 - The release gate packs the exact npm artifact, installs it in a clean consumer, and runs its installed CLI and isolated trial.
 - GitHub Actions used by CI and release are pinned to reviewed commit SHAs.
-- npm publishing remains a separate manual action requiring an exact matching tag, explicit confirmation, and trusted-publisher authentication without long-lived publish credentials.
+- npm releases require a matching version tag, explicit confirmation, Trusted Publishing, provenance, and post-publish integrity verification. Long-lived publishing credentials are not used.
 
 Independent adoption and AI-host automatic-pickup evidence remain limited. This release should not be presented as proof of market adoption or as a package manager, vulnerability scanner, or full SBOM generator.

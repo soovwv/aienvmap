@@ -24,8 +24,10 @@ test("0.2.0 release metadata stays aligned across package, APM, contracts, and d
   assert.match(scorecard, new RegExp(`\\| Market validation \\| ${result.marketValidation.score}/100 \\|`));
   assert.match(scorecard, new RegExp(`\\| Weighted release readiness \\| ${result.overall.score}/100 \\|`));
   assert.equal(result.releaseAssessment.qualified, true);
-  assert.equal(result.releaseAssessment.publishReady, true);
-  assert.match(scorecard, /published 0\.2\.0 engineering release/);
+  assert.equal(result.releaseAssessment.releaseStatus, "published");
+  assert.equal(result.releaseAssessment.publishReady, false);
+  assert.equal(result.releaseAssessment.publishEligibility, "not-applicable-already-published");
+  assert.match(scorecard, /release engineering gates passed for v0\.2\.0/);
   assert.doesNotMatch(scorecard, /external-confirmation-required/);
   assert.match(readme, new RegExp(`${surfaceCount} documented AI JSON root-field surfaces`));
   assert.equal(surfaceCount, 15);
