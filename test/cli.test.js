@@ -90,6 +90,8 @@ test("CLI scorecard keeps technical and market evidence separate", async () => {
   const json = JSON.parse(stdout);
   assert.equal(json.schemaName, "aienvmap-product-scorecard");
   assert.ok(json.technicalReadiness.score > json.marketValidation.score);
+  assert.ok(json.marketReadiness.score > json.marketValidation.score);
+  assert.equal(json.releaseAssessment.qualified, true);
   assert.match(json.rule, /not use overall score alone/);
 });
 
@@ -173,6 +175,7 @@ test("package publish allowlist stays small and intentional", async () => {
     "scripts/apm-consumer-check.mjs",
     "scripts/installed-package-check.mjs",
     "contracts",
+    "evidence",
     "README.md",
     "LICENSE",
     "CHANGELOG.md",

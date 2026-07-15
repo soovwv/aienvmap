@@ -7,19 +7,34 @@ const technicalDimensions = [
   dimension("safety-and-quality", 19, 20, ["npm run release:check", "npm run pack:install-check", "test/reconcile.test.js", ".github/workflows/ci.yml", "aienvmap@0.1.1 dist.attestations"], "Validate the 0.2.0 package and probe boundaries in independent external environments.")
 ];
 
-const marketDimensions = [
-  dimension("differentiation", 15, 20, ["README.md#why", "examples/ai-workspace-case-study.md"], "Publish side-by-side workflows against adjacent tools."),
-  dimension("problem-evidence", 7, 20, ["examples/multi-agent-conflict.md"], "Collect reproducible external environment-drift cases."),
-  dimension("adoption-evidence", 2, 20, ["https://www.npmjs.com/package/aienvmap", "https://github.com/soovwv/aienvmap"], "Track real users, repeat usage, and external contributors."),
-  dimension("ecosystem-integration", 7, 20, [".apm/skills/aienvmap/SKILL.md", "scripts/apm-consumer-check.mjs", "action.yml"], "Publish verified host-specific AI integration examples."),
-  dimension("onboarding-and-proof", 12, 20, ["aienvmap start --json", "aienvmap demo --json"], "Run first-use tests with users unfamiliar with the project.")
+const marketReadinessDimensions = [
+  dimension("positioning", 17, 20, ["README.md#why", "MARKET.md"], "Validate the boundary with external users who also use adjacent environment tools."),
+  dimension("distribution", 14, 20, [".apm/skills/aienvmap/SKILL.md", "scripts/apm-consumer-check.mjs", "action.yml"], "Verify actual host pickup after the immutable release tag exists."),
+  dimension("onboarding", 17, 20, ["aienvmap start --json", "aienvmap trial --json", "AI_TESTING.md"], "Run first-use tests with users unfamiliar with the project."),
+  dimension("release-operations", 15, 20, ["npm run release:check", ".github/workflows/release.yml", "SECURITY.md"], "Verify npm-side trusted publishing and protected-main release governance."),
+  dimension("external-proof-flow", 10, 20, ["TESTER_INVITE.md", "CASE_REVIEW.md", "examples/portable-environment-case-guide.md"], "Collect three independent outcome-verified cases.")
+];
+
+const marketValidationDimensions = [
+  dimension("independent-problem-evidence", 0, 25, ["evidence/market-snapshot-2026-07-15.json"], "Collect reproducible external environment-drift cases."),
+  dimension("verified-adoption", 2, 25, ["https://www.npmjs.com/package/aienvmap", "https://github.com/soovwv/aienvmap"], "Verify successful use without treating downloads as users."),
+  dimension("outcome-evidence", 0, 25, ["CASE_REVIEW.md"], "Obtain independent before/after or no-change outcome verification."),
+  dimension("retention-and-contribution", 0, 25, ["https://github.com/soovwv/aienvmap"], "Observe repeat use or an external contribution.")
+];
+
+const releaseAxes = [
+  releaseAxis("coreFeatureCompleteness", 92, 90, ["aienvmap start --json", "aienvmap reconcile --json", "aienvmap sbom --json"]),
+  releaseAxis("stabilityAndTesting", 94, 90, ["npm run release:check", ".github/workflows/ci.yml", "VALIDATION.md"]),
+  releaseAxis("lightweight", 93, 90, ["package.json#dependencies", "npm run pack:install-check", "src/performance-budget.js"]),
+  releaseAxis("aiUsability", 88, 85, ["README.md#10-second-use", "aienvmap schema --json", "test/start.test.js"]),
+  releaseAxis("differentiation", 82, 75, ["MARKET.md#competitive-position", "examples/ai-workspace-case-study.md"]),
+  releaseAxis("marketReadiness", 73, 70, ["AI_TESTING.md", "TESTER_INVITE.md", ".apm/skills/aienvmap/SKILL.md"])
 ];
 
 const adjacentAlternatives = [
   alternative("Microsoft APM", "agent context dependency management", "APM declares, locks, audits, governs, and exports SBOMs for agent context; aienvmap supplies observed host runtime and coordination evidence", "https://github.com/microsoft/apm"),
   alternative("mise", "runtime, tool, task, and config-trust management", "mise exposes managed tools and environment data to AI through MCP; aienvmap observes mixed active routing and coordinates changes without trusting config, installing, or switching tools", "https://mise.jdx.dev/"),
   alternative("envinfo", "active development environment reporting", "envinfo quickly reports common active binaries and system details; aienvmap adds bounded multi-path evidence, AI decisions, and change handoff", "https://github.com/tabrindle/envinfo"),
-  alternative("AgentRC", "AI repository context generation and evaluation", "AgentRC measures and generates codebase instructions; aienvmap supplies host runtime evidence and environment-change coordination", "https://github.com/microsoft/agentrc"),
   alternative("Devbox", "isolated reproducible development environments", "Devbox creates a declared portable environment; aienvmap observes mixed existing installations without replacing the shell", "https://github.com/jetify-com/devbox"),
   alternative("Flox", "declared reusable development environments", "Flox aligns humans and AI on an activated reproducible environment; aienvmap maps and coordinates the non-clean host state already present", "https://github.com/flox/flox"),
   alternative("Renovate", "automated dependency updates", "aienvmap coordinates AI intent and environment evidence before and after changes", "https://docs.renovatebot.com/"),
@@ -29,21 +44,31 @@ const adjacentAlternatives = [
 
 export function productScorecard() {
   const technical = category("technicalReadiness", technicalDimensions);
-  const market = category("marketValidation", marketDimensions);
-  const overall = Math.round(technical.score * 0.7 + market.score * 0.3);
+  const marketReadiness = category("marketReadiness", marketReadinessDimensions);
+  const marketValidation = category("marketValidation", marketValidationDimensions);
+  const overall = Math.round(technical.score * 0.7 + marketReadiness.score * 0.3);
+  const releaseAssessment = {
+    target: "0.2.0",
+    qualified: releaseAxes.every((axis) => axis.pass),
+    axes: releaseAxes,
+    rule: "Every axis must meet its threshold. Market readiness measures release preparation; independent market validation remains separate and is not required to publish an honest early release."
+  };
   return {
     schemaName: "aienvmap-product-scorecard",
     schemaVersion: 1,
     status: "evidence-limited",
-    overall: { score: overall, maximum: 100, confidence: "medium", weights: { technicalReadiness: 0.7, marketValidation: 0.3 } },
+    overall: { score: overall, maximum: 100, confidence: "medium", weights: { technicalReadiness: 0.7, marketReadiness: 0.3 }, excludes: ["marketValidation"] },
     technicalReadiness: technical,
-    marketValidation: market,
+    marketReadiness,
+    marketValidation,
+    releaseAssessment,
     positioning: "AI workspace coordination and environment evidence layer; not a package manager, vulnerability scanner, or full SBOM generator.",
     marketResearch: {
       report: "MARKET.md",
       observedAt: "2026-07-15",
-      publicSignals: { githubStars: 0, githubForks: 0, independentOutcomeVerifiedCases: 0, npmDownloadsWindow: { requests: 116, start: "2026-06-14", end: "2026-07-13" } },
-      adjacentSignals: { observedAt: "2026-07-15", microsoftApmStars: 3234, microsoftApmRelease: "v0.25.0", devboxStars: 12172, devboxRelease: "0.17.5", floxStars: 4049, floxRelease: "v1.13.2", miseStars: 30763, miseRelease: "v2026.7.6", syftStars: 9235, syftRelease: "v1.46.0", envinfoStars: 793, envinfoRelease: "v7.22.0" },
+      snapshot: "evidence/market-snapshot-2026-07-15.json",
+      publicSignals: { githubStars: 0, githubForks: 0, independentOutcomeVerifiedCases: 0, npmDownloadsWindow: { requests: 268, start: "2026-06-14", end: "2026-07-13" } },
+      adjacentSignals: { observedAt: "2026-07-15", microsoftApmStars: 3235, microsoftApmRelease: "v0.25.0", devboxStars: 12172, devboxRelease: "0.17.5", floxStars: 4049, floxRelease: "v1.13.2", miseStars: 30763, miseRelease: "v2026.7.6", syftStars: 9235, syftRelease: "v1.46.0", envinfoStars: 793, envinfoRelease: "v7.22.0" },
       interpretation: "npm downloads are requests, not unique users, retention, successful setups, or recommendation evidence.",
       scoreImpact: "none until independent outcome-verified evidence exists"
     },
@@ -81,4 +106,8 @@ function category(name, dimensions) {
 
 function alternative(name, category, boundary, official) {
   return { name, category, boundary, official };
+}
+
+function releaseAxis(id, score, threshold, evidence) {
+  return { id, score, threshold, pass: score >= threshold, evidence };
 }

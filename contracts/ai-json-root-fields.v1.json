@@ -3,7 +3,7 @@
   "schemaVersion": 1,
   "targetRelease": "0.2.0",
   "algorithm": "sha256(JSON.stringify(ordered surface-to-rootFields map))",
-  "digest": "8fc10f941be14836e94843776c6ae02910c0b5735f9b8ddab533e6fd917672b7",
+  "digest": "2a30537d3e1707c07e10990afcae3336d6881e7d0dd8112d8453112cdb18fdeb",
   "surfaceFieldCounts": {
     "discover": 10,
     "start": 24,
@@ -14,7 +14,7 @@
     "handoff": 15,
     "plan": 12,
     "manifest": 8,
-    "reconcile": 19,
+    "reconcile": 20,
     "reconcileCheck": 10,
     "trial": 13,
     "sbom": 21,

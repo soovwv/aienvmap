@@ -20,8 +20,10 @@ test("0.2.0 release metadata stays aligned across package, APM, contracts, and d
   assert.equal(pkg.version, "0.2.0");
   assert.match(apm, new RegExp(`^version: ${pkg.version.replaceAll(".", "\\.")}$`, "m"));
   assert.match(scorecard, new RegExp(`\\| Technical readiness \\| ${result.technicalReadiness.score}/100 \\|`));
+  assert.match(scorecard, new RegExp(`\\| Market readiness \\| ${result.marketReadiness.score}/100 \\|`));
   assert.match(scorecard, new RegExp(`\\| Market validation \\| ${result.marketValidation.score}/100 \\|`));
-  assert.match(scorecard, new RegExp(`\\| Weighted overall \\| ${result.overall.score}/100 \\|`));
+  assert.match(scorecard, new RegExp(`\\| Weighted release readiness \\| ${result.overall.score}/100 \\|`));
+  assert.equal(result.releaseAssessment.qualified, true);
   assert.match(readme, new RegExp(`${surfaceCount} documented AI JSON root-field surfaces`));
   assert.equal(surfaceCount, 15);
   assert.doesNotMatch(scorecard, /Strong prototype|contract is not stable until 0\.2\.0/);

@@ -723,7 +723,7 @@ export function schemaContract() {
       },
       scorecard: {
         command: "aienvmap scorecard --json",
-        rootFields: ["schemaName", "schemaVersion", "status", "overall", "technicalReadiness", "marketValidation", "positioning", "marketResearch", "adjacentAlternatives", "strengths", "weaknesses", "nextPriorities", "externalEvidenceRequirements", "limitations", "rule"],
+        rootFields: ["schemaName", "schemaVersion", "status", "overall", "technicalReadiness", "marketReadiness", "marketValidation", "releaseAssessment", "positioning", "marketResearch", "adjacentAlternatives", "strengths", "weaknesses", "nextPriorities", "externalEvidenceRequirements", "limitations", "rule"],
         rule: "Keep technical readiness separate from market validation and require cited evidence before increasing either score."
       },
       demo: {
