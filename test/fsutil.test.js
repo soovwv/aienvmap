@@ -4,7 +4,11 @@ import assert from "node:assert/strict";
 import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
+import { spawn } from "node:child_process";
+import { fileURLToPath } from "node:url";
 import { appendJsonLine, appendJsonLinesChecked, jsonlRevision, readJson, stripBom, writeJson } from "../src/fsutil.js";
+
+const casWriter = fileURLToPath(new URL("../test-support/cas-writer.mjs", import.meta.url));
 
 test("readJson accepts UTF-8 BOM JSON files from Windows editors", async () => {
   const dir = await fs.mkdtemp(path.join(os.tmpdir(), "aienvmap-json-"));
@@ -61,3 +65,88 @@ test("checked JSONL append commits multiple resolution events as one revision", 
   assert.equal(await jsonlRevision(file), result.revision);
   assert.equal((await fs.readFile(file, "utf8")).trim().split(/\r?\n/).length, 2);
 });
+
+test("checked JSONL append allows only one independent process to commit a shared revision", { timeout: 15_000 }, async () => {
+  const dir = await fs.mkdtemp(path.join(os.tmpdir(), "aienvmap-cas-process-"));
+  const file = path.join(dir, "intents.jsonl");
+  const gate = path.join(dir, "go");
+  const expected = await jsonlRevision(file);
+  const first = spawnWriter(file, expected, "first", path.join(dir, "first.ready"), gate);
+  const second = spawnWriter(file, expected, "second", path.join(dir, "second.ready"), gate);
+
+  try {
+    await Promise.all([
+      waitForPath(path.join(dir, "first.ready")),
+      waitForPath(path.join(dir, "second.ready"))
+    ]);
+    await fs.writeFile(gate, "go\n", "utf8");
+    const results = await Promise.all([first.result, second.result]);
+    const committed = results.filter((item) => item.output.status === "committed");
+    const rejected = results.filter((item) => item.output.status === "rejected");
+
+    assert.equal(committed.length, 1);
+    assert.equal(committed[0].code, 0);
+    assert.equal(rejected.length, 1);
+    assert.equal(rejected[0].code, 2);
+    assert.equal(rejected[0].output.code, "AIENVMAP_REVISION_CONFLICT");
+    assert.equal(rejected[0].output.currentRevision, committed[0].output.revision);
+    const lines = (await fs.readFile(file, "utf8")).trim().split(/\r?\n/).map(JSON.parse);
+    assert.equal(lines.length, 1);
+    assert.ok(["first", "second"].includes(lines[0].id));
+    await assert.rejects(fs.access(`${file}.lock`));
+  } finally {
+    first.child.kill();
+    second.child.kill();
+  }
+});
+
+test("JSONL append recovers an abandoned stale lock", async () => {
+  const dir = await fs.mkdtemp(path.join(os.tmpdir(), "aienvmap-stale-lock-"));
+  const file = path.join(dir, "timeline.jsonl");
+  const lock = `${file}.lock`;
+  await fs.writeFile(lock, JSON.stringify({ pid: 999999, at: "stale" }), "utf8");
+  const stale = new Date(Date.now() - 20_000);
+  await fs.utimes(lock, stale, stale);
+
+  await appendJsonLine(file, { id: "recovered" });
+
+  assert.deepEqual((await fs.readFile(file, "utf8")).trim().split(/\r?\n/).map(JSON.parse), [{ id: "recovered" }]);
+  await assert.rejects(fs.access(lock));
+});
+
+function spawnWriter(file, revision, id, ready, gate) {
+  const child = spawn(process.execPath, [casWriter, file, revision, id, ready, gate], {
+    windowsHide: true,
+    stdio: ["ignore", "pipe", "pipe"]
+  });
+  let stdout = "";
+  let stderr = "";
+  child.stdout.setEncoding("utf8");
+  child.stderr.setEncoding("utf8");
+  child.stdout.on("data", (chunk) => { stdout += chunk; });
+  child.stderr.on("data", (chunk) => { stderr += chunk; });
+  const result = new Promise((resolve, reject) => {
+    child.once("error", reject);
+    child.once("close", (code) => {
+      try {
+        resolve({ code, output: JSON.parse(stdout.trim()), stderr });
+      } catch (error) {
+        reject(new Error(`CAS writer ${id} returned invalid output: ${stdout || stderr}`, { cause: error }));
+      }
+    });
+  });
+  return { child, result };
+}
+
+async function waitForPath(file, timeoutMs = 10_000) {
+  const deadline = Date.now() + timeoutMs;
+  while (Date.now() < deadline) {
+    try {
+      await fs.access(file);
+      return;
+    } catch {
+      await new Promise((resolve) => setTimeout(resolve, 10));
+    }
+  }
+  throw new Error(`timed out waiting for ${file}`);
+}
