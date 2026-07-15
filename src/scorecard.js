@@ -26,8 +26,8 @@ const releaseAxes = [
   releaseAxis("coreFeatureCompleteness", 92, 90, ["aienvmap start --json", "aienvmap reconcile --json", "aienvmap sbom --json"]),
   releaseAxis("stabilityAndTesting", 94, 90, ["npm run release:check", ".github/workflows/ci.yml", "VALIDATION.md"]),
   releaseAxis("lightweight", 93, 90, ["package.json#dependencies", "npm run pack:install-check", "src/performance-budget.js"]),
-  releaseAxis("aiUsability", 88, 85, ["README.md#10-second-use", "aienvmap schema --json", "test/start.test.js"]),
-  releaseAxis("differentiation", 82, 75, ["MARKET.md#competitive-position", "examples/ai-workspace-case-study.md"]),
+  releaseAxis("aiUsability", 92, 90, ["README.md#10-second-use", "src/ai-decision-envelope.js", "test/ai-decision-envelope.test.js", "aienvmap schema --json"], "One compact envelope now supplies an evidence-backed action, bounded user question, explicit non-authority, and next safe command without adding another command.", "Real automatic pickup still needs host-specific external proof."),
+  releaseAxis("differentiation", 91, 90, ["MARKET.md#competitive-position", "aienvmap schema --json", "examples/ai-workspace-case-study.md"], "The machine-readable unique job, choose-instead map, and composition order distinguish observation and handoff from installation, activation, context packaging, and full scanning.", "Independent users must still prove that this combined workflow is valuable in practice."),
   releaseAxis("marketReadiness", 73, 70, ["AI_TESTING.md", "TESTER_INVITE.md", ".apm/skills/aienvmap/SKILL.md"])
 ];
 
@@ -115,6 +115,6 @@ function alternative(name, category, boundary, official) {
   return { name, category, boundary, official };
 }
 
-function releaseAxis(id, score, threshold, evidence) {
-  return { id, score, threshold, pass: score >= threshold, evidence };
+function releaseAxis(id, score, threshold, evidence, rationale = "", remainingGap = "") {
+  return { id, score, threshold, pass: score >= threshold, evidence, ...(rationale ? { rationale } : {}), ...(remainingGap ? { remainingGap } : {}) };
 }

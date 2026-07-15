@@ -54,6 +54,7 @@ export async function startWorkspace(args = {}) {
   } else if (!args.quiet) {
     console.log(`aienvmap start: ${result.mode}`);
     console.log(`decision: ${result.decision}: ${result.summary}`);
+    if (result.aiDecisionEnvelope?.userQuestion) console.log(`ask user: ${result.aiDecisionEnvelope.userQuestion}`);
     console.log(`read: ${result.readOrder.join(" -> ")}`);
     console.log(`next: ${result.nextCommand}`);
     console.log(`setup: ${result.nextSetupCommand}`);

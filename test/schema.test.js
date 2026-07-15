@@ -187,6 +187,11 @@ test("schemaContract describes stable AI output contracts", () => {
   assert.match(schema.aiAdoptionDecision.skipWhen.join(" "), /full compliance SBOM/);
   assert.equal(schema.aiAdoptionDecision.proofCommand, "aienvmap demo --json");
   assert.match(schema.aiAdoptionDecision.rule, /compact decision block/);
+  assert.match(schema.aiAdoptionDecision.uniqueJob, /evidence-referenced, approval-bounded next action/);
+  assert.deepEqual(schema.aiAdoptionDecision.chooseInstead["agent context packaging and distribution"], ["Microsoft APM"]);
+  assert.ok(schema.aiAdoptionDecision.chooseInstead["full SBOM or vulnerability evidence"].includes("Syft"));
+  assert.match(schema.aiAdoptionDecision.compositionOrder.join(" "), /userQuestion/);
+  assert.match(schema.aiAdoptionDecision.rule, /chooseInstead/);
   assert.ok(schema.aiBootstrapFields.includes("nextSafeCommandSource"));
   assert.ok(schema.aiBootstrapFields.includes("nextSafeCommandReason"));
   assert.ok(schema.aiSessionFields.includes("ifMissingOrStale"));

@@ -42,6 +42,7 @@ export async function demoWorkspace(args = {}) {
     recommendationDecision: {
       source: "schema.aiAdoptionDecision",
       position: aiAdoptionDecision.position || recommendation.positioning,
+      uniqueJob: aiAdoptionDecision.uniqueJob || recommendation.shortPitch,
       recommendWhen: aiAdoptionDecision.useWhen || recommendation.recommendWhen || [],
       useWhen: aiAdoptionDecision.useWhen || recommendation.recommendWhen || [],
       doNotRecommendWhen: aiAdoptionDecision.skipWhen || recommendation.doNotRecommendWhen || [],
@@ -49,6 +50,8 @@ export async function demoWorkspace(args = {}) {
       firstCommands: aiAdoptionDecision.startWith || recommendation.firstCommands || ["aienvmap start", "aienvmap onboard", "aienvmap context --json"],
       startWith: aiAdoptionDecision.startWith || recommendation.firstCommands || ["aienvmap start", "aienvmap onboard", "aienvmap context --json"],
       fallbackWhenDiscoveryMissed: aiAdoptionDecision.fallbackWhenDiscoveryMissed || {},
+      chooseInstead: aiAdoptionDecision.chooseInstead || {},
+      compositionOrder: aiAdoptionDecision.compositionOrder || [],
       proofCommand: aiAdoptionDecision.proofCommand || recommendation.proofCommand || "aienvmap demo --json",
       rule: aiAdoptionDecision.rule || recommendation.rule
     },
@@ -101,6 +104,7 @@ export async function demoWorkspace(args = {}) {
     console.log(`freshness: ${result.artifactFreshness.state || "unknown"} / ${result.artifactFreshness.nextCommand || "aienvmap sync"}`);
     console.log(`context fields: ${result.contextFields.join(", ")}`);
     console.log(`recommendation: ${result.recommendation}`);
+    console.log(`unique job: ${result.recommendationDecision.uniqueJob}`);
     console.log(`adoption signals: ${result.adoptionSignals.slice(0, 3).join(", ")}`);
     console.log(`AI proof signals: ${result.aiProofSignals.join(", ")}`);
     console.log(`first commands: ${result.recommendationDecision.firstCommands.join(" -> ")}`);

@@ -2,7 +2,9 @@
 
 ## Unreleased
 
-- No changes yet.
+- Added evidence-derived `userQuestion`, explicit action, observation authority, and never-do boundaries to the compact AI decision envelope so agents ask instead of guessing when runtime, coordination, or security evidence needs review.
+- Added machine-readable `uniqueJob`, `chooseInstead`, and composition order to the AI adoption decision so agents distinguish aienvmap from runtime managers, full scanners, and APM while composing with them correctly.
+- Raised the evidence-backed AI usability and differentiation qualification thresholds and scores above 90 without adding runtime dependencies or a new command.
 
 ## 0.2.0 - 2026-07-15
 

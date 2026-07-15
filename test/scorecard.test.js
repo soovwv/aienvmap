@@ -17,6 +17,10 @@ test("product scorecard separates release readiness from independent market vali
   assert.equal(result.releaseAssessment.publishReady, false);
   assert.deepEqual(result.releaseAssessment.publishBlockers.map((item) => item.id), ["exposed-token-revocation", "npm-trusted-publisher", "immutable-release-source"]);
   assert.ok(result.releaseAssessment.axes.every((axis) => axis.pass && axis.score >= axis.threshold));
+  assert.equal(result.releaseAssessment.axes.find((axis) => axis.id === "aiUsability").score, 92);
+  assert.equal(result.releaseAssessment.axes.find((axis) => axis.id === "differentiation").score, 91);
+  assert.match(result.releaseAssessment.axes.find((axis) => axis.id === "aiUsability").rationale, /bounded user question/);
+  assert.match(result.releaseAssessment.axes.find((axis) => axis.id === "differentiation").remainingGap, /Independent users/);
   assert.match(result.limitations.join(" "), /not inferred from feature count/);
 });
 

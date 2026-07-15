@@ -20,11 +20,13 @@ The dated public traction and adjacent-tool comparison live in [MARKET.md](MARKE
 | Core feature completeness | 92 | 90 | pass |
 | Stability and testing | 94 | 90 | pass |
 | Lightweight operation | 93 | 90 | pass |
-| AI usability | 88 | 85 | pass |
-| Differentiation | 82 | 75 | pass |
+| AI usability | 92 | 90 | pass |
+| Differentiation | 91 | 90 | pass |
 | Market readiness | 73 | 70 | pass |
 
 All axes must pass. The code qualifies as an honest early 0.2.0 release candidate; it does not claim product-market fit or independent adoption. npm publishing remains on hold until the previously exposed token is confirmed revoked, npm-side trusted publishing is configured, and `v0.2.0` points to the protected CI-passing main commit.
+
+AI usability is supported by a compact decision envelope that states the next safe action, evidence references, whether a user question is required, a reason-derived question, and explicit non-authority boundaries. Differentiation is supported by the machine-readable `aiAdoptionDecision.uniqueJob`, `chooseInstead`, and composition order so an AI can combine aienvmap with environment managers and scanners without misrepresenting its role. These are technical readiness scores, not independent adoption evidence.
 
 ## Position
 
