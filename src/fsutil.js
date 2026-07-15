@@ -19,6 +19,25 @@ export async function readJson(file, fallback = null) {
   }
 }
 
+export async function readJsonStrict(file, fallback = null) {
+  let raw;
+  try {
+    raw = await fs.readFile(file, "utf8");
+  } catch (error) {
+    if (error?.code === "ENOENT") return fallback;
+    throw error;
+  }
+  try {
+    return JSON.parse(stripBom(raw));
+  } catch (cause) {
+    const error = new Error(`${path.basename(file)} contains invalid JSON; repair or remove the artifact before continuing`);
+    error.code = "AIENVMAP_INVALID_JSON";
+    error.file = file;
+    error.cause = cause;
+    throw error;
+  }
+}
+
 export function stripBom(value) {
   return String(value).replace(/^\uFEFF/, "");
 }
@@ -28,6 +47,7 @@ export async function writeJson(file, data) {
 }
 
 export async function writeTextAtomic(file, content) {
+  await assertAienvmapWriteBoundary(file);
   await fs.mkdir(path.dirname(file), { recursive: true });
   const temp = path.join(path.dirname(file), `.${path.basename(file)}.${process.pid}.${Date.now()}.tmp`);
   try {
@@ -43,6 +63,7 @@ export async function writeTextAtomic(file, content) {
 }
 
 export async function appendJsonLine(file, data) {
+  await assertAienvmapWriteBoundary(file);
   await fs.mkdir(path.dirname(file), { recursive: true });
   await withFileLock(file, async () => {
     await fs.appendFile(file, `${JSON.stringify(data)}\n`, "utf8");
@@ -58,6 +79,7 @@ export async function jsonlRevision(file) {
 }
 
 export async function appendJsonLinesChecked(file, entries, expectedRevision) {
+  await assertAienvmapWriteBoundary(file);
   await fs.mkdir(path.dirname(file), { recursive: true });
   return withFileLock(file, async () => {
     let raw = "";
@@ -161,4 +183,42 @@ export async function removeMarkerBlock(file, begin, end) {
   const next = [before, after].filter(Boolean).join("\n\n") + (before || after ? "\n" : "");
   await writeTextAtomic(file, next);
   return { changed: true, action: "remove-marker" };
+}
+
+export async function assertWritePathInsideWorkspace(workspace, target) {
+  const root = await fs.realpath(path.resolve(workspace));
+  const absolute = path.resolve(target);
+  let probe = absolute;
+  const remainder = [];
+  let resolved;
+  while (true) {
+    try {
+      resolved = await fs.realpath(probe);
+      break;
+    } catch (error) {
+      if (error?.code !== "ENOENT") throw error;
+      const parent = path.dirname(probe);
+      if (parent === probe) throw error;
+      remainder.unshift(path.basename(probe));
+      probe = parent;
+    }
+  }
+  const candidate = path.resolve(resolved, ...remainder);
+  const relative = path.relative(root, candidate);
+  if (!relative || relative.startsWith("..") || path.isAbsolute(relative)) {
+    const error = new Error("write target must stay inside the workspace after resolving symbolic links");
+    error.code = "AIENVMAP_WRITE_OUTSIDE_WORKSPACE";
+    throw error;
+  }
+  return absolute;
+}
+
+async function assertAienvmapWriteBoundary(file) {
+  const absolute = path.resolve(file);
+  const parts = absolute.split(path.sep);
+  const index = parts.lastIndexOf(".aienvmap");
+  if (index < 1) return;
+  const state = parts.slice(0, index + 1).join(path.sep) || path.parse(absolute).root;
+  const workspace = path.dirname(state);
+  await assertWritePathInsideWorkspace(workspace, absolute);
 }
