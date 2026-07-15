@@ -2,7 +2,7 @@ const technicalDimensions = [
   dimension("lightweight-runtime", 15, 15, ["package.json#dependencies", "npm pack --dry-run"], "Keep zero runtime dependencies and a bounded package."),
   dimension("ai-readable-contract", 14, 15, ["aienvmap schema --json", "src/ai-decision-envelope.js"], "Stabilize the additive contract at 0.2.0."),
   dimension("environment-inventory", 19, 20, ["aienvmap reconcile --json --full-packages", "aienvmap reconcile --portable --json", "test/reconcile.test.js"], "Validate portable reports and consolidation plans against external, mixed-manager environments."),
-  dimension("multi-ai-coordination", 13, 15, ["aienvmap demo --json", "test/demo.test.js"], "Validate the workflow in an external multi-user case study."),
+  dimension("multi-ai-coordination", 13, 15, ["aienvmap demo --json", "test/demo.test.js", "test/fsutil.test.js#independent-process-cas"], "Validate the workflow in an external multi-user case study."),
   dimension("sbom-interoperability", 12, 15, ["aienvmap sbom --json", "test/sbom.test.js"], "Validate imported CycloneDX and SPDX evidence against more generators."),
   dimension("safety-and-quality", 19, 20, ["npm run release:check", "npm run pack:install-check", "test/reconcile.test.js", ".github/workflows/ci.yml", "aienvmap@0.1.1 dist.attestations"], "Validate the 0.2.0 package and probe boundaries in independent external environments.")
 ];
@@ -24,7 +24,7 @@ const marketValidationDimensions = [
 
 const releaseAxes = [
   releaseAxis("coreFeatureCompleteness", 92, 90, ["aienvmap start --json", "aienvmap reconcile --json", "aienvmap sbom --json"]),
-  releaseAxis("stabilityAndTesting", 94, 90, ["npm run release:check", ".github/workflows/ci.yml", "VALIDATION.md", "test/temp-hygiene.test.js", "test/windows-launcher-guidance.test.js"]),
+  releaseAxis("stabilityAndTesting", 94, 90, ["npm run release:check", ".github/workflows/ci.yml", "VALIDATION.md", "test/fsutil.test.js#independent-process-cas", "test/temp-hygiene.test.js", "test/windows-launcher-guidance.test.js"]),
   releaseAxis("lightweight", 93, 90, ["package.json#dependencies", "npm run pack:install-check", "src/performance-budget.js"]),
   releaseAxis("aiUsability", 92, 90, ["README.md#10-second-use", "src/ai-decision-envelope.js", "test/ai-decision-envelope.test.js", "aienvmap schema --json"], "One compact envelope now supplies an evidence-backed action, bounded user question, explicit non-authority, and next safe command without adding another command.", "Real automatic pickup still needs host-specific external proof."),
   releaseAxis("differentiation", 91, 90, ["MARKET.md#competitive-position", "aienvmap schema --json", "examples/ai-workspace-case-study.md"], "The machine-readable unique job, choose-instead map, and composition order distinguish observation and handoff from installation, activation, context packaging, and full scanning.", "Independent users must still prove that this combined workflow is valuable in practice."),

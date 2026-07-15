@@ -6,6 +6,7 @@
 
 ## 0.2.0 - 2026-07-15
 
+- Added an independent-process coordination race test proving that one shared revision permits exactly one commit and rejects the competing stale writer, plus abandoned stale-lock recovery coverage.
 - Added Windows PowerShell launcher guidance so AI agents use existing `.cmd` shims when `.ps1` shims are policy-blocked, without changing or bypassing execution policy.
 - Added tracked cleanup for test and demo temporary workspaces plus a hygiene gate that prevents new `mkdtemp` tests from omitting cleanup coverage.
 - Added evidence-derived `userQuestion`, explicit action, observation authority, and never-do boundaries to the compact AI decision envelope so agents ask instead of guessing when runtime, coordination, or security evidence needs review.
