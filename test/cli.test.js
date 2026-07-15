@@ -93,7 +93,8 @@ test("CLI scorecard keeps technical and market evidence separate", async () => {
   assert.ok(json.technicalReadiness.score > json.marketValidation.score);
   assert.ok(json.marketReadiness.score > json.marketValidation.score);
   assert.equal(json.releaseAssessment.qualified, true);
-  assert.equal(json.releaseAssessment.publishReady, false);
+  assert.equal(json.releaseAssessment.publishReady, true);
+  assert.deepEqual(json.releaseAssessment.publishBlockers, []);
   assert.match(json.rule, /not use overall score alone/);
 });
 
