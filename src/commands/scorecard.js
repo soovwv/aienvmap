@@ -11,7 +11,9 @@ export async function scorecardWorkspace(args = {}) {
     console.log(`market readiness: ${scorecard.marketReadiness.score}/100`);
     console.log(`market validation: ${scorecard.marketValidation.score}/100`);
     console.log(`0.2.0 code qualified: ${scorecard.releaseAssessment.qualified}`);
+    console.log(`release status: ${scorecard.releaseAssessment.releaseStatus}`);
     console.log(`publish ready: ${scorecard.releaseAssessment.publishReady}`);
+    console.log(`publish eligibility: ${scorecard.releaseAssessment.publishEligibility}`);
     console.log(`position: ${scorecard.positioning}`);
     console.log(`next: ${scorecard.nextPriorities[0].outcome}`);
     console.log(`rule: ${scorecard.rule}`);

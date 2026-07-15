@@ -14,7 +14,9 @@ test("product scorecard separates release readiness from independent market vali
   assert.ok(result.technicalReadiness.score > result.marketValidation.score);
   assert.deepEqual(result.overall.excludes, ["marketValidation"]);
   assert.equal(result.releaseAssessment.qualified, true);
-  assert.equal(result.releaseAssessment.publishReady, true);
+  assert.equal(result.releaseAssessment.releaseStatus, "published");
+  assert.equal(result.releaseAssessment.publishReady, false);
+  assert.equal(result.releaseAssessment.publishEligibility, "not-applicable-already-published");
   assert.deepEqual(result.releaseAssessment.publishBlockers, []);
   assert.deepEqual(result.releaseAssessment.releaseEvidence.map((item) => item.id), ["npm-trusted-publisher", "immutable-release-source", "npm-provenance"]);
   assert.ok(result.releaseAssessment.axes.every((axis) => axis.pass && axis.score >= axis.threshold));
