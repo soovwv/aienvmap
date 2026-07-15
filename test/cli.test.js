@@ -140,6 +140,11 @@ test("package, README, and CLI help share the accurate environment-before-change
   assert.match(readme, /aiDiscovery\.decision/);
   assert.match(readme, /fallback-required/);
   assert.match(readme, /aiAdoptionDecision/);
+  assert.match(readme, /evidence-derived `userQuestion`/);
+  assert.match(readme, /`observed-not-approved` authority/);
+  assert.match(readme, /aiAdoptionDecision\.uniqueJob/);
+  assert.match(readme, /`chooseInstead`/);
+  assert.match(readme, /`compositionOrder`/);
   assert.match(readme, /aiEntry/);
   assert.match(readme, /operationalSafety/);
   assert.match(readme, /releaseReadiness\.currentBatch/);

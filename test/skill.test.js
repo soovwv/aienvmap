@@ -126,4 +126,38 @@ test("packaged aienvmap skill points AI agents to current startup contracts", as
   assert.match(skill, /Java remains information-only/);
   assert.match(skill, /Never write this policy before the user answers/);
   assert.match(skill, /newly detected version or any routing\/project mismatch still requires review/);
+  assert.match(skill, /questionRequired/);
+  assert.match(skill, /provided `userQuestion` without rewriting it or inferring intent/);
+  assert.match(skill, /observationAuthority: observed-not-approved/);
+  assert.match(skill, /every `neverDo` item/);
+  assert.match(skill, /uniqueJob/);
+  assert.match(skill, /chooseInstead/);
+  assert.match(skill, /compositionOrder/);
+});
+
+test("APM skill carries the same AI question and adjacent-tool boundaries", async () => {
+  const skill = await fs.readFile(path.resolve(".apm/skills/aienvmap/SKILL.md"), "utf8");
+
+  assert.match(skill, /questionRequired/);
+  assert.match(skill, /provided `userQuestion` without inferring intent/);
+  assert.match(skill, /observationAuthority: observed-not-approved/);
+  assert.match(skill, /`neverDo` as hard interpretation boundaries/);
+  assert.match(skill, /aiAdoptionDecision\.uniqueJob/);
+  assert.match(skill, /chooseInstead/);
+  assert.match(skill, /compositionOrder/);
+  assert.match(skill, /APM distributes this skill; aienvmap observes the host/);
+});
+
+test("0.2.0 release documents the final AI decision contract", async () => {
+  const changelog = await fs.readFile(path.resolve("CHANGELOG.md"), "utf8");
+  const releaseNotes = await fs.readFile(path.resolve("RELEASE_NOTES_0.2.0.md"), "utf8");
+  const unreleased = changelog.split("## 0.2.0")[0];
+  const release = changelog.split("## 0.2.0")[1] || "";
+
+  assert.match(unreleased, /No changes yet/);
+  assert.doesNotMatch(unreleased, /evidence-derived `userQuestion`/);
+  assert.match(release, /evidence-derived `userQuestion`/);
+  assert.match(release, /machine-readable `uniqueJob`, `chooseInstead`, and composition order/);
+  assert.match(releaseNotes, /`observed-not-approved` authority/);
+  assert.match(releaseNotes, /`uniqueJob`, `chooseInstead`, and composition order/);
 });

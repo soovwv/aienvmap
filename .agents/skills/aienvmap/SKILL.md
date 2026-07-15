@@ -29,7 +29,7 @@ npx aienvmap discover --json
 
 Use root `discoveryDecision`, `aiEntry`, `startupChecklist`, `copyPastePrompt`, and `fallbackPrompt` from `start --json` before assuming automatic pickup worked. `discover --json` also exposes the same guidance under `aiDiscovery`.
 
-If you are deciding whether to recommend this tool, read `npx aienvmap schema --json` and use `aiAdoptionDecision` first. It is the compact use/recommend/start/skip block for AI agents.
+If you are deciding whether to recommend this tool, read `npx aienvmap schema --json` and use `aiAdoptionDecision` first. It is the compact use/recommend/start/skip block for AI agents. Use `uniqueJob`, `chooseInstead`, and `compositionOrder` to keep installation, activation, agent-context distribution, and full scanning with the appropriate adjacent tools.
 For deeper criteria and evidence, read `recommendation.shortPitch`, `recommendation.decisionRoutine`, `recommendation.evidenceDocs`, `qualitySignals`, `examples/ai-adoption-guide.md`, and `examples/ai-workspace-case-study.md`.
 
 ## Session Start
@@ -56,7 +56,7 @@ npx aienvmap start --json
 
 Use `aiEntry` and `aiSession` from start/status/context JSON as the shortest startup routine: read order, stale refresh, intent, checkpoint, and handoff.
 
-Read `aiDecisionEnvelope` first in start/status/context, reconcile, and SBOM JSON. Use `decision`, `reasonCodes`, `evidenceRefs`, and `nextSafeCommand` for the short path. `requiresHumanApprovalBefore` applies even when clear: removal, global installs, runtime switching, and lockfile rewrites remain review-only; unknown future fields are additive.
+Read `aiDecisionEnvelope` first in start/status/context, reconcile, and SBOM JSON. Use `decision`, `reasonCodes`, `evidenceRefs`, `action`, and `nextSafeCommand` for the short path. When `questionRequired` is true, ask the provided `userQuestion` without rewriting it or inferring intent. Treat `observationAuthority: observed-not-approved` and every `neverDo` item as interpretation boundaries. `requiresHumanApprovalBefore` applies even when clear: removal, global installs, runtime switching, and lockfile rewrites remain review-only; unknown future fields are additive.
 
 Read `externalSbom` during startup. `refresh-import-required` and `component-drift-review` require opening `.aienvmap/sbom.json` and the original artifact before dependency or release changes. `identity-confidence-review` is non-blocking coordination evidence, not proof or remediation authority.
 

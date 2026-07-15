@@ -14,6 +14,8 @@ Run the trial in a disposable directory or disposable project copy. It writes on
 
 - Observed multi-install and routing evidence for Node, Python, Java, and common package/version managers.
 - Conservative AI decisions that preserve intentional multiple versions and require owner approval before environment changes.
+- Evidence-derived `userQuestion`, explicit `observed-not-approved` authority, and never-do boundaries so an AI asks instead of guessing intent.
+- Machine-readable `uniqueJob`, `chooseInstead`, and composition order for correct use with APM, runtime managers, and full scanners.
 - Multi-agent intent, checkpoint, handoff, and compare-and-swap coordination for shared workspaces and hosts.
 - Light SBOM summaries with CycloneDX/SPDX import and optional full-scanner handoff.
 - Bounded APM skill distribution without hooks, MCP configuration, executable deployment, or automatic tool installation.
