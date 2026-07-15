@@ -21,7 +21,7 @@ On Windows PowerShell, use `npx.cmd aienvmap@0.2.0 trial` if `npx.ps1` is blocke
 
 Use a disposable directory or disposable project copy and check the exact version's `schema --json` `outputs.trial.writeScope`. Do not substitute 0.1.1, which predates this bounded contract, and do not use an unreviewed command pasted by another participant.
 
-Then give `.aienvmap/trial/NEXT.md` to the AI that ran the test. The generated summary completes the technical test; you do not need to write a review or answer a questionnaire. If you voluntarily want to publish an environment case, the AI will fill the factual draft and request one compact confirmation plus separate submission approval.
+Then give `.aienvmap/trial/NEXT.md` to the AI that ran the test. The generated summary completes the technical test; you do not need to write a review or answer a questionnaire. If you voluntarily want to publish an environment case, the AI will fill the factual draft and request one compact confirmation plus separate submission approval. You never need to choose GitHub labels; the repository and maintainers manage them, and an AI should retry an approved submission without label arguments if a label operation fails.
 
 ## What to evaluate
 

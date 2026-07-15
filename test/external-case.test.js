@@ -27,4 +27,15 @@ test("maintainer case review prevents double counting and weak outcome claims", 
   for (const required of ["submitted", "reproducible", "outcome-verified", "longitudinal", "Never count", "raw `portable.json`", "no-change decision", "Never request a positive review"]) assert.match(review, new RegExp(required, "i"));
   assert.match(review, /downloads, stars, repository fixtures/);
   assert.match(review, /Count one external environment once at its highest verified maturity/);
+  assert.match(review, /exactly one evidence-maturity label/i);
+  assert.match(review, /label handling must never block evidence submission/i);
+});
+
+test("environment case intake applies submitted without requiring tester label access", async () => {
+  const template = await fs.readFile(path.resolve(".github/ISSUE_TEMPLATE/environment_case.md"), "utf8");
+  const aiTesting = await fs.readFile(path.resolve("AI_TESTING.md"), "utf8");
+  assert.match(template, /^labels: evidence, environment-case, submitted$/m);
+  assert.match(template, /Do not select or pass labels/);
+  assert.match(aiTesting, /do not pass label arguments/i);
+  assert.match(aiTesting, /retry without label arguments/i);
 });

@@ -14,11 +14,12 @@ There is no automatic upload. Any public submission requires a separate human de
 6. Treat the technical test as complete without requesting a review. Summarize the generated result and ask no opinion questions unless the human wants to create a public environment case.
 7. For an optional public case, fill every factual field you can from the generated artifacts and your own actions. Ask the human once for: `real=yes|partly|no; useful=1|2|3|4|5|skip; outcome=no-change|follow-up|change-made|other; independent=yes|no`. Accept an optional correction in the same reply.
 8. Fill `case-draft.md` from that reply. Do not invent positive feedback, identity, independence, consent, or an outcome.
-9. Show the complete final draft to the human and ask separately for explicit submission approval. Never interpret silence, trial approval, or the compact confirmation as approval to publish.
+9. Show the complete final draft to the human and ask separately for explicit submission approval. Never interpret silence, trial approval, or the compact confirmation as approval to publish. Open the repository's `environment_case.md` template after approval; do not ask the tester to choose labels and do not pass label arguments through a CLI, API, connector, or generated URL. Template labels are repository-managed, and a maintainer handles any missing label after submission.
 
 ## Required safety behavior
 
 - Never submit a GitHub issue, send a network request, or reveal local data without explicit human approval.
+- A label lookup, permission, or application failure must not block the approved issue body: retry without label arguments and leave label management to the maintainer.
 - Do not burden the human with a questionnaire for routine technical testing. Public case evidence is optional.
 - Never paste raw reconciliation output, `portable.json`, paths, usernames, hostnames, secrets, tokens, environment variables, or private project/package names.
 - Never infer that duplicate versions are accidental. Ask whether they are intentional.

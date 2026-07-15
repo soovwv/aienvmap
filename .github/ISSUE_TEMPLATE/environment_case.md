@@ -2,11 +2,12 @@
 name: Portable environment case
 about: Submit reviewed, redacted evidence from a real mixed-runtime or multi-AI environment
 title: "[environment case] "
-labels: evidence, environment-case
+labels: evidence, environment-case, submitted
 assignees: ""
 ---
 
 <!-- Public issue. Do not paste raw reconcile output, paths, usernames, hostnames, project/package names, secrets, tokens, or proprietary details. -->
+<!-- Do not select or pass labels when submitting. This template applies the intake labels; maintainers manage evidence-maturity labels. -->
 
 ## Problem observed before aienvmap
 

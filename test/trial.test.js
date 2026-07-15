@@ -61,6 +61,8 @@ test("trial completes a local technical test without uploading or changing the e
     assert.match(next, /Technical test: no opinion required/);
     assert.match(next, /real=yes\|partly\|no/);
     assert.match(next, /separately for explicit public submission approval/);
+    assert.match(next, /Do not ask the tester to choose labels/);
+    assert.match(next, /submit the approved body without label arguments/);
   } finally {
     await fs.rm(dir, { recursive: true, force: true });
   }
