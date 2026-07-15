@@ -34,8 +34,11 @@ test("maintainer case review prevents double counting and weak outcome claims", 
 test("environment case intake applies submitted without requiring tester label access", async () => {
   const template = await fs.readFile(path.resolve(".github/ISSUE_TEMPLATE/environment_case.md"), "utf8");
   const aiTesting = await fs.readFile(path.resolve("AI_TESTING.md"), "utf8");
+  const invite = await fs.readFile(path.resolve("TESTER_INVITE.md"), "utf8");
   assert.match(template, /^labels: evidence, environment-case, submitted$/m);
   assert.match(template, /Do not select or pass labels/);
   assert.match(aiTesting, /do not pass label arguments/i);
   assert.match(aiTesting, /retry without label arguments/i);
+  assert.match(invite, /You do not choose GitHub labels/);
+  assert.match(invite, /without label arguments/);
 });

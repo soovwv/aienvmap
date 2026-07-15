@@ -6,11 +6,11 @@ Use one of these messages in a community that permits project testing requests. 
 
 > I am looking for external testers for aienvmap 0.2.0, a dependency-free environment map for AI coding agents. It reads existing Node, Python, Java, package-manager, and light SBOM state before an AI changes the environment. In a disposable directory or disposable project copy, run `npx aienvmap@0.2.0 trial` (`npx.cmd ...` on Windows PowerShell when `npx.ps1` is policy-blocked), then let your AI summarize the local result. Do not change PowerShell execution policy. It writes only under `.aienvmap/trial/`, skips project Maven/Gradle wrappers, requests no PATH or tool changes, and uploads nothing automatically. Runtime version probes execute discovered third-party files with bounded arguments, so side-effect-free behavior cannot be guaranteed for arbitrary executables. Honest reports of missed installations, false positives, and confusing output are especially useful.
 
-The AI can complete the technical test and summarize the result without asking you to write a review. A public environment case is optional; if you choose it, the AI asks for one compact confirmation, prepares the draft, and asks separately before anything is submitted.
+The AI can complete the technical test and summarize the result without asking you to write a review. A public environment case is optional; if you choose it, the AI asks for one compact confirmation, prepares the draft, and asks separately before anything is submitted. You do not choose GitHub labels. The repository and maintainers manage them; if a label operation fails, the AI retries the approved issue body without label arguments.
 
 ## AI-assisted version
 
-> You can ask Codex, Claude, Gemini, Cursor, or Copilot to perform the test. Give the AI the repository's `AI_TESTING.md` and ask it to follow every approval and privacy rule. The AI must show you the final draft and may not submit it without your explicit approval.
+> You can ask Codex, Claude, Gemini, Cursor, or Copilot to perform the test. Give the AI the repository's `AI_TESTING.md` and ask it to follow every approval and privacy rule. The AI must show you the final draft and may not submit it without your explicit approval. It must not ask you to choose labels or pass label arguments during submission.
 
 ## Who is most useful
 
