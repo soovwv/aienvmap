@@ -152,6 +152,7 @@ test("package, README, and CLI help share the accurate environment-before-change
   assert.match(stdout, /know the development environment before an AI changes it/);
   assert.match(stdout, /aienvmap start    one-command AI startup with a copy-paste fallback prompt/);
   assert.match(stdout, /aienvmap discover  read-only detection plus aiDiscovery\.decision and copy-paste prompt/);
+  assert.match(stdout, /aienvmap scorecard separate release-readiness and independent market-validation evidence/);
 });
 
 test("package stays runtime dependency-free for lightweight shared machines", async () => {

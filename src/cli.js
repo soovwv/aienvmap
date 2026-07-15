@@ -160,7 +160,7 @@ Common:
   aienvmap discover  read-only detection plus aiDiscovery.decision and copy-paste prompt
   aienvmap reconcile read-only package-manager traffic report for existing, non-clean environments
   aienvmap trial     run a local technical test and prepare optional public evidence
-  aienvmap scorecard evidence-bounded technical readiness and market validation scores
+  aienvmap scorecard separate release-readiness and independent market-validation evidence
   aienvmap snippet   print an AGENTS.md pointer snippet
   aienvmap demo      run the temporary multi-agent conflict demo
   aienvmap dash      regenerate/open the lightweight dashboard
