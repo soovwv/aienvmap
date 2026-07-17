@@ -23,7 +23,7 @@ Skip it for a project-local source edit that cannot affect the development envir
 ## Safety before execution
 
 1. Prefer an already available `aienvmap` command.
-2. If it is unavailable, explain that `npx aienvmap@0.2.0` may download and cache the exact npm release. Ask for approval before any network-backed execution.
+2. If it is unavailable, explain that `npx aienvmap@0.2.1` may download and cache the exact npm release. Ask for approval before any network-backed execution.
 3. Never install aienvmap globally, edit PATH, remove software, consolidate versions, or run a package manager merely because this skill was loaded.
 4. Treat Java discovery as information-only.
 5. On Windows PowerShell, if `npx` resolves to a policy-blocked `npx.ps1`, use `npx.cmd` with identical package arguments. Never change or bypass PowerShell execution policy.
@@ -41,7 +41,7 @@ aienvmap start --json
 If the command is not already available and the user approved exact-version npm execution:
 
 ```bash
-npx aienvmap@0.2.0 start --json
+npx aienvmap@0.2.1 start --json
 ```
 
 Then:

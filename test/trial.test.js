@@ -73,10 +73,11 @@ test("tester guides keep human consent and AI safety explicit", async () => {
   const ai = await fs.readFile(path.resolve("AI_TESTING.md"), "utf8");
   const invite = await fs.readFile(path.resolve("TESTER_INVITE.md"), "utf8");
   const release = await fs.readFile(path.resolve("RELEASE_NOTES_0.1.1.md"), "utf8");
-  const currentRelease = await fs.readFile(path.resolve("RELEASE_NOTES_0.2.0.md"), "utf8");
+  const stableRelease = await fs.readFile(path.resolve("RELEASE_NOTES_0.2.0.md"), "utf8");
+  const currentRelease = await fs.readFile(path.resolve("RELEASE_NOTES_0.2.1.md"), "utf8");
   const readme = await fs.readFile(path.resolve("README.md"), "utf8");
   for (const text of [testing, ai]) {
-    assert.match(text, /0\.2\.0 trial/);
+    assert.match(text, /0\.2\.1 trial/);
     assert.match(text, /no automatic upload/i);
     assert.match(text, /human/i);
   }
@@ -93,15 +94,16 @@ test("tester guides keep human consent and AI safety explicit", async () => {
   assert.match(testing, /disposable directory or disposable project copy/);
   assert.match(testing, /do not need to write a review or answer a questionnaire/i);
   assert.match(invite, /Do not request positive reviews/);
-  assert.match(invite, /npx aienvmap@0\.2\.0 trial/);
+  assert.match(invite, /npx aienvmap@0\.2\.1 trial/);
   assert.match(invite, /disposable directory or disposable project copy/);
   assert.match(invite, /skips project Maven\/Gradle wrappers/);
   assert.match(invite, /side-effect-free behavior cannot be guaranteed/);
   assert.match(release, /signed npm provenance/);
   assert.match(release, /```bash\s+npx aienvmap@0\.1\.1 trial\s+```/);
   assert.match(release, /Run it in a disposable directory or disposable project copy/);
-  assert.match(currentRelease, /npx aienvmap@0\.2\.0 trial/);
-  assert.match(currentRelease, /arbitrary third-party executable side effects cannot be guaranteed absent/);
-  assert.match(readme, /Run `npx aienvmap@0\.2\.0 trial` in a disposable directory or disposable project copy/);
+  assert.match(stableRelease, /npx aienvmap@0\.2\.0 trial/);
+  assert.match(stableRelease, /arbitrary third-party executable side effects cannot be guaranteed absent/);
+  assert.match(currentRelease, /npx aienvmap@0\.2\.1 start/);
+  assert.match(readme, /Run `npx aienvmap@0\.2\.1 trial` in a disposable directory or disposable project copy/);
   assert.match(readme, /Trial artifacts are isolated under `.aienvmap\/trial\/`/);
 });

@@ -19,8 +19,8 @@ Cause:
 Safe workaround:
 
 ```powershell
-npx.cmd aienvmap@0.2.0 start
-npx.cmd aienvmap@0.2.0 trial
+npx.cmd aienvmap@0.2.1 start
+npx.cmd aienvmap@0.2.1 trial
 npm.cmd --version
 ```
 

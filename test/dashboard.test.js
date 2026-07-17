@@ -54,10 +54,31 @@ test("dashboardStyle keeps essential dashboard surfaces responsive", () => {
 test("dashboardCardClientScript keeps card priority markup centralized", () => {
   const script = dashboardCardClientScript();
 
-  assert.match(script, /const card=/);
+  assert.match(script, /function card\(/);
   assert.match(script, /cardPriority\(title\)/);
   assert.match(script, /data-dashboard-priority/);
   assert.match(script, /card-head/);
+});
+
+test("dashboard card helpers are hoisted before generated card groups execute", () => {
+  const script = [
+    "const releaseReadiness={target:'0.2.0'};",
+    "const qualitySignals={status:'ready'};",
+    "const ciHasFailure=false;",
+    "const enforcementHtml='';",
+    "const releaseReadinessHtml='';",
+    "const qualitySignalsHtml='';",
+    "const ciReadinessHtml='';",
+    "const esc=value=>String(value);",
+    dashboardOperationalCardsClientScript(),
+    dashboardPriorityClientScript(),
+    dashboardCardClientScript(),
+    "return operationalCardsHtml;"
+  ].join("\n");
+
+  const html = new Function(script)();
+  assert.match(html, /Enforcement Mode/);
+  assert.match(html, /Release Readiness/);
 });
 
 test("dashboardMainCardsClientScript keeps main grid cards data-driven", () => {
@@ -568,7 +589,7 @@ test("renderDashboard includes the audit summary surface", () => {
   assert.match(dashboardSurfaceBudget.noGrowthRule, /before adding new dashboard cards/);
   assert.match(dashboardEssentialSurfaceClientScript(), /const essentialSurfaces=/);
   assert.match(dashboardPriorityClientScript(), /const essentialCards=\["AI Session"/);
-  assert.match(dashboardPriorityClientScript(), /const cardPriority=title=>essentialCards\.includes\(title\)\?'essential':'support'/);
+  assert.match(dashboardPriorityClientScript(), /function cardPriority\(title\)/);
   assert.match(dashboardAgentClientScript(), /const agentNames=\{agents:'Codex',claude:'Claude',gemini:'Gemini'\}/);
   assert.match(dashboardAgentClientScript(), /agentNames\.cursor='Cursor'/);
   assert.match(dashboardAgentClientScript(), /aienvmap pointer installed/);
@@ -724,7 +745,7 @@ test("renderDashboard includes the audit summary surface", () => {
   assert.match(html, /Read first/);
   assert.match(html, /\.aienvmap\/status\.json/);
   assert.match(dashboardLayoutClientScripts(), /const essentialSurfaces=/);
-  assert.match(dashboardLayoutClientScripts(), /const card=/);
+  assert.match(dashboardLayoutClientScripts(), /function card\(/);
   assert.match(dashboardLayoutClientScripts(), /const mainCards=/);
   assert.match(dashboardLayoutClientScripts(), /const supportCards=/);
   assert.match(html, /Dependency files/);
@@ -899,6 +920,23 @@ test("dashWorkspace links written plan artifacts", async () => {
   assert.match(html, /requirements\.txt/);
   assert.match(html, /uv\.lock/);
   assert.match(html, /django/);
+
+  const data = html.match(/<script type="application\/json" id="data">([\s\S]*?)<\/script>/)?.[1]
+    .replaceAll("&amp;", "&")
+    .replaceAll("&lt;", "<")
+    .replaceAll("&gt;", ">");
+  const clientScript = html.match(/<script>\s*([\s\S]*?)\s*<\/script>/)?.[1];
+  const app = { innerHTML: "" };
+  const document = {
+    getElementById(id) {
+      if (id === "data") return { textContent: data };
+      if (id === "app") return app;
+      return null;
+    }
+  };
+  new Function("document", clientScript)(document);
+  assert.match(app.innerHTML, /AI environment map/);
+  assert.match(app.innerHTML, /Environment Health/);
 });
 
 test("dashboard opener avoids a command shell and reports launch failure", async () => {

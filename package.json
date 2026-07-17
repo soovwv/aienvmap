@@ -1,6 +1,6 @@
 {
   "name": "aienvmap",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Dependency-free environment map and explicit change handoff for AI coding agents sharing a repository or machine.",
   "type": "module",
   "bin": {
@@ -13,7 +13,7 @@
   "bugs": {
     "url": "https://github.com/soovwv/aienvmap/issues"
   },
-  "homepage": "https://github.com/soovwv/aienvmap#readme",
+  "homepage": "https://aienvmap.svwvs.com/",
   "files": [
     "bin",
     "src",
@@ -34,11 +34,13 @@
     "ROADMAP.md",
     "SCORECARD.md",
     "MARKET.md",
+    "PROMOTION.md",
     "VALIDATION.md",
     "TESTING.md",
     "AI_TESTING.md",
     "TESTER_INVITE.md",
     "RELEASE_NOTES_0.2.0.md",
+    "RELEASE_NOTES_0.2.1.md",
     "action.yml",
     "examples",
     ".agents",

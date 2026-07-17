@@ -17,8 +17,8 @@ test("Windows-facing guidance uses cmd shims without weakening PowerShell policy
   const sources = await Promise.all(guidanceFiles.map(async (file) => [file, await fs.readFile(path.resolve(file), "utf8")]));
   const combined = sources.map(([, source]) => source).join("\n");
 
-  assert.match(combined, /npx\.cmd aienvmap@0\.2\.0 start/);
-  assert.match(combined, /npx\.cmd aienvmap@0\.2\.0 trial/);
+  assert.match(combined, /npx\.cmd aienvmap@0\.2\.1 start/);
+  assert.match(combined, /npx\.cmd aienvmap@0\.2\.1 trial/);
   assert.match(combined, /npm\.cmd/);
   assert.match(combined, /aienvmap\.cmd/);
   assert.match(combined, /Do not run `Set-ExecutionPolicy`|never run `Set-ExecutionPolicy`/i);

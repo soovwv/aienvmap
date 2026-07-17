@@ -8,7 +8,7 @@ Observed 2026-07-15 from public GitHub repository metadata, the npm registry, th
 | --- | ---: | --- |
 | GitHub stars | 0 | no public repository endorsement yet |
 | GitHub forks | 0 | no visible downstream development yet |
-| Open external environment cases | 0 | no independent outcome-verified evidence yet |
+| Open external environment cases | 1 | submitted and awaiting maintainer evidence-maturity review; individual cases are not promoted until at least 5 have been collected |
 | npm downloads, 2026-06-14 through 2026-07-13 | 268 | requests, not unique people; may include bots, CI, maintainer use, and reinstalls |
 | Published npm versions | 2 | release noise remains low; latest is the signed-provenance 0.1.1 tester release |
 

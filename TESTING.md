@@ -14,10 +14,10 @@ Thank you for testing aienvmap on a real development machine. The test takes abo
 Open a terminal in a disposable directory and run:
 
 ```bash
-npx aienvmap@0.2.0 trial
+npx aienvmap@0.2.1 trial
 ```
 
-On Windows PowerShell, use `npx.cmd aienvmap@0.2.0 trial` if `npx.ps1` is blocked by the local execution policy. Do not change or bypass the policy. This uses the command shim installed with Node.js and keeps the package and arguments identical.
+On Windows PowerShell, use `npx.cmd aienvmap@0.2.1 trial` if `npx.ps1` is blocked by the local execution policy. Do not change or bypass the policy. This uses the command shim installed with Node.js and keeps the package and arguments identical.
 
 Use a disposable directory or disposable project copy and check the exact version's `schema --json` `outputs.trial.writeScope`. Do not substitute 0.1.1, which predates this bounded contract, and do not use an unreviewed command pasted by another participant.
 
