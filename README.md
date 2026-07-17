@@ -2,38 +2,53 @@
 
 [![CI](https://github.com/soovwv/aienvmap/actions/workflows/ci.yml/badge.svg)](https://github.com/soovwv/aienvmap/actions/workflows/ci.yml)
 [![License](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
-[![Node](https://img.shields.io/badge/node-%3E%3D18-339933.svg)](package.json)
+[![Node](https://img.shields.io/badge/node-%3E%3D18-339933.svg)](package.json) / [Website](https://aienvmap.svwvs.com/)
 **Know the development environment before an AI changes it.**
 
-`aienvmap` is a dependency-free environment map and explicit change handoff for AI coding agents working in the same repository or shared machine. It shows Codex, Claude, Gemini, Cursor, and Copilot the observed runtimes, package-manager routing, light SBOM evidence, and pending change intent without silently installing, switching, or removing software.
+`aienvmap` is a dependency-free environment map and explicit change handoff for AI coding agents. It gives Codex, Claude, Gemini, Cursor, and Copilot a read-only preflight for the runtimes they are about to rely on and the environment changes another session already plans - before either agent guesses or changes the machine.
+
+```bash
+npx aienvmap@0.2.1 start
+```
+
+It reports evidence without silently installing, switching, or removing software. It does not upgrade, repair, or rewrite your development environment.
+
+For a bounded external trial in a disposable directory, run `npx aienvmap@0.2.1 trial`; nothing is uploaded automatically.
+![aienvmap terminal demo showing a review-first dependency conflict](examples/aienvmap-terminal-demo.svg)
 
 ## Why
 
 AI coding agents are good at changing code. They are bad at remembering what another agent assumed about Node, Python, Java, package managers, or dependency changes. `aienvmap` gives the next agent observed evidence and pending intent before it guesses.
 
-Use it if several AI agents or sessions share environment-affecting work in one repository, laptop, server, or CI workspace. Skip it if you only need a full compliance SBOM scanner, runtime installer, or hard policy lock manager.
+### Use it when
+
+Use it if several AI agents or sessions share environment-affecting work in one repository, laptop, server, or CI workspace; several runtime installations make active routing unclear; or you want evidence and a handoff before approving a change.
+
+### Choose another tool when
+
+Skip it if you only need a full compliance SBOM scanner, runtime installer, hard policy lock manager, distributed lock, or automatic environment repair.
 
 ## 10-Second Use
 
-```bash
-npx aienvmap@0.2.0 start
-```
-
 `start` is the one-command AI preflight: it refreshes the environment map when needed, runs quick multi-install reconciliation, and returns the next safe command. To add project instruction pointers for supported AI hosts, preview with `npx aienvmap onboard --dry-run`, then run `npx aienvmap onboard` after review.
 
-Windows PowerShell may select a blocked `npx.ps1` shim. In that case use `npx.cmd aienvmap@0.2.0 start`; do not change the machine execution policy. The same rule applies to `npm.cmd` and an installed `aienvmap.cmd` shim.
+Windows PowerShell may select a blocked `npx.ps1` shim. In that case use `npx.cmd aienvmap@0.2.1 start`; do not change the machine execution policy. The same rule applies to `npm.cmd` and an installed `aienvmap.cmd` shim.
 
 Try `npx aienvmap demo` for an isolated conflict example. It shows one agent's dependency intent becoming visible to the next agent; environment changes are never inferred automatically and remain approval-gated.
-
-![aienvmap terminal demo showing a review-first dependency conflict](examples/aienvmap-terminal-demo.svg)
 
 - Agent A records a planned dependency change.
 - Agent B starts later and sees the pending intent.
 - The workspace becomes review-first; no package is installed, removed, or switched.
 
+## Evidence, not claims
+
+There are 372 automated tests, plus maintainer-run Windows, Linux, and macOS [validation evidence](VALIDATION.md).
+
+Public external cases are reviewed as evidence, but individual submissions are not used in promotion until at least five have been collected. Negative results and critical reviews are welcome. See [testing](TESTING.md), the [portable case guide](examples/portable-environment-case-guide.md), and the [promotion and community guide](PROMOTION.md).
+
 ## External Trial
 
-Run `npx aienvmap@0.2.0 trial` in a disposable directory or disposable project copy on a real development machine. Trial artifacts are isolated under `.aienvmap/trial/`, project Maven/Gradle wrappers are skipped, and nothing is uploaded automatically. The trial runs bounded runtime version probes, so arbitrary discovered executables are not guaranteed side-effect-free. Follow [TESTING.md](TESTING.md), or give [AI_TESTING.md](AI_TESTING.md) to an AI agent. Technical testing needs no human review; optional public evidence uses one compact confirmation, complete-draft review, and separate submission consent. Community maintainers can reuse [TESTER_INVITE.md](TESTER_INVITE.md).
+Run `npx aienvmap@0.2.1 trial` in a disposable directory or disposable project copy on a real development machine. Trial artifacts are isolated under `.aienvmap/trial/`, project Maven/Gradle wrappers are skipped, and nothing is uploaded automatically. The trial runs bounded runtime version probes, so arbitrary discovered executables are not guaranteed side-effect-free. Follow [TESTING.md](TESTING.md), or give [AI_TESTING.md](AI_TESTING.md) to an AI agent. Technical testing needs no human review; optional public evidence uses one compact confirmation, complete-draft review, and separate submission consent. Community maintainers can reuse [TESTER_INVITE.md](TESTER_INVITE.md).
 
 ## What the AI gets
 
@@ -62,12 +77,7 @@ For the shared-server story, read [AI workspace coordination case study](example
 
 ## Advanced environment evidence
 
-- Shared servers: `--inspect-home` or bounded `--inspect-homes` records no-exec file-presence evidence without enumerating OS users; `--home-evidence` extracts one alias for owning-user verification.
-- Portable review: `--portable`, `--portable-from`, `--portable-compare`, and `--owner-verification` redact paths and compare evidence without proving identity or cleanup authority.
-- Manager proof: explicit full scans use bounded Volta/fnm/nvm/mise, uv/pyenv, SDKMAN, and jenv evidence; even `ownershipProven: true` never authorizes removal.
-- Java routing: project Maven/Gradle wrappers take precedence; Launcher/Daemon JVM evidence and native discovery remain review-only.
-- SBOM bridge: `sbom --import <file> --write` retains a digest and bounded CycloneDX/SPDX summary and never runs the external scanner.
-- Drift gate: startup saves an automatic observation that is not check-eligible; after review, explicit `reconcile --write` accepts the current observation as a baseline, while `reconcile --check --json` returns exit `2` for drift and never authorizes cleanup.
+Bounded home inspection, portable redacted comparisons, manager ownership evidence, Java build-tool routing, external CycloneDX/SPDX summaries, and an opt-in drift gate are available for advanced review. None proves identity or authorizes cleanup; see the [roadmap](ROADMAP.md#reconciliation-track) for exact boundaries and commands.
 
 ## Outputs
 
@@ -90,19 +100,10 @@ Sharing policy: treat `manifest*.json`, `reconcile.json`, raw SBOM files, `dashb
 
 ## AI Contract
 
-- The 0.2.0 `schema --json` contract includes trial write scope, privacy, precise safety fields, runtime-probe boundaries, and manual-submission rules. Version 0.1.1 supports `trial` but predates `outputs.trial`.
-- `start`, `status`, `context`, `reconcile`, and SBOM outputs share `aiDecisionEnvelope`; read it first, while `requiresHumanApprovalBefore` keeps destructive action classes review-only even when clear.
-- `reconcile` also emits a proposal-only `consolidationPlan`: evidence, stop conditions, rollback requirements, and approval gates - never an apply or removal command.
-- `schemaVersion`, `contractVersion`, `stableFrom`, and compatibility rules are explicit.
-- `aiAdoptionDecision.uniqueJob`, `chooseInstead`, `compositionOrder`, recommendation criteria, and evidence docs tell AI when to use aienvmap, compose it with another tool, or skip it.
-- `agentPointers.discovery`, `aiDiscovery.decision`, `sessionUse`, `startupChecklist`, `aiEntry`, and `copyPastePrompt` tell AI whether discovery is `auto-ready` or `fallback-required`; `onboard --json` returns a reviewed 12-field contract, where `verification` proves marker integrity but never AI-host pickup.
-- `.aienvmap/discovery.json`, `discovery.json.maintenance`, `agentDiscovery.sessionStart`, and `readOrder` give the fallback start path for schema-only or Markdown-first agents.
-- `environmentChangeProtocol`, `operationalSafety`, `followUpPlan`, `collaboration`, `coordination`, and `agentActivity` keep shared changes advisory; `followUpPlan` points to sync, status, or handoff when needed.
-- `coordinationRevision` enables optional compare-and-swap protection for intent and resolution writes without a daemon, database, or runtime dependency.
-- Optional intent `session` and bounded lease evidence distinguish concurrent AI sessions on a shared server; expiry is advisory and never authorizes cleanup or changes.
-- `start`, `status`, and `context` expose a sample-free `externalSbom` signal; stale or component drift raises advisory review, while absent evidence and identity fallback stay non-blocking.
-- `qualitySignals`, `releaseGate`, and `releaseReadiness` expose the AI-friendly, lightweight, batched stable-contract gate.
-- After `0.2.0`, documented JSON fields stay backward-compatible; new fields are additive.
+The 0.2.0 `schema --json` contract covers trial write scope, privacy, runtime-probe boundaries, and manual submission. `start`, `status`, `context`, `reconcile`, and SBOM outputs share `aiDecisionEnvelope`; `requiresHumanApprovalBefore` keeps destructive actions review-only. Reconciliation emits a proposal-only `consolidationPlan`, never an apply or removal command.
+`aiAdoptionDecision.uniqueJob`, `chooseInstead`, and `compositionOrder` tell AI when to use, combine, or skip aienvmap. `agentPointers.discovery`, `aiDiscovery.decision`, `sessionUse`, `startupChecklist`, `aiEntry`, and `copyPastePrompt` distinguish `auto-ready` from `fallback-required`; marker verification never proves AI-host pickup.
+`environmentChangeProtocol`, `operationalSafety`, `followUpPlan`, collaboration, coordination, and bounded session leases keep shared changes advisory. `followUpPlan` points to sync, status, or handoff; `coordinationRevision` adds optional compare-and-swap protection without a daemon or database.
+`externalSbom`, `qualitySignals`, `releaseGate`, `releaseReadiness`, explicit schema versions, and additive post-0.2.0 fields preserve stable, evidence-bounded automation.
 
 ## Commands
 
@@ -155,4 +156,4 @@ npm run release:check
 npm pack --dry-run
 ```
 
-[Roadmap](ROADMAP.md) / [Scorecard](SCORECARD.md) / [Market snapshot](MARKET.md) / [Security](SECURITY.md) / [Troubleshooting](TROUBLESHOOTING.md) / [Bugfix Log](BUGFIXES.md) / [Contributing](CONTRIBUTING.md) / [Portable case guide](examples/portable-environment-case-guide.md) / [Multi-agent conflict demo](examples/multi-agent-conflict.md) / Apache-2.0
+[Roadmap](ROADMAP.md) / [Scorecard](SCORECARD.md) / [Market snapshot](MARKET.md) / [Promotion guide](PROMOTION.md) / [Security](SECURITY.md) / [Troubleshooting](TROUBLESHOOTING.md) / [Bugfix Log](BUGFIXES.md) / [Contributing](CONTRIBUTING.md) / [Portable case guide](examples/portable-environment-case-guide.md) / [Multi-agent conflict demo](examples/multi-agent-conflict.md) / Apache-2.0

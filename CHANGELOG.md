@@ -4,6 +4,14 @@
 
 - No changes yet.
 
+## 0.2.1 - 2026-07-17
+
+- Fixed the generated dashboard client script so card groups render only after their data dependencies are initialized, preventing a temporal-dead-zone exception that left the dashboard blank.
+- Added an execution-level dashboard regression test that runs the generated client script and verifies that the main application surface is populated.
+- Reworked the README first screen around the problem, safe default, intended users, and product website.
+- Added a promotion guide with evidence thresholds that withholds individual public case promotion until at least five submissions have been collected.
+- Set `https://aienvmap.svwvs.com/` as the primary product introduction URL.
+
 ## 0.2.0 - 2026-07-15
 
 - Added an independent-process coordination race test proving that one shared revision permits exactly one commit and rejects the competing stale writer, plus abandoned stale-lock recovery coverage.

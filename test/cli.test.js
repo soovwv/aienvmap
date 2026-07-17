@@ -165,7 +165,7 @@ test("package, README, and CLI help share the accurate environment-before-change
   assert.match(readmeTop, /Know the development environment before an AI changes it/);
   assert.match(readmeTop, /environment map and explicit change handoff/);
   assert.match(readmeTop, /dependency-free/);
-  assert.match(readmeTop, /npx aienvmap@0\.2\.0 trial/);
+  assert.match(readmeTop, /npx aienvmap@0\.2\.1 trial/);
   assert.match(readmeTop, /nothing is uploaded automatically/);
   assert.match(readmeTop, /without silently installing, switching, or removing software/);
   assert.match(readmeTop, /## Why/);
@@ -175,7 +175,7 @@ test("package, README, and CLI help share the accurate environment-before-change
   assert.match(readmeTop, /Agent A records a planned dependency change/);
   assert.match(readmeTop, /Agent B starts later and sees the pending intent/);
   assert.match(readme, /no package is installed, removed, or switched/);
-  assert.match(readmeTop, /npx aienvmap@0\.2\.0 start/);
+  assert.match(readmeTop, /npx aienvmap@0\.2\.1 start/);
   assert.doesNotMatch(readmeTop, /npx aienvmap reconcile --quick/);
   assert.ok(readme.split(/\r?\n/).length <= 160);
   assert.ok(readme.indexOf("## Advanced environment evidence") > readme.indexOf("## What the AI gets"));
@@ -212,7 +212,7 @@ test("package stays runtime dependency-free for lightweight shared machines", as
   assert.equal(pkg.peerDependencies, undefined);
   assert.equal(pkg.bundledDependencies, undefined);
   assert.equal(pkg.main, undefined);
-  assert.equal(pkg.version, "0.2.0");
+  assert.equal(pkg.version, "0.2.1");
 });
 
 test("package publish allowlist stays small and intentional", async () => {
@@ -238,11 +238,13 @@ test("package publish allowlist stays small and intentional", async () => {
     "ROADMAP.md",
     "SCORECARD.md",
     "MARKET.md",
+    "PROMOTION.md",
     "VALIDATION.md",
     "TESTING.md",
     "AI_TESTING.md",
     "TESTER_INVITE.md",
     "RELEASE_NOTES_0.2.0.md",
+    "RELEASE_NOTES_0.2.1.md",
     "action.yml",
     "examples",
     ".agents",

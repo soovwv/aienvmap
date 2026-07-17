@@ -6,7 +6,7 @@ import { productScorecard } from "../src/scorecard.js";
 
 const root = path.resolve(".");
 
-test("0.2.0 release metadata stays aligned across package, APM, contracts, and docs", async () => {
+test("current release metadata stays aligned across package, APM, contracts, and docs", async () => {
   const pkg = JSON.parse(await fs.readFile(path.join(root, "package.json"), "utf8"));
   const apm = await fs.readFile(path.join(root, "apm.yml"), "utf8");
   const scorecard = await fs.readFile(path.join(root, "SCORECARD.md"), "utf8");
@@ -17,7 +17,7 @@ test("0.2.0 release metadata stays aligned across package, APM, contracts, and d
   const result = productScorecard();
   const surfaceCount = Object.keys(freeze.surfaceFieldCounts).length;
 
-  assert.equal(pkg.version, "0.2.0");
+  assert.equal(pkg.version, "0.2.1");
   assert.match(apm, new RegExp(`^version: ${pkg.version.replaceAll(".", "\\.")}$`, "m"));
   assert.match(scorecard, new RegExp(`\\| Technical readiness \\| ${result.technicalReadiness.score}/100 \\|`));
   assert.match(scorecard, new RegExp(`\\| Market readiness \\| ${result.marketReadiness.score}/100 \\|`));
@@ -41,7 +41,7 @@ test("0.2.0 release metadata stays aligned across package, APM, contracts, and d
 test("CHANGELOG reserves semantic-version release headings for real package versions", async () => {
   const changelog = await fs.readFile(path.join(root, "CHANGELOG.md"), "utf8");
   const releases = [...changelog.matchAll(/^## (\d+\.\d+\.\d+)(?:\s|$)/gm)].map((match) => match[1]);
-  assert.deepEqual(releases, ["0.2.0", "0.1.1", "0.1.0"]);
+  assert.deepEqual(releases, ["0.2.1", "0.2.0", "0.1.1", "0.1.0"]);
   assert.match(changelog, /^## Pre-release development history$/m);
   assert.match(changelog, /^### Internal batch 69$/m);
   assert.doesNotMatch(changelog, /^## 0\.1\.(?:[2-9]|[1-6]\d)$/m);

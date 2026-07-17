@@ -102,13 +102,13 @@ export function dashboardEssentialSurfaceClientScript() {
 export function dashboardPriorityClientScript() {
   return [
     `const essentialCards=${JSON.stringify(dashboardEssentialCards)};`,
-    "const cardPriority=title=>essentialCards.includes(title)?'essential':'support';"
+    `function cardPriority(title){return ${JSON.stringify(dashboardEssentialCards)}.includes(title)?'essential':'support'}`
   ].join("\n");
 }
 
 export function dashboardCardClientScript() {
   return [
-    "const card=(title,badge,body)=>`<section class=\"card ${cardPriority(title)}\" data-dashboard-priority=\"${cardPriority(title)}\"><div class=\"card-head\"><h2>${title}</h2>${badge||''}</div>${body}</section>`;"
+    "function card(title,badge,body){return `<section class=\"card ${cardPriority(title)}\" data-dashboard-priority=\"${cardPriority(title)}\"><div class=\"card-head\"><h2>${title}</h2>${badge||''}</div>${body}</section>`}"
   ].join("\n");
 }
 
