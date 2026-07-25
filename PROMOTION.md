@@ -6,7 +6,7 @@ Use `https://aienvmap.svwvs.com/` as the primary public introduction URL. Link t
 
 ## Goal
 
-The current goal is not maximum impressions. It is ten real trials, three public outcome-verified cases, at least one Linux case, one macOS case, and one later report showing whether the recorded environment decision remained useful.
+The current goal is not maximum impressions. It is ten real trials, at least five public external submissions before any individual case is introduced, three outcome-verified cases, at least one Linux case, one macOS case, and one later report showing whether the recorded environment decision remained useful.
 
 Count GitHub stars, npm requests, and post views as reach only. Do not describe them as users, successful setups, retention, or product validation.
 
@@ -33,7 +33,7 @@ Do not lead with the full JSON contract, SBOM interoperability, manager ownershi
 
 ## Proof that can be cited
 
-- 372 automated tests in the repository.
+- More than 370 automated tests in the repository; use the current test output for an exact count.
 - Maintainer-run Windows, Linux, and macOS compatibility evidence in `VALIDATION.md`.
 - npm provenance and release controls described in `SECURITY.md` and `SCORECARD.md`.
 
@@ -67,7 +67,7 @@ Suggested order:
 
 Contact people who actually use multiple AI coding sessions or have mixed Node/Python/Java installations. Ask for one bounded action:
 
-> In a disposable directory, run `npx aienvmap@0.2.1 trial` (`npx.cmd` on policy-restricted Windows PowerShell) and tell me whether the findings match your environment. Public submission is optional, and raw paths or environment dumps should not be shared.
+> In a disposable directory, run `npx aienvmap@0.2.2 trial` (`npx.cmd` on policy-restricted Windows PowerShell) and tell me whether the findings match your environment. Public submission is optional, and raw paths or environment dumps should not be shared.
 
 Personal contacts are valid testers. Disclose material relationships and do not describe a contributor, coauthor, paid tester, or maintainer-assisted review as fully independent.
 
@@ -83,7 +83,7 @@ Body:
 
 > I built aienvmap after noticing that separate AI coding sessions can work in the same repository while assuming different Node, Python, Java, or package-manager routes. It records observed runtime evidence and pending change intent so the next agent can review them before changing the environment.
 >
-> Try it with `npx aienvmap@0.2.1 start`. The default workflow writes local aienvmap artifacts but does not install, remove, switch, or rewrite the development environment.
+> Try it with `npx aienvmap@0.2.2 start`. The default workflow writes local aienvmap artifacts but does not install, remove, switch, or rewrite the development environment.
 >
 > I am looking for critical feedback on whether the first-run decision is useful, which findings are unclear, and whether this solves a real multi-agent problem.
 >
@@ -91,7 +91,7 @@ Body:
 
 ### Short social post
 
-> Codex and Copilot can share a repository without sharing the same assumptions about Node or Python. `npx aienvmap@0.2.1 start` gives the next agent observed runtime evidence and pending change intent without installing, removing, or switching anything. Critical feedback and real-environment trials are welcome: https://aienvmap.svwvs.com/
+> Codex and Copilot can share a repository without sharing the same assumptions about Node or Python. `npx aienvmap@0.2.2 start` gives the next agent observed runtime evidence and pending change intent without installing, removing, or switching anything. Critical feedback and real-environment trials are welcome: https://aienvmap.svwvs.com/
 
 ### Korean community draft
 
@@ -99,7 +99,7 @@ Translate this structure naturally rather than copying a machine-generated featu
 
 1. State that you are the maintainer.
 2. Describe one concrete multi-agent runtime mismatch.
-3. Show `npx aienvmap@0.2.1 start`.
+3. Show `npx aienvmap@0.2.2 start`.
 4. State that installation, removal, PATH edits, and runtime switching are outside the default behavior.
 5. Link the project website; do not introduce individual submissions before the five-case threshold.
 6. Ask whether the problem is real and whether the first output is understandable.

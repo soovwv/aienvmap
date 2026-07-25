@@ -3,7 +3,9 @@ import assert from "node:assert/strict";
 import { evaluatePerformanceMeasurement, evaluateWorkspaceMeasurement, performanceBudget } from "../src/performance-budget.js";
 
 test("performance budgets cover core AI entry and inventory paths", () => {
-  assert.deepEqual(Object.keys(performanceBudget.commands), ["scorecard", "start", "reconcileQuick"]);
+  assert.deepEqual(Object.keys(performanceBudget.commands), ["scorecard", "start", "startCompact", "statusCompact", "reconcileQuick"]);
+  assert.equal(performanceBudget.commands.startCompact.maxStdoutBytes, 5120);
+  assert.equal(performanceBudget.commands.statusCompact.maxStdoutBytes, 5120);
   assert.equal(performanceBudget.mode, "regression-guard-not-benchmark");
   assert.match(performanceBudget.rule, /not latency promises/);
 });

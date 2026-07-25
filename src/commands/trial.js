@@ -30,6 +30,12 @@ export async function trialWorkspace(args = {}) {
     status: "technical-test-complete",
     decision: portable.decision,
     inventoryCounts: summary.evidence.inventoryCounts,
+    reviewSummary: {
+      runtimeCategoryCount: countRuntimeCategories(summary.evidence.inventoryCounts),
+      distinctPythonEnvironmentCount: summary.evidence.inventoryCounts.python,
+      confidence: summary.evidence.findingDetails[0]?.confidence || (portable.decision === "clear" ? "high" : "unknown"),
+      reason: summary.evidence.findingDetails[0]?.summary || "No environment findings require review."
+    },
     lightSbom: { packageCount: lightSbom.summary?.packages || 0, securityScanEnabled: false },
     artifacts: [".aienvmap/trial/portable.json", ".aienvmap/trial/case-summary.json", ".aienvmap/trial/case-draft.md", ".aienvmap/trial/NEXT.md"],
     next: "Technical testing is complete. Ask an AI to summarize case-summary.json. Public case evidence is optional and requires brief human confirmation and separate submission consent.",
@@ -42,7 +48,8 @@ export async function trialWorkspace(args = {}) {
       aienvmapMutationPerformed: false,
       projectWrappersExecuted: false,
       runtimeVersionProbesExecuted: true,
-      thirdPartyProbeSideEffectsGuaranteedAbsent: false
+      thirdPartyProbeSideEffectsGuaranteedAbsent: false,
+      launcherCacheMayChange: true
     },
     marketEvidence: false,
     rule: "Technical testing needs no human opinion; public market evidence requires independent human confirmation, privacy review, and explicit submission consent."
@@ -51,11 +58,19 @@ export async function trialWorkspace(args = {}) {
   else if (!args.quiet) {
     console.log(`aienvmap trial: ${result.status}`);
     console.log(`decision: ${result.decision}`);
+    console.log(`runtimes: ${result.reviewSummary.runtimeCategoryCount} categories; Python environments: ${result.reviewSummary.distinctPythonEnvironmentCount}`);
+    console.log(`confidence: ${result.reviewSummary.confidence}`);
+    console.log(`reason: ${result.reviewSummary.reason}`);
+    console.log("system changes: none by aienvmap; the npx launcher may update its package cache");
     console.log(`review: ${result.artifacts[3]} -> ${result.artifacts[2]}`);
     console.log(`submit: ${result.feedbackUrl}`);
     console.log("privacy: no telemetry or automatic upload");
   }
   return result;
+}
+
+function countRuntimeCategories(counts = {}) {
+  return [counts.node, counts.python, counts.conda, ...Object.values(counts.otherRuntimes || {})].filter((count) => Number(count) > 0).length;
 }
 
 function renderNextSteps() {

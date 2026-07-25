@@ -1,4 +1,5 @@
 import path from "node:path";
+import { versionMatchesConstraint } from "./version-constraint.js";
 
 export function analyzeNodePackageManagers(managers = {}, project = {}) {
   const findings = [];
@@ -36,9 +37,7 @@ export function analyzeCondaRouting(conda = {}, pythonInstallations = [], env = 
 }
 
 function versionMatches(expected, actual) {
-  const clean = String(expected).replace(/^[=v]/, "");
-  if (/^\d+(?:\.\d+){0,2}$/.test(clean)) return actual === clean || actual.startsWith(`${clean}.`);
-  return true;
+  return versionMatchesConstraint(expected, actual);
 }
 
 function pathContains(parent, child) {

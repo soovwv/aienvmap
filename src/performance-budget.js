@@ -6,6 +6,8 @@ export const performanceBudget = Object.freeze({
   commands: Object.freeze({
     scorecard: Object.freeze({ args: ["scorecard", "--json"], maxDurationMs: 5000, maxStdoutBytes: 65536 }),
     start: Object.freeze({ args: ["start", "--json"], maxDurationMs: 30000, maxStdoutBytes: 524288 }),
+    startCompact: Object.freeze({ args: ["start", "--json", "--compact"], maxDurationMs: 30000, maxStdoutBytes: 5120 }),
+    statusCompact: Object.freeze({ args: ["status", "--json", "--compact"], maxDurationMs: 5000, maxStdoutBytes: 5120 }),
     reconcileQuick: Object.freeze({ args: ["reconcile", "--quick", "--json"], maxDurationMs: 30000, maxStdoutBytes: 1048576 })
   }),
   workspace: Object.freeze({ maxGeneratedBytes: 3145728, maxGeneratedFiles: 32 }),

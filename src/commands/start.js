@@ -4,6 +4,12 @@ import { syncWorkspace } from "./sync.js";
 import { reconcileWorkspace, summarizeReconciliation } from "./reconcile.js";
 import { readJsonStrict } from "../fsutil.js";
 import { reconcileJsonPath, workspaceDir } from "../paths.js";
+import { readFileSync } from "node:fs";
+import { reconciliationFresh } from "../reconciliation-freshness.js";
+import { compactStartPreflight } from "../compact-preflight.js";
+import { explainReasonCodes } from "../reason-explanations.js";
+
+const packageVersion = JSON.parse(readFileSync(new URL("../../package.json", import.meta.url), "utf8")).version;
 
 export async function startWorkspace(args = {}) {
   const dir = workspaceDir(args);
@@ -15,8 +21,10 @@ export async function startWorkspace(args = {}) {
   }
 
   let reconciliation = await readJsonStrict(reconcileJsonPath(dir), null);
-  if (needsSync || !reconciliationFresh(reconciliation)) {
+  let reconciliationIsFresh = await reconciliationFresh(reconciliation, dir);
+  if (needsSync || !reconciliationIsFresh) {
     reconciliation = await reconcileWorkspace({ ...args, dir, quiet: true, json: false, write: true, quick: true, automatic_snapshot: true });
+    reconciliationIsFresh = await reconciliationFresh(reconciliation, dir);
   }
 
   const status = await statusWorkspace({ ...args, quiet: true, json: false, write: true });
@@ -43,35 +51,28 @@ export async function startWorkspace(args = {}) {
     fallbackPrompt: after.aiDiscovery?.fallbackPrompt || "",
     copyPastePrompt: after.aiDiscovery?.copyPastePrompt || after.aiDiscovery?.fallbackPrompt || "",
     promptUse: after.aiDiscovery?.promptUse || null,
-    reconciliation: { ...summarizeReconciliation(reconciliation), freshness: reconciliationFresh(reconciliation) ? "fresh" : "unknown-or-stale" },
+    reconciliation: { ...summarizeReconciliation(reconciliation), freshness: reconciliationIsFresh ? "fresh" : "unknown-or-stale" },
     externalSbom: status.externalSbom,
     statusText: renderStatusText(status),
     rule: "Use this as the first AI entry command when instruction-file automatic discovery is uncertain. It only writes aienvmap artifacts and keeps local decisions advisory."
   };
 
   if (args.json) {
-    console.log(JSON.stringify(result, null, 2));
+    console.log(JSON.stringify(args.compact ? compactStartPreflight(result, status) : result, null, 2));
   } else if (!args.quiet) {
-    console.log(`aienvmap start: ${result.mode}`);
-    console.log(`decision: ${result.decision}: ${result.summary}`);
-    if (result.aiDecisionEnvelope?.userQuestion) console.log(`ask user: ${result.aiDecisionEnvelope.userQuestion}`);
-    console.log(`read: ${result.readOrder.join(" -> ")}`);
+    const counts = status.counts || {};
+    const reason = explainReasonCodes(result.aiDecisionEnvelope?.reasonCodes, 1)[0] || result.summary;
+    console.log(`aienvmap ${packageVersion}: ${result.decision} | latest command: npx aienvmap@latest start`);
+    console.log(`detected: runtimes ${counts.runtimes || 0} | package managers ${counts.packageManagers || 0} | containers ${counts.containers || 0}`);
+    console.log(`review: warnings ${counts.warnings || 0} | planned changes ${counts.openIntents || 0}`);
+    console.log(`reason: ${reason}`);
+    if (result.aiDecisionEnvelope?.userQuestion) console.log(`ask: ${result.aiDecisionEnvelope.userQuestion}`);
     console.log(`next: ${result.nextCommand}`);
-    console.log(`setup: ${result.nextSetupCommand}`);
-    console.log(`reconcile: ${result.reconciliation.decision} / ${result.reconciliation.artifact}`);
-    console.log(`AI discovery: ${result.discoveryDecision} / ${result.agentPointers?.discovery || after.agentPointers.discovery}`);
-    console.log(`aiEntry: ${result.startHere} / follow aiEntry.readFirst, nextCommand, intent, checkpoint, and handoff`);
-    console.log(`discovery: ${result.agentPointers?.discovery || after.agentPointers.discovery}`);
-    console.log(`AI fallback: ${result.fallbackPrompt}`);
-    console.log(`copy-paste prompt: ${result.copyPastePrompt}`);
+    console.log(`details: ${result.startHere} | ${result.reconciliation.artifact}`);
+    console.log(`AI prompt: ${result.copyPastePrompt}`);
   }
 
   return result;
-}
-
-function reconciliationFresh(value = {}) {
-  const generated = Date.parse(value.generatedAt || "");
-  return Number.isFinite(generated) && Date.now() - generated < 24 * 60 * 60 * 1000;
 }
 
 function withReconcile(readOrder = []) {

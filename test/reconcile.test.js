@@ -4,7 +4,7 @@ import assert from "node:assert/strict";
 import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
-import { analyzeNodeInstallations, analyzeNodePackageManagers, analyzeNpmInstallations, analyzePythonCommandRouting, analyzePythonInstallations, analyzeRuntimeLinks, applyIntentionalRuntimePolicy, attachFnmManagerEvidence, attachMiseNodeEvidence, attachMisePythonEvidence, attachNvmManagerEvidence, attachPyenvManagerEvidence, attachUvManagerEvidence, attachVoltaManagerEvidence, buildAiDecision, buildConsolidationPlan, buildEnvironmentClarification, compareNpmGlobalPackages, comparePythonPackages, findNodeCandidates, findNodePackageManagerCandidates, findPythonCandidates, inspectFnmNodeManager, inspectMiseRuntimeManager, inspectNodeCandidates, inspectNodePackageManagerCandidates, inspectNvmNodeManager, inspectPyenvPythonManager, inspectPythonCandidates, inspectVoltaNodeManager, linkNodeNpmRuntimes, linkPythonPipRuntimes, miseInventoryForRuntime, parseFnmNodeList, parseMiseRuntimeInventory, parsePackageManager, parsePipList, parsePipVersion, parsePyenvVersions, parseVoltaNodeList, summarizePipInspect, summarizePythonPackages } from "../src/package-managers.js";
+import { analyzeNodeInstallations, analyzeNodePackageManagers, analyzeNpmInstallations, analyzePythonCommandRouting, analyzePythonInstallations, analyzeRuntimeLinks, applyIntentionalRuntimePolicy, attachFnmManagerEvidence, attachMiseNodeEvidence, attachMisePythonEvidence, attachNvmManagerEvidence, attachPyenvManagerEvidence, attachUvManagerEvidence, attachVoltaManagerEvidence, buildAiDecision, buildConsolidationPlan, buildEnvironmentClarification, compareNpmGlobalPackages, comparePythonPackages, findNodeCandidates, findNodePackageManagerCandidates, findPythonCandidates, groupPythonInstallations, inspectFnmNodeManager, inspectMiseRuntimeManager, inspectNodeCandidates, inspectNodePackageManagerCandidates, inspectNvmNodeManager, inspectPyenvPythonManager, inspectPythonCandidates, inspectVoltaNodeManager, linkNodeNpmRuntimes, linkPythonPipRuntimes, miseInventoryForRuntime, parseFnmNodeList, parseMiseRuntimeInventory, parsePackageManager, parsePipList, parsePipVersion, parsePyenvVersions, parseVoltaNodeList, summarizePipInspect, summarizePythonPackages } from "../src/package-managers.js";
 import { buildPortableCaseSummary, buildPortableReconciliation, comparePortableReconciliations, isolatedHomeEnvironment, portableEvidenceFingerprint, resolveInspectedHome } from "../src/commands/reconcile.js";
 import { analyzePythonToolEntryPoints, findPythonToolCandidates, inspectPythonToolCandidates } from "../src/package-managers.js";
 import { analyzeCondaRouting, inspectCondaCandidates, parseCondaEnvironmentInfo } from "../src/package-managers.js";
@@ -778,6 +778,33 @@ test("analyzePythonInstallations compares active Python with project version", (
   assert.deepEqual(findings.map((item) => item.code), ["multiple-python-installations", "active-python-project-mismatch"]);
 });
 
+test("runtime mismatch findings preserve declared and observed evidence", () => {
+  const [finding] = analyzeNodeInstallations([
+    { version: "20.0.0", active: true, path: "/tools/node" }
+  ], {
+    node: {
+      versionFile: "22.12.0",
+      declaration: { source: ".tool-versions", evidenceType: "declared" }
+    }
+  });
+  assert.equal(finding.evidenceType, "declared-vs-observed");
+  assert.deepEqual(finding.declared, { value: "22.12.0", source: ".tool-versions", evidenceType: "declared" });
+  assert.deepEqual(finding.observed, { value: "20.0.0", source: "/tools/node", evidenceType: "observed" });
+  assert.match(finding.message, /\.tool-versions declares 22\.12\.0/);
+});
+
+test("Python aliases sharing one interpreter prefix count as one environment", () => {
+  const grouped = groupPythonInstallations([
+    { path: "/usr/bin/python", version: "3.12.1", prefix: "/usr", basePrefix: "/usr", active: true },
+    { path: "/usr/bin/python3", version: "3.12.1", prefix: "/usr", basePrefix: "/usr", active: false }
+  ], { executed: true });
+  assert.equal(grouped.length, 1);
+  assert.deepEqual(grouped[0].aliases, ["/usr/bin/python3"]);
+  assert.equal(grouped[0].commandEntryPointCount, 2);
+  assert.equal(grouped[0].classification, "likely-duplicate");
+  assert.deepEqual(analyzePythonInstallations(grouped).map((item) => item.code), []);
+});
+
 test("AI decisions keep inactive virtual environments and require approval", () => {
   const result = buildAiDecision({
     npm: [],
@@ -940,10 +967,35 @@ test("case summary excludes versions and fingerprints and cannot self-qualify as
   assert.equal(summary.status, "draft-human-review-required");
   assert.equal(summary.evidence.inventoryCounts.node, 1);
   assert.deepEqual(summary.evidence.findingCodes, ["multiple-node-installations"]);
+  assert.equal(summary.evidence.findingDetails[0].confidence, "unknown");
+  assert.match(summary.evidence.findingDetails[0].summary, /multiple node installations needs review/i);
+  assert.deepEqual(summary.safetyEnvelope, {
+    pathModified: false,
+    softwareInstalledByAienvmap: false,
+    softwareRemoved: false,
+    networkUploaded: false,
+    projectWrappersExecuted: false,
+    launcherCacheMayChange: true
+  });
   assert.equal(summary.marketEvidence.eligible, false);
   for (const privateValue of ["22.7.1", "alice", report.evidenceFingerprint]) assert.equal(serialized.includes(privateValue), false);
   assert.equal(summary.environmentChangesAuthorized, false);
   assert.equal(summary.removalAuthorized, false);
+});
+
+test("case summary explains Python alias and pip findings without paths or versions", () => {
+  const report = buildPortableReconciliation({
+    scanMode: "quick",
+    node: { installations: [], distinctVersions: [] }, npm: { installations: [], distinctVersions: [] },
+    python: { installations: [{ version: "3.12.1", path: "/home/alice/python", aliases: ["/home/alice/python3"] }], distinctVersions: ["3.12.1"] },
+    otherRuntimes: {},
+    findings: [{ code: "multiple-python-installations" }, { code: "pip-python-runtime-link-uncertain" }], decision: "review"
+  }, { platform: "linux", arch: "x64" });
+  const summary = buildPortableCaseSummary(report);
+  assert.equal(summary.evidence.findingDetails[0].confidence, "medium");
+  assert.match(summary.evidence.findingDetails[0].reviewReason, /1 Python command aliases/);
+  assert.match(summary.evidence.findingDetails[1].summary, /Active pip could not be linked confidently/);
+  assert.doesNotMatch(JSON.stringify(summary), /alice|3\.12\.1/);
 });
 
 test("case summary allowlists retained labels even when a fingerprint-valid input is hostile", () => {

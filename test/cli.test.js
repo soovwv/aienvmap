@@ -29,8 +29,15 @@ test("CLI rejects hallucinated options and unused positional arguments", async (
 
 test("CLI command help does not execute the command", async () => {
   const { stdout } = await execFileAsync(process.execPath, [path.resolve("bin/aienvmap.js"), "status", "--help"], { cwd: path.resolve(".") });
-  assert.match(stdout, /Usage:/);
-  assert.match(stdout, /aienvmap status/);
+  assert.match(stdout, /^aienvmap status \[--dir \.\]/);
+  assert.doesNotMatch(stdout, /aienvmap onboard/);
+});
+
+test("CLI command help reports command-specific required options", async () => {
+  const { stdout } = await execFileAsync(process.execPath, [path.resolve("bin/aienvmap.js"), "checkpoint", "--help"], { cwd: path.resolve(".") });
+  assert.match(stdout, /--actor agent:id/);
+  assert.match(stdout, /--summary what-changed/);
+  assert.match(stdout, /help --all/);
 });
 
 test("CLI onboard accepts a target after a boolean option", async () => {
@@ -133,10 +140,10 @@ test("CLI scorecard keeps technical and market evidence separate", async () => {
   assert.ok(json.technicalReadiness.score > json.marketValidation.score);
   assert.ok(json.marketReadiness.score > json.marketValidation.score);
   assert.equal(json.releaseAssessment.qualified, true);
-  assert.equal(json.releaseAssessment.releaseStatus, "published");
-  assert.equal(json.releaseAssessment.publishReady, false);
-  assert.equal(json.releaseAssessment.publishEligibility, "not-applicable-already-published");
-  assert.deepEqual(json.releaseAssessment.publishBlockers, []);
+  assert.equal(json.releaseAssessment.releaseStatus, "release-candidate");
+  assert.equal(json.releaseAssessment.publishReady, true);
+  assert.equal(json.releaseAssessment.publishEligibility, "eligible-after-immutable-tag-and-ci");
+  assert.ok(json.releaseAssessment.publishBlockers.some((item) => item.includes("v0.2.2")));
   assert.match(json.rule, /not use overall score alone/);
 });
 
@@ -146,6 +153,11 @@ test("package, README, and CLI help share the accurate environment-before-change
   const { stdout } = await execFileAsync(process.execPath, [
     path.resolve("bin/aienvmap.js"),
     "--help"
+  ], { cwd: path.resolve(".") });
+  const { stdout: detailedHelp } = await execFileAsync(process.execPath, [
+    path.resolve("bin/aienvmap.js"),
+    "help",
+    "--all"
   ], { cwd: path.resolve(".") });
   const readmeTop = readme.replace(/\r\n/g, "\n").slice(0, 2800);
 
@@ -163,9 +175,9 @@ test("package, README, and CLI help share the accurate environment-before-change
   assert.ok(pkg.keywords.includes("light-sbom"));
   assert.ok(pkg.keywords.includes("dependency-coordination"));
   assert.match(readmeTop, /Know the development environment before an AI changes it/);
-  assert.match(readmeTop, /environment map and explicit change handoff/);
+  assert.match(readmeTop, /local environment evidence and explicit change handoff/);
   assert.match(readmeTop, /dependency-free/);
-  assert.match(readmeTop, /npx aienvmap@0\.2\.1 trial/);
+  assert.match(readmeTop, /npx aienvmap@0\.2\.2 trial/);
   assert.match(readmeTop, /nothing is uploaded automatically/);
   assert.match(readmeTop, /without silently installing, switching, or removing software/);
   assert.match(readmeTop, /## Why/);
@@ -175,7 +187,7 @@ test("package, README, and CLI help share the accurate environment-before-change
   assert.match(readmeTop, /Agent A records a planned dependency change/);
   assert.match(readmeTop, /Agent B starts later and sees the pending intent/);
   assert.match(readme, /no package is installed, removed, or switched/);
-  assert.match(readmeTop, /npx aienvmap@0\.2\.1 start/);
+  assert.match(readmeTop, /npx aienvmap@0\.2\.2 start/);
   assert.doesNotMatch(readmeTop, /npx aienvmap reconcile --quick/);
   assert.ok(readme.split(/\r?\n/).length <= 160);
   assert.ok(readme.indexOf("## Advanced environment evidence") > readme.indexOf("## What the AI gets"));
@@ -200,8 +212,8 @@ test("package, README, and CLI help share the accurate environment-before-change
   assert.match(readme, /never edits the project's `\.gitignore`/);
   assert.match(stdout, /know the development environment before an AI changes it/);
   assert.match(stdout, /aienvmap start    one-command AI startup with a copy-paste fallback prompt/);
-  assert.match(stdout, /aienvmap discover  read-only detection plus aiDiscovery\.decision and copy-paste prompt/);
-  assert.match(stdout, /aienvmap scorecard separate release-readiness and independent market-validation evidence/);
+  assert.match(detailedHelp, /discover\s+verify AI instruction-file discovery/);
+  assert.match(detailedHelp, /scorecard\s+separate engineering readiness from market evidence/);
 });
 
 test("package stays runtime dependency-free for lightweight shared machines", async () => {
@@ -212,7 +224,7 @@ test("package stays runtime dependency-free for lightweight shared machines", as
   assert.equal(pkg.peerDependencies, undefined);
   assert.equal(pkg.bundledDependencies, undefined);
   assert.equal(pkg.main, undefined);
-  assert.equal(pkg.version, "0.2.1");
+  assert.equal(pkg.version, "0.2.2");
 });
 
 test("package publish allowlist stays small and intentional", async () => {
@@ -245,6 +257,7 @@ test("package publish allowlist stays small and intentional", async () => {
     "TESTER_INVITE.md",
     "RELEASE_NOTES_0.2.0.md",
     "RELEASE_NOTES_0.2.1.md",
+    "RELEASE_NOTES_0.2.2.md",
     "action.yml",
     "examples",
     ".agents",
@@ -255,4 +268,37 @@ test("package publish allowlist stays small and intentional", async () => {
   assert.equal(pkg.files.includes(".aienvmap"), false);
   assert.equal(pkg.files.includes(".apm"), true);
   assert.equal(pkg.files.includes("apm.yml"), true);
+});
+
+test("CLI default help leads with the two-command workflow and defers advanced commands", async () => {
+  const { stdout } = await execFileAsync(process.execPath, [path.resolve("bin/aienvmap.js"), "--help"], { cwd: path.resolve(".") });
+  assert.match(stdout, /aienvmap start/);
+  assert.match(stdout, /aienvmap status/);
+  assert.match(stdout, /aienvmap help --all/);
+  assert.doesNotMatch(stdout, /Advanced commands:/);
+
+  const detailed = await execFileAsync(process.execPath, [path.resolve("bin/aienvmap.js"), "help", "--all"], { cwd: path.resolve(".") });
+  assert.match(detailed.stdout, /Advanced commands:/);
+  assert.match(detailed.stdout, /reconcile\s+inspect mixed runtime/);
+});
+
+test("CLI scopes compact output to start/status JSON", async () => {
+  await assert.rejects(
+    execFileAsync(process.execPath, [path.resolve("bin/aienvmap.js"), "start", "--compact"], { cwd: path.resolve(".") }),
+    /--compact requires --json/
+  );
+  await assert.rejects(
+    execFileAsync(process.execPath, [path.resolve("bin/aienvmap.js"), "sbom", "--json", "--compact"], { cwd: path.resolve(".") }),
+    /--compact is only supported by start and status/
+  );
+});
+
+test("generated workspace snapshots stay out of git and npm publication", async () => {
+  const ignore = await fs.readFile(path.resolve(".gitignore"), "utf8");
+  const pkg = JSON.parse(await fs.readFile(path.resolve("package.json"), "utf8"));
+
+  assert.match(ignore, /^\.aienvmap\/$/m);
+  assert.match(ignore, /^AIENV\.md$/m);
+  assert.equal(pkg.files.includes(".aienvmap"), false);
+  assert.equal(pkg.files.includes("AIENV.md"), false);
 });

@@ -1,7 +1,7 @@
 {
   "schemaName": "aienvmap-ai-json-root-field-freeze",
   "schemaVersion": 1,
-  "targetRelease": "0.2.0",
+  "targetRelease": "0.2.2",
   "algorithm": "sha256(JSON.stringify(ordered surface-to-rootFields map))",
   "digest": "2a30537d3e1707c07e10990afcae3336d6881e7d0dd8112d8453112cdb18fdeb",
   "surfaceFieldCounts": {

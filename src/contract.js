@@ -284,8 +284,8 @@ export function schemaContract() {
       files: ["AGENTS.md", "CLAUDE.md", "GEMINI.md"],
       optionalFiles: [".cursor/rules/environment.md", ".github/copilot-instructions.md"],
       skillFiles: [".agents/skills/aienvmap/SKILL.md", ".claude/skills/aienvmap/SKILL.md"],
-      apmInstallCommand: "apm install soovwv/aienvmap/.apm/skills/aienvmap#v0.2.0 --target agent-skills,claude",
-      apmReleaseRule: "The bounded GitHub skill subpath is an APM distribution channel, not a claimed central-marketplace listing. Use the immutable v0.2.0 tag after that tag is published.",
+      apmInstallCommand: "apm install soovwv/aienvmap/.apm/skills/aienvmap#v0.2.2 --target agent-skills,claude",
+      apmReleaseRule: "The bounded GitHub skill subpath is an APM distribution channel, not a claimed central-marketplace listing. Use the immutable v0.2.2 tag after that tag is published.",
       startCommand: "aienvmap start",
       discoverCommand: "aienvmap discover",
       installCommand: "aienvmap onboard",
@@ -360,13 +360,13 @@ export function schemaContract() {
       workflow: ".github/workflows/release.yml",
       publishWorkflow: "GitHub Actions Release workflow_dispatch",
       provenance: {
-        status: "0.1.1-verified-0.2.0-pending",
+        status: "trusted-publishing-verified",
         oidcPermission: "id-token: write",
         publishFlag: "--provenance",
         sourcePolicy: "current main commit with matching v<version> tag",
         duplicatePolicy: "fail when aienvmap@<version> already exists",
         postPublishVerification: "npm registry version and dist.integrity",
-        trustedPublishing: "workflow-ready; npm-side trusted publisher configuration must be verified before the 0.2.0 release"
+        trustedPublishing: "verified through the published 0.2.0 and 0.2.1 provenance releases; reverify registry attestations after every publish"
       },
       beforePublish: [
         "npm run release:check",
@@ -375,49 +375,31 @@ export function schemaContract() {
         "verify aienvmap@<version> is not already published",
         "confirm npm publish with confirm_publish=publish"
       ],
-      afterStablePublish: "Deprecate aienvmap@<0.2.0 as prototype history after 0.2.0 is published.",
+      afterStablePublish: "Keep aienvmap@<0.2.0 as deprecated prototype history; never unpublish normal release history.",
       rule: "Do not publish every commit; batch meaningful changes and keep local operation advisory."
     },
     releaseReadiness: {
-      target: "0.2.0",
+      target: "0.2.2",
       status: "release-candidate",
       currentBatch: {
         status: "reviewed",
-        releaseType: "stability-batch",
-        themes: ["APM ecosystem distribution", "AI discovery", "verified AI onboarding", "dependency quick check", "dashboard parity", "dashboard maintainability", "AI quality signals", "SBOM interoperability", "recommendation positioning", "shared contract constants", "runtime probe safety", "installed package verification", "release gating"],
+        releaseType: "compatible-patch-batch",
+        themes: ["human dashboard simplification", "command-specific help", "environment evidence accuracy", "runtime manager evidence", "failure isolation", "installed package verification", "performance budgets", "market evidence"],
         changes: [
-          "APM-compatible bounded agent skill with no hooks, MCP server, executable deployment, or automatic install behavior",
-          "discovery, sync, status, and onboarding recognize APM skill coverage and avoid duplicate native pointer writes",
-          "clean APM consumer install gate verifies skill placement and native-pointer coexistence without claiming AI-host pickup",
-          "best-effort AI discovery with aiDiscovery.decision, discovery.json, startupChecklist, and fallback prompt contract",
-          "onboard re-reads requested marker files and reports fail-closed verification without claiming AI-host automatic pickup",
-          "copyPastePrompt, promptUse, and aiEntry recovery fields for AI hosts that miss instruction-file automatic discovery",
-          "plain start and discover output expose aiEntry so fallback recovery is visible without opening JSON",
-          "aiEntry and copyPastePrompt guidance aligned across README, schema, packaged AI skill, adoption guide, and example evidence docs",
-          "generated .aienvmap/README.md and summary.md surface aiEntry for artifact-first AI agents",
-          "dashboard Agent Pointers mirrors auto-ready versus fallback-required startup decisions and shows aiEntry fields",
-          "dashboard rendering split into payload, document, style, card, mainCards, supportCards, operationalCards, and stateCards helpers",
-          "SBOM aiUse is visible in JSON, summary, dashboard, and schema as the shortest dependency/security safety summary",
-          "dependencyQuickCheck surfaced in SBOM, status/context, summary, handoff, dashboard, and demo outputs",
-          "demo --json exposes recommendationDecision so AI agents can decide recommend, skip, first commands, and proof command from one artifact",
-          "demo --json recommendationDecision now uses aiAdoptionDecision while preserving compatible recommend/skip/start fields",
-          "dashboard Quality Signals mirrors aiAdoptionDecision so humans see the same use/recommend/start/skip contract as AI agents",
-          "sessionUse provides a compact cross-agent startup proof command and fallback decision for every AI session",
-          "plain sbom and verbose status text expose dependencyQuickCheck without expanding default status output",
-          "start --json exposes root-level discoveryDecision, startupChecklist, resume, aiEntry, copyPastePrompt, and fallbackPrompt for AI hosts",
-          "operational safety contract in status/context",
-          "quality signals in schema/status/context/summary/dashboard",
-          "AI adoption checklist and demo recommendation signals, including discovery decision and dashboard parity",
-          "compact aiAdoptionDecision block for AI agents deciding whether to use, recommend, start, or skip aienvmap",
-          "package metadata and recommendation signals for shared-environment version drift prevention",
-          "centralized AI discovery/read-order constants across discovery, status, dashboard, schema, SBOM, and generated artifacts",
-          "external SBOM/security scanner guidance",
-          "non-mutating-by-design trial safety fields and explicit third-party runtime probe limits",
-          "cross-platform packed-install smoke verification for the actual npm artifact",
-          "manual batched release gate"
+          "two-tab human dashboard separates the concise environment overview from light SBOM details",
+          "dashboard sections fail independently and tolerate incomplete timestamps and optional evidence",
+          "detected tools are grouped as runtimes, package managers, and containers with severity-aware risk styling",
+          "command-specific help exposes only the selected command syntax and required options",
+          "compact start and status outputs stay within explicit byte and duration budgets",
+          "project expectation, version constraint, runtime finding, route, reason, and reconciliation freshness logic are isolated into bounded modules",
+          "mise, fnm, nvm, and Volta evidence is reconciled without replacing stronger manager ownership evidence",
+          "Windows atomic writes retry bounded transient lock failures",
+          "GitHub Action output is compact by default while preserving machine-readable artifacts",
+          "installed npm tarball verification proves the simplified dashboard is generated by the packaged CLI",
+          "dated market evidence remains separate from technical readiness and independent validation"
         ],
         decision: "release-candidate",
-        reason: "The stability and AI-contract batch has been reviewed as one intentional release candidate for 0.2.0; final release checks, tag verification, and npm authentication remain."
+        reason: "The dashboard, CLI, evidence accuracy, reliability, and maintainability changes are grouped as one intentional compatible patch release for 0.2.2; final release checks, tag verification, and registry publication remain."
       },
       publishDecision: {
         default: "hold",
@@ -441,18 +423,17 @@ export function schemaContract() {
       },
       publishGate: {
         status: "ready-for-final-check",
-        reason: "The 0.2.0 stability batch is reviewed and versioned; publishing remains blocked until the final release check, exact tag, and npm trusted publisher are verified.",
-        nextAction: "Run npm run release:check, verify npm-side trusted publishing, tag the exact merged main commit, then use the manual release workflow.",
+        reason: "The 0.2.2 compatible patch batch is reviewed and versioned; publishing remains blocked until the final release check, exact tag, and npm trusted publisher are verified.",
+        nextAction: "Run npm run release:check, verify the installed-package dashboard, tag the exact merged main commit, then use the manual release workflow.",
         requiredEvidence: ["npm run release:check", "npm run pack:install-check", "node bin/aienvmap.js schema --json", "node bin/aienvmap.js demo --json", "npm pack --dry-run"],
         readyWhen: [
           "currentBatch changes are reviewed as one release note group",
           "documented JSON contracts are additive and compatible",
-          "aiDiscovery.decision, aiUse, and dependencyQuickCheck are visible in the AI JSON contract, generated artifacts, plain CLI review, dashboard, and examples",
+          "the simplified overview and SBOM tabs are generated from the installed npm tarball",
           "shared AI discovery/read-order constants are covered by release:check",
-          "README, examples, schema, CHANGELOG, dashboard, and packaged AI skill describe the same AI workspace coordination contract",
-          "aiEntry, generated artifact hints, dashboard fallback fields, copyPastePrompt, promptUse, dashboard helper lists, and release notes are covered by release:check",
-          "onboard verification distinguishes marker-file integrity from unverified AI-host automatic pickup",
-          "package.json version is intentionally bumped for 0.2.0 or the chosen release"
+          "README, schema, CHANGELOG, dashboard, and packaged AI skill describe the same environment-evidence and change-handoff contract",
+          "command help, dashboard failure isolation, runtime evidence modules, and release notes are covered by release:check",
+          "package.json version is intentionally bumped to 0.2.2"
         ],
         holdWhen: [
           "release-candidate changes differ from the reviewed release notes",
@@ -466,7 +447,7 @@ export function schemaContract() {
         "currentBatch changes are reviewed as one release note group",
         "README, examples, schema, and CHANGELOG describe the same AI workspace coordination contract",
         "npm run release:check passes after the final batched change",
-        "package.json version is intentionally bumped for 0.2.0 or the chosen release",
+        "package.json version is intentionally bumped to 0.2.2",
         "v<version> tag resolves to the exact current main release commit",
         "GitHub Release workflow is run manually with explicit publish confirmation"
       ],
@@ -479,7 +460,7 @@ export function schemaContract() {
         "README quick start and AI contract are current",
         "package metadata and CLI help match AI workspace coordination positioning",
         "multi-agent conflict demo passes",
-        "0.1.x deprecation message is prepared but not run until 0.2.0 is published"
+        "the installed 0.2.2 tarball generates the simplified dashboard"
       ],
       evidenceCommands: [
         "npm run release:check",
@@ -555,6 +536,17 @@ export function schemaContract() {
         rootFields: ["status", "mode", "localMode", "purpose", "startHere", "readOrder", "decision", "aiDecisionEnvelope", "summary", "nextCommand", "nextSetupCommand", "agentPointers", "aiDiscovery", "discoveryDecision", "startupChecklist", "resume", "sessionUse", "aiEntry", "fallbackPrompt", "copyPastePrompt", "promptUse", "reconciliation", "statusText", "rule"],
         purpose: "One-command AI startup that syncs only when artifacts are missing or stale, then returns the discovery decision and shortest resume routine.",
         rule: "Use root discoveryDecision, startupChecklist, sessionUse, resume, and fallbackPrompt before assuming instruction-file automatic discovery worked."
+      },
+      compactPreflight: {
+        commands: ["aienvmap start --json --compact", "aienvmap status --json --compact"],
+        schemaName: "aienvmap-compact-preflight",
+        schemaVersion: 1,
+        maximumBytes: 5120,
+        rootFields: ["schemaName", "schemaVersion", "source", "state", "mode", "summary", "counts", "decision", "review", "next", "evidence", "discovery", "rule"],
+        decisionFields: ["action", "reasonCodes", "projectLocalWork", "environmentChanges", "question", "requiresHumanApprovalBefore", "removalAuthorized"],
+        evidenceFields: ["startHere", "readOrder", "reconciliation", "coordinationRevision"],
+        purpose: "Bounded first-decision projection for AI hosts; it links to full evidence instead of repeating the complete automation contract.",
+        rule: "Use compact output for initial routing only; read referenced artifacts or full JSON before environment, dependency, security, install, removal, or runtime changes."
       },
       discovery: {
         file: ".aienvmap/discovery.json",

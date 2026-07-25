@@ -102,100 +102,26 @@ runs:
         if [ "${{ inputs.write-summary }}" = "true" ]; then
           node "$GITHUB_ACTION_PATH/bin/aienvmap.js" summary --dir "${{ inputs.directory }}" --write --quiet
           if [ -n "$GITHUB_STEP_SUMMARY" ]; then
-            cat "${{ inputs.directory }}/.aienvmap/summary.md" >> "$GITHUB_STEP_SUMMARY"
-          fi
-        fi
-
-    - name: Append strict plan summary
-      shell: bash
-      run: |
-        if [ "${{ inputs.write-summary }}" = "true" ] && [ -n "$GITHUB_STEP_SUMMARY" ]; then
-          mkdir -p "${{ inputs.directory }}/.aienvmap"
-          plan_source="${{ inputs.directory }}/.aienvmap/doctor.json"
-          if [ ! -f "$plan_source" ]; then
-            plan_source="$(mktemp)"
-            node "$GITHUB_ACTION_PATH/bin/aienvmap.js" doctor --dir "${{ inputs.directory }}" --json > "$plan_source"
-          fi
-          node - "$plan_source" "$GITHUB_STEP_SUMMARY" <<'NODE'
+            node - "${{ inputs.directory }}/.aienvmap/status.json" "$GITHUB_STEP_SUMMARY" <<'NODE'
         const fs = require("node:fs");
-
-        const [doctorPath, summaryPath] = process.argv.slice(2);
-        const doctor = JSON.parse(fs.readFileSync(doctorPath, "utf8"));
-        const plan = doctor.enforcement?.strictPlan || {};
-        const local = plan.localDefault || "aienvmap doctor --json";
-        const ci = plan.ciCommand || "aienvmap doctor --strict all --json";
-        const rule = plan.rule || "Strict failure is explicit only.";
-
+        const [statusPath, summaryPath] = process.argv.slice(2);
+        const status = JSON.parse(fs.readFileSync(statusPath, "utf8"));
+        const counts = status.counts || {};
+        const risk = status.sbomRisk || {};
+        const num = (value) => Number.isFinite(Number(value)) ? Number(value) : 0;
         fs.appendFileSync(summaryPath, [
+          "## aienvmap environment preflight",
           "",
-          "## aienvmap strict plan",
-          "",
-          `- local: \`${local}\``,
-          `- ci: \`${ci}\``,
-          `- rule: ${rule}`,
+          `- environment: **${status.state || "unknown"}**`,
+          `- detected: runtimes ${num(counts.runtimes)}, package managers ${num(counts.packageManagers)}, containers ${num(counts.containers)}`,
+          `- review: warnings ${num(counts.warnings)}, planned changes ${num(counts.openIntents)}`,
+          `- dependency risk: ${risk.level || "unknown"} (${num(risk.score)})`,
+          `- next: \`${status.nextCommand || "aienvmap status --json"}\``,
+          "- details: `.aienvmap/status.json` and `.aienvmap/summary.md`",
           ""
         ].join("\n"));
         NODE
-        fi
-
-    - name: Append follow-up plan summary
-      shell: bash
-      run: |
-        if [ "${{ inputs.write-summary }}" = "true" ] && [ -n "$GITHUB_STEP_SUMMARY" ]; then
-          mkdir -p "${{ inputs.directory }}/.aienvmap"
-          doctor_source="${{ inputs.directory }}/.aienvmap/doctor.json"
-          if [ ! -f "$doctor_source" ]; then
-            doctor_source="$(mktemp)"
-            node "$GITHUB_ACTION_PATH/bin/aienvmap.js" doctor --dir "${{ inputs.directory }}" --json > "$doctor_source"
           fi
-          node - "$doctor_source" "$GITHUB_STEP_SUMMARY" <<'NODE'
-        const fs = require("node:fs");
-
-        const [doctorPath, summaryPath] = process.argv.slice(2);
-        const doctor = JSON.parse(fs.readFileSync(doctorPath, "utf8"));
-        const followUp = doctor.followUpPlan || {};
-        if (followUp.status !== "pending") process.exit(0);
-
-        fs.appendFileSync(summaryPath, [
-          "",
-          "## aienvmap follow-up plan",
-          "",
-          `- next: \`${followUp.nextCommand || "aienvmap status --json"}\``,
-          `- targets: ${(followUp.targets || []).join(", ") || "environment"}`,
-          `- rule: ${followUp.rule || "Resolve follow-ups before shared environment changes."}`,
-          ""
-        ].join("\n"));
-        NODE
-        fi
-
-    - name: Append AI loop summary
-      shell: bash
-      run: |
-        if [ "${{ inputs.write-summary }}" = "true" ] && [ -n "$GITHUB_STEP_SUMMARY" ]; then
-          mkdir -p "${{ inputs.directory }}/.aienvmap"
-          schema_source="${{ inputs.directory }}/.aienvmap/schema.json"
-          if [ ! -f "$schema_source" ]; then
-            schema_source="$(mktemp)"
-            node "$GITHUB_ACTION_PATH/bin/aienvmap.js" schema --json > "$schema_source"
-          fi
-          node - "$schema_source" "$GITHUB_STEP_SUMMARY" <<'NODE'
-        const fs = require("node:fs");
-
-        const [schemaPath, summaryPath] = process.argv.slice(2);
-        const schema = JSON.parse(fs.readFileSync(schemaPath, "utf8"));
-        const loop = schema.aiLoop || {};
-        const steps = (loop.steps || []).slice(0, 6).map((item) => item.command).join(" -> ");
-
-        fs.appendFileSync(summaryPath, [
-          "",
-          "## aienvmap AI loop",
-          "",
-          `- mode: ${loop.localMode || "warn-only"}`,
-          `- steps: \`${steps || "aienvmap sync -> aienvmap status -> aienvmap handoff"}\``,
-          `- rule: ${loop.strictRule || "Local checks are warn-only; strict gates are explicit."}`,
-          ""
-        ].join("\n"));
-        NODE
         fi
 
     - name: Doctor

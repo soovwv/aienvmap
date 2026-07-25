@@ -58,7 +58,7 @@ const commands = new Map([
 const version = JSON.parse(readFileSync(new URL("../package.json", import.meta.url), "utf8")).version;
 const globalValueOptions = new Set(["--dir"]);
 const booleanOptions = new Set([
-  "all", "check", "ci", "clear_import", "deep", "dry_run", "full_packages", "inspect_project_wrappers",
+  "all", "check", "ci", "clear_import", "compact", "deep", "dry_run", "full_packages", "inspect_project_wrappers",
   "json", "markdown", "no_sync", "open", "owner_verification", "portable", "quick", "quiet", "record",
   "security", "show_paths", "uninstall", "verbose"
 ]);
@@ -70,6 +70,34 @@ const requiredValueOptions = new Set([
 ]);
 const knownOptions = new Set([...booleanOptions, ...requiredValueOptions, "write"]);
 const positionalCommands = new Set(["demo", "onboard", "snippet"]);
+const commandUsage = new Map([
+  ["start", "aienvmap start [--dir .] [--json] [--compact]"],
+  ["status", "aienvmap status [--dir .] [--json] [--compact] [--write] [--quiet] [--verbose]"],
+  ["onboard", "aienvmap onboard [codex claude gemini] [--agents codex,claude,gemini,cursor,copilot] [--dry-run|--uninstall] [--no-sync]"],
+  ["sync", "aienvmap sync [--dir .] [--json] [--quiet] [--deep] [--security]"],
+  ["context", "aienvmap context [--dir .] [--json]"],
+  ["discover", "aienvmap discover [--dir .] [--json]"],
+  ["reconcile", "aienvmap reconcile [--dir .] [--json] [--write|--check|--portable] [--quick|--full-packages]"],
+  ["intent", "aienvmap intent [--dir .] --actor agent:id --action planned-change [--target dependency] [--if-revision ir1:...]"],
+  ["resolve", "aienvmap resolve [--dir .] --actor human:id (--id intent-id|--target dependency|--all) [--if-revision ir1:...]"],
+  ["checkpoint", "aienvmap checkpoint [--dir .] --actor agent:id --summary what-changed [--target dependency] [--json]"],
+  ["handoff", "aienvmap handoff [--dir .] [--json] [--record --actor agent:id]"],
+  ["plan", "aienvmap plan [--dir .] [--json] [--write]"],
+  ["doctor", "aienvmap doctor [--dir .] [--json] [--ci] [--strict security|policy|coordination|all]"],
+  ["sbom", "aienvmap sbom [--dir .] [--json] [--write] [--import workspace-sbom.json|--clear-import]"],
+  ["trial", "aienvmap trial [--dir .] [--json]"],
+  ["dash", "aienvmap dash [--dir .] [--open]"],
+  ["schema", "aienvmap schema [--json]"],
+  ["scorecard", "aienvmap scorecard [--json]"],
+  ["init", "aienvmap init [--dir .]"],
+  ["scan", "aienvmap scan [--dir .] [--json] [--deep] [--security]"],
+  ["compile", "aienvmap compile [--dir .]"],
+  ["diff", "aienvmap diff [--dir .]"],
+  ["record", "aienvmap record [--dir .] --actor agent:id --summary what-changed [--target environment]"],
+  ["summary", "aienvmap summary [--dir .] [--write]"],
+  ["snippet", "aienvmap snippet [agents|codex|claude|gemini|cursor|copilot] [--write AGENTS.md]"],
+  ["demo", "aienvmap demo [conflict] [--json]"]
+]);
 
 export async function main(argv) {
   const { command, rest, globalArgs } = splitCommand(argv);
@@ -81,16 +109,28 @@ export async function main(argv) {
     printUsage();
     return;
   }
+  if (command === "help") {
+    const args = parseArgs(rest);
+    if (args._.length) throw new Error(`help: unexpected argument "${args._[0]}"`);
+    printUsage({ all: args.all === true });
+    return;
+  }
   const run = commands.get(command);
   if (!run) {
     printUsage();
     throw new Error(`unknown command "${command}"`);
   }
   if (rest.includes("--help") || rest.includes("-h")) {
-    printUsage();
+    printCommandUsage(command);
     return;
   }
   const args = { ...globalArgs, ...parseArgs(rest) };
+  if (args.compact && !["start", "status"].includes(command)) {
+    throw new Error(`${command}: --compact is only supported by start and status`);
+  }
+  if (args.compact && !args.json) {
+    throw new Error(`${command}: --compact requires --json`);
+  }
   if (!positionalCommands.has(command) && args._.length) {
     throw new Error(`${command}: unexpected argument "${args._[0]}"`);
   }
@@ -152,69 +192,54 @@ export function parseArgs(argv) {
   return out;
 }
 
-function printUsage() {
+function printUsage(options = {}) {
+  const advanced = options.all ? `
+Advanced commands:
+  sync        refresh all generated artifacts
+  context     print the full AI preflight brief
+  discover    verify AI instruction-file discovery
+  reconcile   inspect mixed runtime and package-manager routing
+  intent      record a planned environment change
+  resolve     resolve or cancel recorded change intent
+  checkpoint  record, refresh, and hand off an environment change
+  handoff     prepare the next-agent environment summary
+  plan        prepare a read-only environment action plan
+  doctor      check policy, security, and coordination gates
+  sbom        inspect or import dependency and SBOM evidence
+  trial       run a local technical test and prepare optional evidence
+  dash        regenerate or open the human dashboard
+  schema      print stable machine-readable contracts
+  scorecard   separate engineering readiness from market evidence
+  init, scan, compile, diff, record, summary, snippet, demo
+
+Run \`aienvmap <command> --help\` for the accepted command syntax.
+` : `
+More:
+  aienvmap help --all
+`;
   console.log(`aienvmap - know the development environment before an AI changes it
 
 Usage:
-  aienvmap sync [--dir .] [--json] [--quiet] [--deep] [--security]
-  aienvmap context [--dir .] [--json]
-  aienvmap status [--dir .] [--json] [--write] [--quiet] [--verbose]
-  aienvmap handoff [--dir .] [--json] [--record --actor agent:id]
-  aienvmap checkpoint [--dir .] --actor agent:id --summary "what changed" [--target dependency] [--json]
-  aienvmap plan [--dir .] [--json] [--write]
-  aienvmap sbom [--dir .] [--json] [--write] [--import workspace-sbom.json|--clear-import]
-  aienvmap summary [--dir .] [--write]
-  aienvmap schema [--json]
-  aienvmap start [--dir .] [--json]
-  aienvmap discover [--dir .] [--json]
-  aienvmap reconcile [--dir .] [--json] [--write|--check|--portable] [--inspect-home /absolute/home] [--portable-from reconcile.json] [--baseline file] [--quick|--full-packages] [--show-paths]
-  aienvmap reconcile --inspect-homes homes.json [--json]
-  aienvmap reconcile --home-evidence aggregate.json --alias build-a [--json]
-  aienvmap reconcile --portable-compare before.json --against after.json [--owner-verification] [--json]
-  aienvmap reconcile --case-summary portable.json [--comparison compare.json] [--json|--markdown]
-  aienvmap scorecard [--json]
-  aienvmap trial [--dir .] [--json]
+  aienvmap start [--dir .] [--json] [--compact]
+  aienvmap status [--dir .] [--json] [--compact] [--write] [--quiet] [--verbose]
   aienvmap onboard [codex claude gemini] [--agents codex,claude,gemini,cursor,copilot] [--dry-run|--uninstall] [--no-sync]
-  aienvmap demo [conflict] [--json]
 
-Common:
+Start here:
   aienvmap start    one-command AI startup with a copy-paste fallback prompt
-  aienvmap onboard   install AI instruction-file pointers and refresh outputs
-  aienvmap sync      update AIENV.md, discovery, start-here README, status, summary, SBOM, ledger, intents, and dashboard
   aienvmap status    print a 5-line AI/human environment decision; --verbose shows command details
-  aienvmap context   print the AI preflight brief
-  aienvmap handoff   print the next-agent handoff summary
-  aienvmap checkpoint record, sync, status, and handoff after an env change
-  aienvmap plan      print a read-only AI environment action plan
-  aienvmap sbom      print/write light SBOM plus dependencyQuickCheck
-  aienvmap summary   print/write a compact Markdown summary for AI and CI
-  aienvmap schema    print the stable AI-readable output contract
-  aienvmap discover  read-only detection plus aiDiscovery.decision and copy-paste prompt
-  aienvmap reconcile read-only package-manager traffic report for existing, non-clean environments
-  aienvmap trial     run a local technical test and prepare optional public evidence
-  aienvmap scorecard separate release-readiness and independent market-validation evidence
-  aienvmap snippet   print an AGENTS.md pointer snippet
-  aienvmap demo      run the temporary multi-agent conflict demo
-  aienvmap dash      regenerate/open the lightweight dashboard
-
-Advanced:
-  aienvmap init [--dir .]
-  aienvmap scan [--dir .] [--deep] [--security]
-  aienvmap intent [--dir .] --actor agent:codex [--session thread:id] --action "install pnpm" [--lease-minutes 60] [--if-revision ir1:...]
-  aienvmap resolve [--dir .] --actor human:you (--id <intent-id>|--target dependency|--all) [--status resolved|cancelled] [--if-revision ir1:...] [--json]
-  aienvmap record [--dir .] --actor agent:codex --summary "updated .nvmrc" [--target node] [--before 20] [--after 24]
-  aienvmap checkpoint [--dir .] --actor agent:codex --summary "updated dependency" [--target dependency]
-  aienvmap snippet [agents|codex|claude|gemini|cursor|copilot] [--write AGENTS.md]
-  aienvmap onboard [codex claude gemini] [--agents codex,claude,gemini,cursor,copilot] [--dry-run|--uninstall] [--no-sync]
-  aienvmap compile [--dir .]
-  aienvmap diff [--dir .]
-  aienvmap doctor [--dir .] [--json] [--ci] [--strict security|policy|coordination|all]
-  aienvmap sbom [--dir .] [--json] [--write] [--import workspace-sbom.json|--clear-import]
-  aienvmap summary [--dir .] [--write]
-  aienvmap start [--dir .] [--json]
-  aienvmap discover [--dir .] [--json]
-  aienvmap reconcile [--dir .] [--json] [--write|--check] [--inspect-home /absolute/home] [--baseline file] [--quick|--full-packages] [--show-paths]
-  aienvmap demo [conflict] [--json]
-  aienvmap dash [--dir .] [--open]
+  aienvmap onboard  install thin AI instruction pointers and refresh outputs
+${advanced}
 `);
+}
+
+function printCommandUsage(command) {
+  const usage = commandUsage.get(command);
+  if (!usage) {
+    printUsage();
+    return;
+  }
+  console.log(`${usage}
+
+This command never gains environment-change authority from help or discovery output.
+Run \`aienvmap help --all\` to see the complete command map.`);
 }

@@ -1,6 +1,6 @@
 {
   "name": "aienvmap",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "Dependency-free environment map and explicit change handoff for AI coding agents sharing a repository or machine.",
   "type": "module",
   "bin": {
@@ -41,6 +41,7 @@
     "TESTER_INVITE.md",
     "RELEASE_NOTES_0.2.0.md",
     "RELEASE_NOTES_0.2.1.md",
+    "RELEASE_NOTES_0.2.2.md",
     "action.yml",
     "examples",
     ".agents",

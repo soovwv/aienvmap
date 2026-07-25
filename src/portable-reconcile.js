@@ -9,7 +9,7 @@ export function buildPortableReconciliation(value = {}, runtime = {}) {
     active: item.active === true,
     source: item.source || "unknown",
     scope: item.scope || "unknown",
-    ...(options.python ? { virtualEnvironment: item.virtualEnvironment === true, pipAvailable: item.pipAvailable === true } : {}),
+    ...(options.python ? { virtualEnvironment: item.virtualEnvironment === true, pipAvailable: item.pipAvailable === true, aliasCount: safeCount(item.aliases?.length), commandEntryPointCount: Math.max(1, safeCount(item.commandEntryPointCount || 1)), classification: safeEnum(item.classification, ["confirmed", "likely-duplicate", "needs-review", "unknown"]) } : {}),
     ...(options.java ? { vendor: item.vendor || "unknown", architecture: item.architecture || "unknown", runtimeKind: item.runtimeKind || "unknown", hasCompiler: item.hasCompiler === true } : {}),
     manager: {
       name: item.managerEvidence?.manager || "unknown",
@@ -184,16 +184,44 @@ export function buildPortableCaseSummary(report = {}, comparison = null) {
     pythonTools: safeNamedCounts(report.inventory?.pythonTools, ["uv", "pipx"]),
     otherRuntimes: safeNamedCounts(report.inventory?.otherRuntimes, ["java", "dotnet", "ruby", "go", "rust"])
   };
+  const findingDetails = (report.findings || []).map((item) => publicFindingDetail(item, report)).filter(Boolean).slice(0, 50);
   return {
     schemaName: "aienvmap.environment-case-summary", schemaVersion: 1, status: "draft-human-review-required",
-    evidence: { platform: safeEnum(report.platform, ["win32", "darwin", "linux", "aix", "freebsd", "openbsd", "sunos", "android"]), architecture: safeEnum(report.architecture, ["x64", "arm64", "arm", "ia32", "ppc64", "s390x", "riscv64"]), scanMode: safeEnum(report.scanMode, ["quick", "standard", "full-packages", "unknown"]), evidenceRole: safeEnum(report.source?.evidenceRole, ["administrator-no-exec", "current-or-owning-user", "unknown"]), inventoryCounts, findingCodes: (report.findings || []).map((item) => String(item.code || "")).filter((code) => /^[a-z0-9-]{1,80}$/.test(code)).slice(0, 50), decision: safeEnum(report.decision, ["clear", "review", "unknown"]) },
+    evidence: { platform: safeEnum(report.platform, ["win32", "darwin", "linux", "aix", "freebsd", "openbsd", "sunos", "android"]), architecture: safeEnum(report.architecture, ["x64", "arm64", "arm", "ia32", "ppc64", "s390x", "riscv64"]), scanMode: safeEnum(report.scanMode, ["quick", "standard", "full-packages", "unknown"]), evidenceRole: safeEnum(report.source?.evidenceRole, ["administrator-no-exec", "current-or-owning-user", "unknown"]), inventoryCounts, findingCodes: findingDetails.map((item) => item.code), findingDetails, decision: safeEnum(report.decision, ["clear", "review", "unknown"]) },
     comparison: comparison ? { present: true, decision: safeEnum(comparison.decision, ["clear", "review", "unknown"]), changeCount: safeCount(comparison.changeCount), changedSections: (comparison.changedSections || []).filter((item) => ["platform", "architecture", "scanMode", "projectSignals", "inventory", "findings", "decision", "consolidation"].includes(item)), ownerVerification: comparison.ownerVerification ? { status: safeEnum(comparison.ownerVerification.status, ["coverage-reported", "coverage-incomplete"]), coverage: (comparison.ownerVerification.coverage || []).map((item) => ({ runtime: safeVerificationRuntime(item.runtime), status: safeEnum(item.status, ["owner-missing", "owner-partial", "owner-reported"]) })).filter((item) => item.runtime !== "unknown").slice(0, 20) } : null, structureValidatedOnly: true } : { present: false },
     humanVerification: { complete: false, requiredFields: ["problemObserved", "aiConsumer", "aiJudgment", "detectedProblemReal", "usefulnessRating", "falsePositivesOrNegatives", "outcome", "independenceConfirmation", "privacyConfirmation"] },
     marketEvidence: { eligible: false, reason: "A generated draft is not independent outcome-verified evidence; a human must review, complete, and submit it manually." },
     privacy: { excluded: ["paths", "usernames and hostnames", "project and package names", "runtime versions", "evidence fingerprints", "timestamps", "raw inventories"], reviewRequired: true },
+    safetyEnvelope: { pathModified: false, softwareInstalledByAienvmap: false, softwareRemoved: false, networkUploaded: false, projectWrappersExecuted: false, launcherCacheMayChange: true },
     environmentChangesAuthorized: false, removalAuthorized: false,
     rule: "Use as a minimal public submission draft only; review prose and complete human verification before manual submission."
   };
+}
+
+function publicFindingDetail(item = {}, report = {}) {
+  const code = String(item.code || "");
+  if (!/^[a-z0-9-]{1,80}$/.test(code)) return null;
+  const python = report.inventory?.python || {};
+  const aliasCount = (python.installations || []).reduce((sum, installation) => sum + safeCount(installation.aliasCount), 0);
+  const known = {
+    "multiple-python-installations": {
+      summary: "Multiple distinct Python environments remain after command aliases are grouped.",
+      confidence: aliasCount ? "medium" : "low",
+      reviewReason: aliasCount ? `${aliasCount} Python command aliases were grouped before counting environments.` : "The available evidence cannot prove that all Python entries are separate installations."
+    },
+    "multiple-pip-entry-points": {
+      summary: "Multiple pip command entry points were detected.",
+      confidence: "medium",
+      reviewReason: "Command entry points do not by themselves prove separate package installations."
+    },
+    "pip-python-runtime-link-uncertain": {
+      summary: "Active pip could not be linked confidently to one Python environment.",
+      confidence: "low",
+      reviewReason: "Multiple Python environments or aliases match the available pip evidence."
+    }
+  };
+  const fallback = code.split("-").filter(Boolean).join(" ");
+  return { code, summary: known[code]?.summary || `${fallback || "Environment finding"} needs review.`, confidence: safeEnum(known[code]?.confidence || item.confidence, ["high", "medium", "low", "unknown"]), reviewReason: known[code]?.reviewReason || "Review the technical evidence before changing the environment." };
 }
 
 export function renderPortableCaseMarkdown(summary = {}) {

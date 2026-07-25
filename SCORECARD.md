@@ -24,7 +24,7 @@ The dated public traction and adjacent-tool comparison live in [MARKET.md](MARKE
 | Differentiation | 91 | 90 | pass |
 | Market readiness | 73 | 70 | pass |
 
-All release engineering gates passed for v0.2.0. The package was published from the CI-verified tag through npm Trusted Publishing with provenance. This confirms release integrity, not product-market fit or independent adoption. Future npm releases remain batched and must pass the same release controls.
+The local v0.2.2 candidate passes the engineering gates and remains blocked on an exact current-main tag plus the manual npm Trusted Publishing workflow with provenance. This candidate status confirms local engineering evidence, not publication, product-market fit, or independent adoption.
 
 AI usability is supported by a compact decision envelope that states the next safe action, evidence references, whether a user question is required, a reason-derived question, and explicit non-authority boundaries. Differentiation is supported by the machine-readable `aiAdoptionDecision.uniqueJob`, `chooseInstead`, and composition order so an AI can combine aienvmap with environment managers and scanners without misrepresenting its role. These are technical readiness scores, not independent adoption evidence.
 
@@ -38,6 +38,17 @@ The APM skill-subpath install and native-pointer coexistence now have a clean co
 
 The APM gate is pinned to the observed v0.25.0 release. A future pin update requires the same clean consumer-install regression check; ecosystem release velocity does not increase aienvmap's market score.
 
+## Capability improvement scores
+
+| Capability | Current | Target |
+| --- | ---: | ---: |
+| Usability | 82 | 92 |
+| Interoperability | 81 | 90 |
+| Distribution and adoption | 74 | 88 |
+| Imitation resistance | 60 | 78 |
+
+Run `aienvmap scorecard --json` for each score's repository evidence and remaining gap. These implementation scores remain separate from the 2/100 market-validation score.
+
 ## Evidence policy
 
 - Repository features and CI count toward technical readiness.
@@ -49,6 +60,6 @@ The APM gate is pinned to the observed v0.25.0 release. A future pin update requ
 
 ## Improvement order
 
-1. Document at least three reproducible external runtime-drift environments with before/after evidence, including one shared-server case verified by the owning user.
+1. Collect at least five public external submissions before introducing individual cases; independently classify reproducibility and outcome verification, including one shared-server case verified by the owning user.
 2. Verify integration examples on major coding-agent hosts.
 3. Preserve reproducible release evidence and keep npm trusted publishing as the only supported release path; do not introduce long-lived publish credentials.

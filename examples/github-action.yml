@@ -17,7 +17,7 @@ jobs:
           write-schema: "true"
           write-doctor-json: "true"
           write-sbom: "true"
-          write-summary: "true" # appends summary, strict plan, follow-up plan, and AI loop to GitHub Step Summary
+          write-summary: "true" # appends one compact environment preflight to GitHub Step Summary
           strict: "off" # security, policy, coordination, all, or off
 
       - uses: actions/upload-artifact@v4

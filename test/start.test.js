@@ -57,7 +57,8 @@ test("start syncs a missing workspace then returns the AI startup contract", asy
   assert.equal(result.copyPastePrompt, result.fallbackPrompt);
   assert.ok(result.promptUse.pasteInto.includes("Claude"));
   assert.match(result.rule, /first AI entry command/);
-  assert.match(result.statusText, /session:/);
+  assert.match(result.statusText, /Environment: clear/);
+  assert.match(result.statusText, /Detected: runtimes/);
   await assert.doesNotReject(fs.access(path.join(dir, ".aienvmap", "status.json")));
   await assert.doesNotReject(fs.access(path.join(dir, ".aienvmap", "dashboard.html")));
   await assert.doesNotReject(fs.access(path.join(dir, ".aienvmap", "reconcile.json")));
@@ -114,7 +115,7 @@ test("start JSON output is machine-readable", async () => {
   assert.match(json.aiDiscovery.rule, /Do not assume automatic pickup/);
 });
 
-test("start text output includes a copy-paste prompt", async () => {
+test("start text output stays human-readable and includes an AI prompt", async () => {
   const dir = await fs.mkdtemp(path.join(os.tmpdir(), "aienvmap-start-text-"));
   const originalLog = console.log;
   const output = [];
@@ -126,8 +127,29 @@ test("start text output includes a copy-paste prompt", async () => {
   }
 
   const text = output.join("\n");
-  assert.match(text, /aiEntry: \.aienvmap\/discovery\.json \/ follow aiEntry\.readFirst/);
-  assert.match(text, /AI fallback:/);
-  assert.match(text, /copy-paste prompt: Use aienvmap as the workspace env map/);
-  assert.match(text, /reconcile: (clear|review) \/ \.aienvmap\/reconcile\.json/);
+  assert.match(text, /aienvmap 0\.2\.2: clear \| latest command: npx aienvmap@latest start/);
+  assert.match(text, /detected: runtimes \d+ \| package managers \d+ \| containers \d+/);
+  assert.match(text, /review: warnings \d+ \| planned changes \d+/);
+  assert.match(text, /details: \.aienvmap\/discovery\.json \| \.aienvmap\/reconcile\.json/);
+  assert.match(text, /AI prompt: Use aienvmap as the workspace env map/);
+  assert.ok(text.split("\n").length <= 8);
+});
+
+test("start compact JSON prints a bounded first-decision projection", async () => {
+  const dir = await fs.mkdtemp(path.join(os.tmpdir(), "aienvmap-start-compact-"));
+  const originalLog = console.log;
+  let output = "";
+  console.log = (value) => { output = value; };
+  try {
+    await startWorkspace({ dir, json: true, compact: true });
+  } finally {
+    console.log = originalLog;
+  }
+
+  const json = JSON.parse(output);
+  assert.equal(json.schemaName, "aienvmap-compact-preflight");
+  assert.equal(json.source, "start");
+  assert.equal(json.decision.removalAuthorized, false);
+  assert.equal(json.evidence.reconciliation, ".aienvmap/reconcile.json");
+  assert.ok(output.length < 5000, `compact start output should stay below 5 KB, got ${output.length}`);
 });
