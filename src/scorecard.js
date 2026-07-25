@@ -12,7 +12,7 @@ const marketReadinessDimensions = [
   dimension("distribution", 14, 20, [".apm/skills/aienvmap/SKILL.md", "scripts/apm-consumer-check.mjs", "action.yml"], "Verify actual host pickup after the immutable release tag exists."),
   dimension("onboarding", 17, 20, ["aienvmap start --json", "aienvmap trial --json", "AI_TESTING.md"], "Run first-use tests with users unfamiliar with the project."),
   dimension("release-operations", 15, 20, ["npm run release:check", ".github/workflows/release.yml", "SECURITY.md"], "Verify npm-side trusted publishing and protected-main release governance."),
-  dimension("external-proof-flow", 10, 20, ["TESTER_INVITE.md", "CASE_REVIEW.md", "examples/portable-environment-case-guide.md"], "Collect three independent outcome-verified cases.")
+  dimension("external-proof-flow", 10, 20, ["TESTER_INVITE.md", "CASE_REVIEW.md", "examples/portable-environment-case-guide.md"], "Collect at least five public submissions before case promotion and classify independent outcome evidence separately.")
 ];
 
 const marketValidationDimensions = [
@@ -34,12 +34,27 @@ const releaseAxes = [
 const adjacentAlternatives = [
   alternative("Microsoft APM", "agent context dependency management", "APM declares, locks, audits, governs, and exports SBOMs for agent context; aienvmap supplies observed host runtime and coordination evidence", "https://github.com/microsoft/apm"),
   alternative("mise", "runtime, tool, task, and config-trust management", "mise exposes managed tools and environment data to AI through MCP; aienvmap observes mixed active routing and coordinates changes without trusting config, installing, or switching tools", "https://mise.jdx.dev/"),
+  alternative("asdf", "extensible multi-runtime version management", "asdf selects declared tool versions; aienvmap observes active and duplicate routes without installing or switching them", "https://asdf-vm.com/"),
   alternative("envinfo", "active development environment reporting", "envinfo quickly reports common active binaries and system details; aienvmap adds bounded multi-path evidence, AI decisions, and change handoff", "https://github.com/tabrindle/envinfo"),
   alternative("Devbox", "isolated reproducible development environments", "Devbox creates a declared portable environment; aienvmap observes mixed existing installations without replacing the shell", "https://github.com/jetify-com/devbox"),
   alternative("Flox", "declared reusable development environments", "Flox aligns humans and AI on an activated reproducible environment; aienvmap maps and coordinates the non-clean host state already present", "https://github.com/flox/flox"),
+  alternative("Dev Containers", "containerized development environment construction", "Dev Containers defines and runs a structured container environment; aienvmap observes an existing host and shared change intent without requiring a container", "https://containers.dev/"),
   alternative("Renovate", "automated dependency updates", "aienvmap coordinates AI intent and environment evidence before and after changes", "https://docs.renovatebot.com/"),
   alternative("Syft", "full software inventory and SBOM generation", "aienvmap provides a light manifest view and imports external evidence", "https://github.com/anchore/syft"),
+  alternative("Trivy", "vulnerability, secret, misconfiguration, license, and SBOM scanning", "aienvmap does not maintain security databases and should preserve Trivy output as external provenance-labelled evidence", "https://trivy.dev/"),
+  alternative("GitHub Copilot repository instructions", "static repository and agent guidance", "instruction files provide conventions and build guidance; aienvmap adds generated host evidence, pending intent, and handoff state", "https://docs.github.com/en/copilot/how-tos/copilot-on-github/customize-copilot/add-custom-instructions/add-repository-instructions"),
   alternative("CycloneDX", "SBOM standard and ecosystem", "aienvmap emits a lite projection and interoperates with richer artifacts", "https://cyclonedx.org/capabilities/sbom/")
+];
+
+const capabilityAssessment = [
+  capability("existing-environment-observation", 91, 94, ["src/package-managers.js", "test/reconcile.test.js"], "Strong mixed-host and multi-path evidence; more independent manager combinations remain."),
+  capability("multi-ai-handoff", 90, 95, ["test/demo.test.js", "test/fsutil.test.js"], "Intent, checkpoint, handoff, leases, and compare-and-swap are implemented; external multi-user proof remains."),
+  capability("usability", 82, 92, ["src/commands/start.js", "src/commands/status.js", "test/start.test.js"], "Default output is compact and action-first; unfamiliar-user completion evidence remains limited."),
+  capability("interoperability", 81, 90, ["src/project-expectations.js", "src/version-constraint.js", "src/sbom-evidence.js"], "Multiple declaration sources and environment-definition summaries remain visible without activation; more real tool combinations remain."),
+  capability("distribution-and-adoption", 74, 88, ["action.yml", "scripts/installed-package-check.mjs", ".apm/skills/aienvmap/SKILL.md"], "npm, GitHub Action, and bounded skill distribution exist; host pickup, first-run conversion, and retention are unverified."),
+  capability("imitation-resistance", 60, 78, ["contracts/ai-json-root-fields.v1.json", "test/project-expectations.test.js", "test/version-constraint.test.js"], "Stable contracts, multi-source declaration conflict evidence, coordination semantics, and fixtures raise replication cost, but ecosystem and independent case data remain small."),
+  capability("lightweight-operation", 96, 96, ["package.json", "src/performance-budget.js"], "Zero runtime dependencies and enforced performance budgets are at target."),
+  capability("security-sbom-depth", 43, 55, ["src/sbom-evidence.js", "README.md"], "Intentionally lightweight and scanner-complementary; the target does not imply building a vulnerability database.")
 ];
 
 export function productScorecard() {
@@ -48,20 +63,20 @@ export function productScorecard() {
   const marketValidation = category("marketValidation", marketValidationDimensions);
   const overall = Math.round(technical.score * 0.7 + marketReadiness.score * 0.3);
   const releaseAssessment = {
-    target: "0.2.0",
-    releaseStatus: "published",
+    target: "0.2.2",
+    releaseStatus: "release-candidate",
     qualified: releaseAxes.every((axis) => axis.pass),
-    qualificationScope: "published code-and-repository release",
-    publishReady: false,
-    publishEligibility: "not-applicable-already-published",
-    publishBlockers: [],
+    qualificationScope: "local release-candidate engineering evidence",
+    publishReady: true,
+    publishEligibility: "eligible-after-immutable-tag-and-ci",
+    publishBlockers: ["merge the reviewed candidate to current main", "create v0.2.2 on that exact commit", "pass the manual trusted-publishing workflow"],
     releaseEvidence: [
       { id: "npm-trusted-publisher", status: "verified", rule: "Publish through the configured npm trusted publisher without long-lived publish credentials." },
-      { id: "immutable-release-source", status: "verified", rule: "v0.2.0 identifies the CI-passing release source." },
-      { id: "npm-provenance", status: "verified", rule: "Registry attestations include npm publish and SLSA provenance statements." }
+      { id: "immutable-release-source", status: "pending", rule: "v0.2.2 must identify the exact CI-passing current main release source." },
+      { id: "npm-provenance", status: "pending", rule: "Verify npm publish and SLSA provenance statements after publication." }
     ],
     axes: releaseAxes,
-    rule: "Every code-quality axis must meet its threshold. An already-published version is not publish-ready again; published engineering readiness and independent market validation remain separate."
+    rule: "Every code-quality axis must meet its threshold. Candidate engineering readiness, immutable release publication, and independent market validation remain separate."
   };
   return {
     schemaName: "aienvmap-product-scorecard",
@@ -72,13 +87,19 @@ export function productScorecard() {
     marketReadiness,
     marketValidation,
     releaseAssessment,
-    positioning: "AI workspace coordination and environment evidence layer; not a package manager, vulnerability scanner, or full SBOM generator.",
+    capabilityAssessment: {
+      observedAt: "2026-07-25",
+      basis: "Repository capability evidence only; these scores do not measure adoption, retention, or product-market fit.",
+      dimensions: capabilityAssessment,
+      rule: "Raise implementation scores only with cited regression evidence and raise market validation only with independent outcomes."
+    },
+    positioning: "Cross-host local environment evidence and explicit change handoff for coding agents; not a package manager, vulnerability scanner, or full SBOM generator.",
     marketResearch: {
       report: "MARKET.md",
-      observedAt: "2026-07-15",
-      snapshot: "evidence/market-snapshot-2026-07-15.json",
-      publicSignals: { githubStars: 0, githubForks: 0, independentOutcomeVerifiedCases: 0, npmDownloadsWindow: { requests: 268, start: "2026-06-14", end: "2026-07-13" } },
-      adjacentSignals: { observedAt: "2026-07-15", microsoftApmStars: 3235, microsoftApmRelease: "v0.25.0", devboxStars: 12172, devboxRelease: "0.17.5", floxStars: 4049, floxRelease: "v1.13.2", miseStars: 30763, miseRelease: "v2026.7.6", syftStars: 9235, syftRelease: "v1.46.0", envinfoStars: 793, envinfoRelease: "v7.22.0" },
+      observedAt: "2026-07-25",
+      snapshot: "evidence/market-snapshot-2026-07-25.json",
+      publicSignals: { githubStars: 0, githubForks: 0, publicEnvironmentSubmissions: 2, independentOutcomeVerifiedCases: 0, npmDownloadsWindow: { requests: 637, start: "2026-06-25", end: "2026-07-24" } },
+      adjacentSignals: { observedAt: "2026-07-25", microsoftApmStars: 3360, microsoftApmRelease: "v0.26.0", devboxStars: 12201, devboxRelease: "0.17.5", floxStars: 4063, floxRelease: "v1.13.2", miseStars: 31118, miseRelease: "v2026.7.13", syftStars: 9295, syftRelease: "v1.49.0", envinfoStars: 794, envinfoRelease: "v7.22.0" },
       interpretation: "npm downloads are requests, not unique users, retention, successful setups, or recommendation evidence.",
       scoreImpact: "none until independent outcome-verified evidence exists"
     },
@@ -86,7 +107,7 @@ export function productScorecard() {
     strengths: ["zero-runtime-dependency local operation", "AI-readable environment and decision contracts", "read-only multi-install discovery", "bounded APM skill distribution with consumer-install regression coverage", "light SBOM interoperability", "explicit approval boundaries"],
     weaknesses: ["limited independent adoption evidence", "few external case studies", "coordination value depends on participating agents consuming a pointer, skill, or explicit fallback prompt", "AI-host automatic skill pickup remains unverified", "cross-user versions require owning-user verification", "third-party runtime version probes cannot guarantee side-effect-free executables", "adjacent tools increasingly combine AI context, agent worktrees, runtime setup, and reproducible environments"],
     nextPriorities: [
-      { priority: 1, outcome: "external problem evidence", proof: "at least three reproducible user environments, including one shared-server owner-verified report" },
+      { priority: 1, outcome: "external problem evidence", proof: "at least five public submissions before case promotion, with independent outcome maturity classified separately and one shared-server owner-verified report" },
       { priority: 2, outcome: "AI-host integration evidence", proof: "verified automatic-pickup and fallback examples for major coding-agent hosts" },
       { priority: 3, outcome: "release authentication maintenance", proof: "npm trusted publishing remains the only supported release path and provenance stays registry-verifiable" }
     ],
@@ -116,6 +137,10 @@ function category(name, dimensions) {
 
 function alternative(name, category, boundary, official) {
   return { name, category, boundary, official };
+}
+
+function capability(id, current, target, evidence, remainingGap) {
+  return { id, current, target, evidence, remainingGap };
 }
 
 function releaseAxis(id, score, threshold, evidence, rationale = "", remainingGap = "") {

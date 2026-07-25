@@ -14,10 +14,10 @@ test("product scorecard separates release readiness from independent market vali
   assert.ok(result.technicalReadiness.score > result.marketValidation.score);
   assert.deepEqual(result.overall.excludes, ["marketValidation"]);
   assert.equal(result.releaseAssessment.qualified, true);
-  assert.equal(result.releaseAssessment.releaseStatus, "published");
-  assert.equal(result.releaseAssessment.publishReady, false);
-  assert.equal(result.releaseAssessment.publishEligibility, "not-applicable-already-published");
-  assert.deepEqual(result.releaseAssessment.publishBlockers, []);
+  assert.equal(result.releaseAssessment.releaseStatus, "release-candidate");
+  assert.equal(result.releaseAssessment.publishReady, true);
+  assert.equal(result.releaseAssessment.publishEligibility, "eligible-after-immutable-tag-and-ci");
+  assert.ok(result.releaseAssessment.publishBlockers.some((item) => item.includes("v0.2.2")));
   assert.deepEqual(result.releaseAssessment.releaseEvidence.map((item) => item.id), ["npm-trusted-publisher", "immutable-release-source", "npm-provenance"]);
   assert.ok(result.releaseAssessment.axes.every((axis) => axis.pass && axis.score >= axis.threshold));
   assert.equal(result.releaseAssessment.axes.find((axis) => axis.id === "aiUsability").score, 92);
@@ -25,6 +25,18 @@ test("product scorecard separates release readiness from independent market vali
   assert.match(result.releaseAssessment.axes.find((axis) => axis.id === "aiUsability").rationale, /bounded user question/);
   assert.match(result.releaseAssessment.axes.find((axis) => axis.id === "differentiation").remainingGap, /Independent users/);
   assert.match(result.limitations.join(" "), /not inferred from feature count/);
+  assert.deepEqual(result.capabilityAssessment.dimensions.map((item) => item.id), [
+    "existing-environment-observation",
+    "multi-ai-handoff",
+    "usability",
+    "interoperability",
+    "distribution-and-adoption",
+    "imitation-resistance",
+    "lightweight-operation",
+    "security-sbom-depth"
+  ]);
+  assert.equal(result.capabilityAssessment.dimensions.find((item) => item.id === "usability").current, 82);
+  assert.match(result.capabilityAssessment.basis, /do not measure adoption/);
 });
 
 test("product scorecard gives AI consumers evidence and bounded competitor categories", () => {
@@ -32,25 +44,45 @@ test("product scorecard gives AI consumers evidence and bounded competitor categ
   assert.ok(result.technicalReadiness.dimensions.every((item) => item.evidence.length > 0 && item.next));
   assert.ok(result.marketReadiness.dimensions.every((item) => item.evidence.length > 0 && item.next));
   assert.ok(result.marketValidation.dimensions.every((item) => item.evidence.length > 0 && item.next));
-  assert.deepEqual(result.adjacentAlternatives.map((item) => item.name), ["Microsoft APM", "mise", "envinfo", "Devbox", "Flox", "Renovate", "Syft", "CycloneDX"]);
+  assert.deepEqual(result.adjacentAlternatives.map((item) => item.name), [
+    "Microsoft APM",
+    "mise",
+    "asdf",
+    "envinfo",
+    "Devbox",
+    "Flox",
+    "Dev Containers",
+    "Renovate",
+    "Syft",
+    "Trivy",
+    "GitHub Copilot repository instructions",
+    "CycloneDX"
+  ]);
   assert.match(result.rule, /not use overall score alone/);
   assert.equal(result.externalEvidenceRequirements.marketCreditStartsAt, "outcome-verified");
   assert.equal(result.externalEvidenceRequirements.mustBeIndependent, true);
   assert.ok(result.externalEvidenceRequirements.disallowedAsMarketProof.includes("repository fixtures"));
-  assert.equal(result.marketResearch.snapshot, "evidence/market-snapshot-2026-07-15.json");
-  assert.equal(result.marketResearch.publicSignals.npmDownloadsWindow.requests, 268);
-  assert.equal(result.marketResearch.publicSignals.npmDownloadsWindow.start, "2026-06-14");
-  assert.equal(result.marketResearch.publicSignals.npmDownloadsWindow.end, "2026-07-13");
-  assert.equal(result.marketResearch.adjacentSignals.microsoftApmStars, 3235);
-  assert.equal(result.marketResearch.adjacentSignals.microsoftApmRelease, "v0.25.0");
-  assert.equal(result.marketResearch.adjacentSignals.miseStars, 30763);
-  assert.equal(result.marketResearch.adjacentSignals.miseRelease, "v2026.7.6");
+  assert.equal(result.marketResearch.snapshot, "evidence/market-snapshot-2026-07-25.json");
+  assert.equal(result.marketResearch.publicSignals.publicEnvironmentSubmissions, 2);
+  assert.equal(result.marketResearch.publicSignals.npmDownloadsWindow.requests, 637);
+  assert.equal(result.marketResearch.publicSignals.npmDownloadsWindow.start, "2026-06-25");
+  assert.equal(result.marketResearch.publicSignals.npmDownloadsWindow.end, "2026-07-24");
+  assert.equal(result.marketResearch.adjacentSignals.microsoftApmStars, 3360);
+  assert.equal(result.marketResearch.adjacentSignals.microsoftApmRelease, "v0.26.0");
+  assert.equal(result.marketResearch.adjacentSignals.miseStars, 31118);
+  assert.equal(result.marketResearch.adjacentSignals.miseRelease, "v2026.7.13");
   assert.match(result.weaknesses.join(" "), /reproducible environments/);
   assert.match(result.marketResearch.interpretation, /not unique users/);
   assert.match(result.marketResearch.scoreImpact, /none until/);
   assert.match(result.strengths.join(" "), /bounded APM skill distribution/);
   assert.match(result.weaknesses.join(" "), /automatic skill pickup remains unverified/);
-  const localEvidence = [...result.technicalReadiness.dimensions, ...result.marketReadiness.dimensions, ...result.marketValidation.dimensions, ...result.releaseAssessment.axes]
+  const localEvidence = [
+    ...result.technicalReadiness.dimensions,
+    ...result.capabilityAssessment.dimensions,
+    ...result.marketReadiness.dimensions,
+    ...result.marketValidation.dimensions,
+    ...result.releaseAssessment.axes,
+  ]
     .flatMap((item) => item.evidence)
     .filter((item) => !item.startsWith("http") && !item.startsWith("aienvmap") && !item.startsWith("npm "))
     .map((item) => item.split("#")[0]);

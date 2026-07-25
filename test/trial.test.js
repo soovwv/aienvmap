@@ -39,6 +39,10 @@ test("trial completes a local technical test without uploading or changing the e
     assert.equal(result.safety.projectWrappersExecuted, false);
     assert.equal(result.safety.runtimeVersionProbesExecuted, true);
     assert.equal(result.safety.thirdPartyProbeSideEffectsGuaranteedAbsent, false);
+    assert.equal(result.safety.launcherCacheMayChange, true);
+    assert.equal(typeof result.reviewSummary.runtimeCategoryCount, "number");
+    assert.equal(typeof result.reviewSummary.distinctPythonEnvironmentCount, "number");
+    assert.equal(typeof result.reviewSummary.reason, "string");
     assert.equal(result.marketEvidence, false);
     assert.deepEqual(result.artifacts, [".aienvmap/trial/portable.json", ".aienvmap/trial/case-summary.json", ".aienvmap/trial/case-draft.md", ".aienvmap/trial/NEXT.md"]);
     assert.equal(await fs.stat(path.join(dir, "AIENV.md")).then(() => true, () => false), false);
@@ -47,6 +51,7 @@ test("trial completes a local technical test without uploading or changing the e
     assert.equal(await fs.readFile(path.join(dir, ".aienvmap", "timeline.jsonl"), "utf8"), timelineSentinel);
     assert.deepEqual((await fs.readdir(path.join(dir, ".aienvmap"))).sort(), ["manifest.json", "timeline.jsonl", "trial"]);
     const draft = await fs.readFile(path.join(dir, ".aienvmap", "trial", "case-draft.md"), "utf8");
+    const caseSummary = JSON.parse(await fs.readFile(path.join(dir, ".aienvmap", "trial", "case-summary.json"), "utf8"));
     const next = await fs.readFile(path.join(dir, ".aienvmap", "trial", "NEXT.md"), "utf8");
     assert.match(draft, /Human verification/);
     assert.match(draft, /Generated technical result/);
@@ -54,6 +59,8 @@ test("trial completes a local technical test without uploading or changing the e
     assert.match(draft, /Silence is not consent/);
     assert.doesNotMatch(draft, /private-fixture/);
     assert.doesNotMatch(draft, new RegExp(dir.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
+    assert.equal(caseSummary.safetyEnvelope.launcherCacheMayChange, true);
+    assert.equal(caseSummary.safetyEnvelope.networkUploaded, false);
     assert.match(next, /no automatic upload/i);
     assert.match(next, /may cache the aienvmap package/i);
     assert.match(next, /cannot guarantee that arbitrary third-party executables have no side effects/i);
@@ -74,10 +81,10 @@ test("tester guides keep human consent and AI safety explicit", async () => {
   const invite = await fs.readFile(path.resolve("TESTER_INVITE.md"), "utf8");
   const release = await fs.readFile(path.resolve("RELEASE_NOTES_0.1.1.md"), "utf8");
   const stableRelease = await fs.readFile(path.resolve("RELEASE_NOTES_0.2.0.md"), "utf8");
-  const currentRelease = await fs.readFile(path.resolve("RELEASE_NOTES_0.2.1.md"), "utf8");
+  const currentRelease = await fs.readFile(path.resolve("RELEASE_NOTES_0.2.2.md"), "utf8");
   const readme = await fs.readFile(path.resolve("README.md"), "utf8");
   for (const text of [testing, ai]) {
-    assert.match(text, /0\.2\.1 trial/);
+    assert.match(text, /0\.2\.2 trial/);
     assert.match(text, /no automatic upload/i);
     assert.match(text, /human/i);
   }
@@ -94,7 +101,7 @@ test("tester guides keep human consent and AI safety explicit", async () => {
   assert.match(testing, /disposable directory or disposable project copy/);
   assert.match(testing, /do not need to write a review or answer a questionnaire/i);
   assert.match(invite, /Do not request positive reviews/);
-  assert.match(invite, /npx aienvmap@0\.2\.1 trial/);
+  assert.match(invite, /npx aienvmap@0\.2\.2 trial/);
   assert.match(invite, /disposable directory or disposable project copy/);
   assert.match(invite, /skips project Maven\/Gradle wrappers/);
   assert.match(invite, /side-effect-free behavior cannot be guaranteed/);
@@ -103,7 +110,7 @@ test("tester guides keep human consent and AI safety explicit", async () => {
   assert.match(release, /Run it in a disposable directory or disposable project copy/);
   assert.match(stableRelease, /npx aienvmap@0\.2\.0 trial/);
   assert.match(stableRelease, /arbitrary third-party executable side effects cannot be guaranteed absent/);
-  assert.match(currentRelease, /npx aienvmap@0\.2\.1 start/);
-  assert.match(readme, /Run `npx aienvmap@0\.2\.1 trial` in a disposable directory or disposable project copy/);
+  assert.match(currentRelease, /npx aienvmap@0\.2\.2 start/);
+  assert.match(readme, /Run `npx aienvmap@0\.2\.2 trial` in a disposable directory or disposable project copy/);
   assert.match(readme, /Trial artifacts are isolated under `.aienvmap\/trial\/`/);
 });

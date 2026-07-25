@@ -4,16 +4,16 @@
 [![License](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
 [![Node](https://img.shields.io/badge/node-%3E%3D18-339933.svg)](package.json) / [Website](https://aienvmap.svwvs.com/)
 **Know the development environment before an AI changes it.**
-
-`aienvmap` is a dependency-free environment map and explicit change handoff for AI coding agents. It gives Codex, Claude, Gemini, Cursor, and Copilot a read-only preflight for the runtimes they are about to rely on and the environment changes another session already plans - before either agent guesses or changes the machine.
+`aienvmap` provides dependency-free local environment evidence and explicit change handoff across AI coding agents. It gives Codex, Claude, Gemini, Cursor, and Copilot a read-only preflight for the runtimes they are about to rely on and the environment changes another session already plans - before either agent guesses or changes the machine.
 
 ```bash
-npx aienvmap@0.2.1 start
+npx aienvmap@0.2.2 start
 ```
 
 It reports evidence without silently installing, switching, or removing software. It does not upgrade, repair, or rewrite your development environment.
+Its narrow job is **pre-change evidence and handoff**. It complements mise/asdf, Devbox/Dev Containers, AI instruction files, and Syft/Trivy rather than replacing them; see the evidence-bounded [market comparison](MARKET.md). The generated light SBOM is AI coordination context, not a vulnerability database, compliance report, or substitute for a full scanner.
 
-For a bounded external trial in a disposable directory, run `npx aienvmap@0.2.1 trial`; nothing is uploaded automatically.
+For a bounded external trial in a disposable directory, run `npx aienvmap@0.2.2 trial`; nothing is uploaded automatically. In the core workflow, Agent A records a planned dependency change. Agent B starts later and sees the pending intent before acting.
 ![aienvmap terminal demo showing a review-first dependency conflict](examples/aienvmap-terminal-demo.svg)
 
 ## Why
@@ -30,9 +30,9 @@ Skip it if you only need a full compliance SBOM scanner, runtime installer, hard
 
 ## 10-Second Use
 
-`start` is the one-command AI preflight: it refreshes the environment map when needed, runs quick multi-install reconciliation, and returns the next safe command. To add project instruction pointers for supported AI hosts, preview with `npx aienvmap onboard --dry-run`, then run `npx aienvmap onboard` after review.
+`start` is the one-command AI preflight: it refreshes the environment map when needed, runs quick multi-install reconciliation, and returns the next safe command. For an unpinned freshness check, run `npx aienvmap@latest start`; the output prints the version actually running. Keep an explicit version in reproducible tests. To add project instruction pointers, preview with `npx aienvmap onboard --dry-run`, then run `npx aienvmap onboard` after review. For a bounded first AI decision, use `start --json --compact` or `status --json --compact`; each keeps plain-language reasons, the safety boundary, evidence paths, and next command under 5 KB. Run `aienvmap help --all` only when advanced commands are needed.
 
-Windows PowerShell may select a blocked `npx.ps1` shim. In that case use `npx.cmd aienvmap@0.2.1 start`; do not change the machine execution policy. The same rule applies to `npm.cmd` and an installed `aienvmap.cmd` shim.
+Windows PowerShell may select a blocked `npx.ps1` shim. In that case use `npx.cmd aienvmap@0.2.2 start`; do not change the machine execution policy. The same rule applies to `npm.cmd` and an installed `aienvmap.cmd` shim.
 
 Try `npx aienvmap demo` for an isolated conflict example. It shows one agent's dependency intent becoming visible to the next agent; environment changes are never inferred automatically and remain approval-gated.
 
@@ -42,13 +42,13 @@ Try `npx aienvmap demo` for an isolated conflict example. It shows one agent's d
 
 ## Evidence, not claims
 
-There are 372 automated tests, plus maintainer-run Windows, Linux, and macOS [validation evidence](VALIDATION.md).
+There are more than 400 automated tests, plus maintainer-run Windows, Linux, and macOS [validation evidence](VALIDATION.md).
 
 Public external cases are reviewed as evidence, but individual submissions are not used in promotion until at least five have been collected. Negative results and critical reviews are welcome. See [testing](TESTING.md), the [portable case guide](examples/portable-environment-case-guide.md), and the [promotion and community guide](PROMOTION.md).
 
 ## External Trial
 
-Run `npx aienvmap@0.2.1 trial` in a disposable directory or disposable project copy on a real development machine. Trial artifacts are isolated under `.aienvmap/trial/`, project Maven/Gradle wrappers are skipped, and nothing is uploaded automatically. The trial runs bounded runtime version probes, so arbitrary discovered executables are not guaranteed side-effect-free. Follow [TESTING.md](TESTING.md), or give [AI_TESTING.md](AI_TESTING.md) to an AI agent. Technical testing needs no human review; optional public evidence uses one compact confirmation, complete-draft review, and separate submission consent. Community maintainers can reuse [TESTER_INVITE.md](TESTER_INVITE.md).
+Run `npx aienvmap@0.2.2 trial` in a disposable directory or disposable project copy on a real development machine. Trial artifacts are isolated under `.aienvmap/trial/`, project Maven/Gradle wrappers are skipped, and nothing is uploaded automatically. The trial runs bounded runtime version probes, so arbitrary discovered executables are not guaranteed side-effect-free. Follow [TESTING.md](TESTING.md), or give [AI_TESTING.md](AI_TESTING.md) to an AI agent. Technical testing needs no human review; optional public evidence uses one compact confirmation, complete-draft review, and separate submission consent. Community maintainers can reuse [TESTER_INVITE.md](TESTER_INVITE.md).
 
 ## What the AI gets
 
@@ -59,7 +59,7 @@ Run `npx aienvmap@0.2.1 trial` in a disposable directory or disposable project c
 
 `start` creates the env map, light SBOM, AI status, discovery entry, and human dashboard when missing or stale. `reconcile` is read-only by default. Removal, PATH edits, runtime switching, global installs, and lockfile rewrites always require review.
 
-`discover` is read-only and reports `aiDiscovery.decision`: `auto-ready` or `fallback-required`. The bounded APM GitHub skill subpath can be installed with `apm install soovwv/aienvmap/.apm/skills/aienvmap#v0.2.0 --target agent-skills,claude` after the immutable release tag exists; this is a distribution channel, not a claimed central-marketplace listing. APM deploys the skill only: no hooks, MCP server, executable, runtime install, or automatic command execution. `onboard --dry-run` previews tiny marker-scoped pointers, while `onboard` preserves a recognized APM skill and writes native pointers only where coverage is missing. Automatic discovery is best-effort: verification proves marker or skill availability, never AI-host pickup. If pickup is uncertain, paste `copyPastePrompt` from `start --json` or `.aienvmap/discovery.json`, then follow `sessionUse` and `aiEntry`.
+`discover` is read-only and reports `aiDiscovery.decision`: `auto-ready` or `fallback-required`. The bounded APM GitHub skill subpath can be installed with `apm install soovwv/aienvmap/.apm/skills/aienvmap#v0.2.2 --target agent-skills,claude` after the immutable release tag exists; this is a distribution channel, not a claimed central-marketplace listing. APM deploys the skill only: no hooks, MCP server, executable, runtime install, or automatic command execution. `onboard --dry-run` previews tiny marker-scoped pointers, while `onboard` preserves a recognized APM skill and writes native pointers only where coverage is missing. Automatic discovery is best-effort: verification proves marker or skill availability, never AI-host pickup. If pickup is uncertain, paste `copyPastePrompt` from `start --json` or `.aienvmap/discovery.json`, then follow `sessionUse` and `aiEntry`.
 
 Formerly published as `aienvmp`. Use `aienvmap` going forward; new workspaces write `.aienvmap/` artifacts.
 

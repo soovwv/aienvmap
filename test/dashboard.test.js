@@ -22,7 +22,7 @@ test("dashboardPayload centralizes schema-backed dashboard data", () => {
   assert.equal(payload.warnings.length, 1);
   assert.equal(payload.intents.length, 1);
   assert.equal(payload.policy.node, "24");
-  assert.equal(payload.releaseReadiness.target, "0.2.0");
+  assert.equal(payload.releaseReadiness.target, "0.2.2");
   assert.equal(payload.schemaQualitySignals.status, "release-candidate");
   assert.equal(payload.schemaAiAdoptionDecision.proofCommand, "aienvmap demo --json");
   assert.match(payload.schemaAiAdoptionDecision.position, /Environment map and explicit change handoff/);
@@ -62,7 +62,7 @@ test("dashboardCardClientScript keeps card priority markup centralized", () => {
 
 test("dashboard card helpers are hoisted before generated card groups execute", () => {
   const script = [
-    "const releaseReadiness={target:'0.2.0'};",
+    "const releaseReadiness={target:'0.2.2'};",
     "const qualitySignals={status:'ready'};",
     "const ciHasFailure=false;",
     "const enforcementHtml='';",
@@ -129,7 +129,7 @@ test("dashboardStateCardsClientScript groups state and handoff side cards", () =
   assert.match(script, /const stateCardsHtml=stateCards\.map/);
 });
 
-test("renderDashboard includes the audit summary surface", () => {
+test("renderDashboard emits only the lightweight human dashboard", () => {
   const html = renderDashboard({
     generatedAt: "2026-07-08T00:00:00.000Z",
     workspace: { name: "sample", path: "/tmp/sample" },
@@ -483,355 +483,61 @@ test("renderDashboard includes the audit summary surface", () => {
     }
   }, [], [], [], {});
 
-  assert.match(html, /Audit summary/);
-  assert.match(html, /AI control strip/);
-  assert.match(html, /10-second review/);
-  assert.match(html, /For humans: check this before any shared environment change/);
-  assert.match(html, /\.cockpit/);
-  assert.match(html, /const primaryReviewTarget=reviewTargets\[0\]\|\|'none'/);
-  assert.match(html, /Next command/);
-  assert.match(html, /First read/);
-  assert.match(html, /Start here/);
-  assert.match(html, /AI bootstrap/);
-  assert.match(html, /\.nextbar/);
-  assert.match(html, /\.brief/);
-  assert.match(html, /const maintenanceLoop=manifest\.preflight\?\.maintenanceLoop\|\|\{\}/);
-  assert.match(html, /const \{manifest,timeline,warnings,intents,policy,releaseReadiness,schemaQualitySignals,schemaAiAdoptionDecision,schemaAgentDiscovery\}=JSON\.parse/);
-  assert.match(html, /const aiSession=manifest\.preflight\?\.aiSession\|\|\{\}/);
-  assert.match(html, /const aiSessionStart=aiSession\.start\|\|\['aienvmap status --json','aienvmap context --json'\]/);
-  assert.match(html, /const aiBootstrap=manifest\.preflight\?\.aiBootstrap\|\|\{\}/);
-  assert.match(html, /const artifactFreshness=manifest\.preflight\?\.artifactFreshness\|\|\{\}/);
-  assert.match(html, /const strictRecommendation=manifest\.preflight\?\.strictRecommendation\|\|\{\}/);
-  assert.match(html, /const releaseChecks=releaseReadiness\?\.requiredBeforeStable\|\|\[\]/);
-  assert.match(html, /const qualitySignals=manifest\.preflight\?\.qualitySignals\|\|schemaQualitySignals\|\|\{\}/);
-  assert.match(html, /schemaAiAdoptionDecision/);
-  assert.match(html, /Release Readiness/);
-  assert.match(html, /Quality Signals/);
-  assert.match(html, /release-candidate/);
-  assert.match(html, /publishDecision=releaseReadiness\?\.publishDecision\|\|\{\}/);
-  assert.match(html, /Decision/);
-  assert.match(html, /meaningful changes are batched/);
-  assert.match(html, /npm run release:check passes locally/);
-  assert.match(html, /Batch meaningful changes before one npm publish/);
-  assert.match(html, /const artifactFreshnessValue=artifactFreshness\.state\|\|'unknown'/);
-  assert.match(html, /const artifactFreshnessNext=artifactFreshness\.nextCommand\|\|artifactFreshness\.refreshCommand\|\|'aienvmap sync'/);
-  assert.match(html, /const nextCommand=aiBootstrap\.nextSafeCommand\|\|manifest\.preflight\?\.nextSafeCommand/);
-  assert.match(html, /const nextReason=topAction\.summary\|\|aiBootstrap\.rule\|\|maintenanceLoop\.rule/);
-  assert.match(html, /const aiEntry=manifest\.preflight\?\.artifacts\?\.discovery\|\|'\.aienvmap\/discovery\.json'/);
-  assert.match(html, /const startHere=manifest\.preflight\?\.artifacts\?\.startHere\|\|'\.aienvmap\/README\.md'/);
-  assert.match(html, /const firstRead=aiBootstrap\.readFirst\|\|nextAgent\.readFirst\|\|'\.aienvmap\/status\.json'/);
-  assert.match(html, /const bootstrapState=\[aiBootstrap\.projectLocalWork\|\|'allowed',aiBootstrap\.environmentChanges\|\|'intent-first'\]/);
-  assert.match(html, /const agentDiscovery=manifest\.preflight\?\.agentPointers\?\.discovery/);
-  assert.match(html, /const dashboardDiscoveryFallback=/);
-  assert.match(html, /const agentDiscoveryFallbackRead=manifest\.preflight\?\.agentPointers\?\.fallbackRead/);
-  assert.match(html, /agentDiscoveryDecision/);
-  assert.match(html, /agentDiscoveryEntry/);
-  assert.match(html, /agentDiscoverySetup/);
-  assert.match(html, /agentDiscoveryAiEntryFields/);
-  assert.match(html, /<th>aiEntry<\/th>/);
-  assert.match(html, /startup/);
-  assert.match(html, /aienvmap start --json/);
-  assert.match(html, /fallback-required/);
-  assert.match(html, /auto-ready/);
-  assert.match(html, /AI discovery/);
-  assert.match(html, /AI entry/);
-  assert.match(html, /Maintenance/);
-  assert.match(html, /AI Session/);
-  assert.match(html, /Before env/);
-  assert.match(html, /<th>Avoid<\/th>/);
-  assert.match(html, /aienvmap checkpoint --actor agent:id --summary dependency-change --target dependency/);
-  assert.deepEqual(dashboardEssentialCards, [
-    "AI Session",
-    "Environment Health",
-    "AI Collaboration",
-    "Light SBOM",
-    "Agent Pointers",
-    "Agent Intents",
-    "Environment Ledger",
-    "Enforcement Mode",
-    "Release Readiness"
-  ]);
-  assert.equal(dashboardCardPriority("AI Session"), "essential");
-  assert.equal(dashboardCardPriority("Runtimes"), "support");
-  assert.deepEqual(dashboardEssentialSurfaces.controlStrip, ["AI readiness", "Freshness", "Collaboration", "SBOM risk"]);
-  assert.deepEqual(dashboardEssentialSurfaces.tenSecondReview, ["AI entry", "Next command", "Review target", "Mode"]);
-  assert.equal(dashboardDiscoveryFallback.command, "aienvmap start --json");
-  assert.equal(dashboardDiscoveryFallback.entry, ".aienvmap/discovery.json");
-  assert.deepEqual(dashboardDiscoveryFallback.decisionValues, ["auto-ready", "fallback-required"]);
-  assert.equal(dashboardDiscoveryFallback.nextSetupCommand, "aienvmap onboard");
-  assert.equal(dashboardDiscoveryFallback.sessionUse.decisionField, "aiDiscovery.decision");
-  assert.equal(dashboardDiscoveryFallback.sessionUse.fallbackPromptField, "copyPastePrompt");
-  assert.ok(dashboardDiscoveryFallback.aiEntryFields.includes("copyPastePrompt"));
-  assert.ok(dashboardDiscoveryFallback.aiEntryFields.includes("beforeEnvironmentChange"));
-  assert.match(dashboardDiscoveryFallback.startupChecklist.join(" "), /dependencyQuickCheck/);
-  assert.match(dashboardDiscoveryFallback.startupChecklist.join(" "), /checkpoint and hand off/);
-  assert.deepEqual(dashboardDiscoveryFallback.read, [".aienvmap/discovery.json", ".aienvmap/README.md", ".aienvmap/status.json", ".aienvmap/summary.md", "aienvmap context --json"]);
-  assert.match(dashboardDiscoveryFallbackClientScript(), /aienvmap start --json/);
-  assert.match(dashboardDiscoveryFallbackClientScript(), /agentDiscoveryEntry/);
-  assert.match(dashboardDiscoveryFallbackClientScript(), /agentDiscoveryDecision=/);
-  assert.match(dashboardDiscoveryFallbackClientScript(), /fallback-required/);
-  assert.match(dashboardDiscoveryFallbackClientScript(), /agentDiscoverySetup/);
-  assert.match(dashboardDiscoveryFallbackClientScript(), /agentDiscoveryAiEntryFields/);
-  assert.match(dashboardDiscoveryFallbackClientScript(), /agentSessionUse/);
-  assert.match(dashboardDiscoveryFallbackClientScript(), /<th>sessionUse<\/th>/);
-  assert.match(dashboardDiscoveryFallbackClientScript(), /<th>aiEntry<\/th>/);
-  assert.match(dashboardDiscoveryFallbackClientScript(), /startup/);
-  assert.ok(dashboardEssentialSurfaces.firstRead.includes("Start here"));
-  assert.ok(dashboardEssentialSurfaces.firstRead.includes("AI entry"));
-  assert.ok(dashboardEssentialSurfaces.firstRead.includes("Maintenance"));
-  assert.equal(dashboardEssentialSurfaces.nextCommand, "Next command");
-  assert.ok(dashboardEssentialSurfaces.essentialCards.includes("Light SBOM"));
-  assert.match(dashboardEssentialSurfaces.rule, /AI startup contract/);
-  assert.equal(dashboardSurfaceBudget.mode, "essential-first");
-  assert.equal(dashboardSurfaceBudget.primaryReviewTime, "10 seconds");
-  assert.ok(dashboardSurfaceBudget.defaultPriority.includes("firstRead"));
-  assert.match(dashboardSurfaceBudget.supportCardRule, /must not hide or replace/);
-  assert.match(dashboardSurfaceBudget.noGrowthRule, /before adding new dashboard cards/);
-  assert.match(dashboardEssentialSurfaceClientScript(), /const essentialSurfaces=/);
-  assert.match(dashboardPriorityClientScript(), /const essentialCards=\["AI Session"/);
-  assert.match(dashboardPriorityClientScript(), /function cardPriority\(title\)/);
-  assert.match(dashboardAgentClientScript(), /const agentNames=\{agents:'Codex',claude:'Claude',gemini:'Gemini'\}/);
-  assert.match(dashboardAgentClientScript(), /agentNames\.cursor='Cursor'/);
-  assert.match(dashboardAgentClientScript(), /aienvmap pointer installed/);
-  assert.match(dashboardAgentClientScript(), /agentPointerCount=entries\(manifest\.agentFiles\)/);
-  assert.match(dashboardScannerGuidanceClientScript(), /const scannerGuidance=lightSbom\.scannerGuidance/);
-  assert.match(dashboardScannerGuidanceClientScript(), /optional-read-only/);
-  assert.match(dashboardScannerGuidanceClientScript(), /aienvmap sync --security/);
-  assert.match(dashboardScannerGuidanceClientScript(), /dependency-track/);
-  assert.match(dashboardScannerGuidanceClientScript(), /dedicated scanners for full evidence/);
-  assert.match(dashboardReviewPlanClientScript(), /const aiReviewPlan=lightSbom\.aiReviewPlan/);
-  assert.match(dashboardReviewPlanClientScript(), /packageManagerPolicy/);
-  assert.match(dashboardReviewPlanClientScript(), /aienvmap checkpoint --actor agent:id --summary dependency-change --target dependency/);
-  assert.match(dashboardAiUseClientScript(), /const aiUse=lightSbom\.aiUse/);
-  assert.match(dashboardAiUseClientScript(), /shortest AI dependency\/security safety summary/);
-  assert.match(dashboardAiUseHtmlClientScript(), /const aiUseHtml=/);
-  assert.match(dashboardAiUseHtmlClientScript(), /Scanner/);
-  assert.match(dashboardReviewPlanHtmlClientScript(), /const aiReviewPlanHtml=aiReviewPlan\.status/);
-  assert.match(dashboardReviewPlanHtmlClientScript(), /No AI review plan available/);
-  assert.match(dashboardReviewPlanHtmlClientScript(), /aienvmap sbom --json/);
-  assert.match(dashboardScannerGuidanceHtmlClientScript(), /const scannerGuidanceHtml=/);
-  assert.match(dashboardScannerGuidanceHtmlClientScript(), /optional-read-only/);
-  assert.match(dashboardScannerGuidanceHtmlClientScript(), /Decision/);
-  assert.match(dashboardScannerGuidanceHtmlClientScript(), /Tools/);
-  assert.match(dashboardScannerGuidanceHtmlClientScript(), /Evidence rule/);
-  assert.match(dashboardScannerGuidanceHtmlClientScript(), /scannerGuidance\.externalTools/);
-  assert.match(dashboardScannerGuidanceHtmlClientScript(), /const scannerWorkflow=scannerGuidance\.evidenceWorkflow/);
-  assert.match(dashboardScannerGuidanceHtmlClientScript(), /evidence/);
-  assert.match(dashboardScannerGuidanceHtmlClientScript(), /scannerGuidance\.decision/);
-  assert.match(dashboardScannerGuidanceHtmlClientScript(), /security-sensitive decisions/);
-  assert.match(dashboardSbomClientScripts(), /const scannerGuidance=lightSbom\.scannerGuidance/);
-  assert.match(dashboardSbomClientScripts(), /const aiUse=lightSbom\.aiUse/);
-  assert.match(dashboardSbomClientScripts(), /const dependencyCoordination=lightSbom\.dependencyCoordination/);
-  assert.match(dashboardRiskSummaryClientScript(), /const riskSummaryHtml=riskSummary\.level/);
-  assert.match(dashboardRiskSummaryClientScript(), /No SBOM action required/);
-  assert.match(dashboardRiskSummaryClientScript(), /No risk summary available/);
-  assert.match(dashboardPackageManagerPolicyClientScript(), /const pmPolicyHtml=/);
-  assert.match(dashboardPackageManagerPolicyClientScript(), /No lockfile policy detected/);
-  assert.match(dashboardDependencyHintsClientScript(), /const dependencyHintsHtml=dependencyHints\.length/);
-  assert.match(dashboardDependencyHintsClientScript(), /No dependency change hints available/);
-  assert.match(dashboardDependencyHintsClientScript(), /lockfiles/);
-  assert.match(dashboardDependencyReadSetClientScript(), /const dependencyReadSetHtml=dependencyReadSet\.length/);
-  assert.match(dashboardDependencyReadSetClientScript(), /No dependency files detected/);
-  assert.match(dashboardDependencyProtocolClientScript(), /const dependencyProtocolHtml=dependencyProtocol\.commands/);
-  assert.match(dashboardDependencyProtocolClientScript(), /No dependency change protocol available/);
-  assert.match(dashboardDependencyReviewClientScript(), /const aiDependencyReviewHtml=aiDependencyReview\.status/);
-  assert.match(dashboardDependencyReviewClientScript(), /Security confidence/);
-  assert.match(dashboardDependencyReviewClientScript(), /aienvmap intent --actor agent:id --action dependency-review --target dependency/);
-  assert.match(dashboardDependencyCoordinationClientScript(), /const dependencyCoordination=lightSbom\.dependencyCoordination/);
-  assert.match(dashboardDependencyCoordinationClientScript(), /const dependencyQuickCheck=lightSbom\.dependencyQuickCheck/);
-  assert.match(dashboardDependencyCoordinationClientScript(), /const dependencyQuickCheckHtml=/);
-  assert.match(dashboardDependencyCoordinationClientScript(), /Scanner evidence/);
-  assert.match(dashboardDependencyCoordinationClientScript(), /audit fix/);
-  assert.match(dashboardEnvironmentProtocolClientScript(), /const environmentProtocol=manifest\.preflight\?\.environmentChangeProtocol/);
-  assert.match(dashboardEnvironmentProtocolClientScript(), /Before shared environment changes/);
-  assert.match(dashboardEnvironmentProtocolClientScript(), /mustNotDo/);
-  assert.match(dashboardReleaseReadinessClientScript(), /const releaseChecks=releaseReadiness\?\.requiredBeforeStable\|\|\[\]/);
-  assert.match(dashboardReleaseReadinessClientScript(), /const dashboardReleaseDefaults=/);
-  assert.match(dashboardReleaseReadinessClientScript(), /const currentBatch=releaseReadiness\?\.currentBatch\|\|\{\}/);
-  assert.match(dashboardReleaseReadinessClientScript(), /const releaseEvidence=releaseReadiness\?\.evidenceCommands\|\|\[\]/);
-  assert.match(dashboardReleaseReadinessClientScript(), /const releaseFocus=releaseReadiness\?\.stabilizationFocus\|\|\[\]/);
-  assert.match(dashboardReleaseReadinessClientScript(), /const publishGate=releaseReadiness\?\.publishGate\|\|\{\}/);
-  assert.match(dashboardReleaseReadinessClientScript(), /const contractReview=releaseReadiness\?\.contractReview\|\|\{\}/);
-  assert.match(dashboardReleaseReadinessClientScript(), /publishDecision=releaseReadiness\?\.publishDecision\|\|\{\}/);
-  assert.match(dashboardReleaseReadinessClientScript(), /Contract review/);
-  assert.match(dashboardReleaseReadinessClientScript(), /contractReview\.surfaces/);
-  assert.match(dashboardReleaseReadinessClientScript(), /single AI-readable/);
-  assert.match(dashboardReleaseReadinessClientScript(), /Batch meaningful changes before one npm publish/);
-  assert.match(dashboardReleaseReadinessClientScript(), /currentBatch\.themes/);
-  assert.match(dashboardReleaseClientScripts(), /const releaseReadinessHtml=/);
-  assert.match(dashboardReleaseClientScripts(), /const qualitySignalsHtml=/);
-  assert.match(dashboardReleaseClientScripts(), /const operationalCards=/);
-  assert.equal(dashboardReleaseDefaults.target, "0.2.0");
-  assert.equal(dashboardReleaseDefaults.evidence, "npm run release:check");
-  assert.equal(dashboardReleaseDefaults.contractReviewStatus, "freeze-candidate-verified");
-  assert.match(dashboardQualitySignalsClientScript(), /const qualitySignals=manifest\.preflight\?\.qualitySignals/);
-  assert.match(dashboardQualitySignalsClientScript(), /const aiAdoptionDecision=schemaAiAdoptionDecision\|\|\{\}/);
-  assert.match(dashboardQualitySignalsClientScript(), /const dashboardQualityDefaults=/);
-  assert.match(dashboardQualitySignalsClientScript(), /AI-friendly/);
-  assert.equal(dashboardQualityDefaults.evidence, "aienvmap start --json && aienvmap context --json");
-  assert.match(dashboardQualitySignalsClientScript(), /Adoption/);
-  assert.match(dashboardQualitySignalsClientScript(), /aiAdoptionDecision\.useWhen/);
-  assert.match(dashboardQualitySignalsClientScript(), /aienvmap demo --json/);
-  assert.match(dashboardQualitySignalsClientScript(), /First check/);
-  assert.match(dashboardQualitySignalsClientScript(), /do not require background services/);
-  for (const title of dashboardEssentialCards) {
-    assert.match(html, new RegExp(title.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
-  }
-  assert.match(html, /const mainCards=\[/);
-  assert.match(html, /const supportCards=\[/);
-  assert.match(html, /const stateCards=\[/);
-  assert.match(html, /const operationalCards=\[/);
-  assert.match(html, /const essentialCards=\["AI Session","Environment Health","AI Collaboration","Light SBOM","Agent Pointers","Agent Intents","Environment Ledger","Enforcement Mode","Release Readiness"\]/);
-  assert.match(html, /const essentialSurfaces=\{"controlStrip":\["AI readiness","Freshness","Collaboration","SBOM risk"\],"tenSecondReview":\["AI entry","Next command","Review target","Mode"\]/);
-  assert.match(html, /data-dashboard-priority=/);
-  assert.match(html, /cardPriority\(title\)/);
-  assert.match(html, /const agentNames=\{agents:'Codex',claude:'Claude',gemini:'Gemini'\}/);
-  assert.match(html, /agentNames\.copilot='Copilot'/);
-  assert.match(html, /const scannerGuidance=lightSbom\.scannerGuidance/);
-  assert.match(html, /const scannerTools=/);
-  assert.match(html, /const aiReviewPlan=lightSbom\.aiReviewPlan/);
-  assert.match(html, /const aiUse=lightSbom\.aiUse/);
-  assert.match(html, /const aiUseHtml=/);
-  assert.match(html, /AI Use/);
-  assert.match(html, /const aiReviewPlanHtml=aiReviewPlan\.status/);
-  assert.match(html, /const scannerGuidanceHtml=/);
-  assert.match(html, /const dependencyCoordinationHtml=/);
-  assert.match(html, /const dependencyQuickCheckHtml=/);
-  assert.match(html, /Dependency Quick Check/);
-  assert.match(html, /Dependency Coordination/);
-  assert.match(html, /const riskSummaryHtml=riskSummary\.level/);
-  assert.match(html, /const pmPolicyHtml=/);
-  assert.match(html, /const dependencyHintsHtml=dependencyHints\.length/);
-  assert.match(html, /const dependencyReadSetHtml=dependencyReadSet\.length/);
-  assert.match(html, /const dependencyProtocolHtml=dependencyProtocol\.commands/);
-  assert.match(html, /const aiDependencyReviewHtml=aiDependencyReview\.status/);
-  assert.match(html, /const environmentProtocol=manifest\.preflight\?\.environmentChangeProtocol/);
-  assert.match(html, /const releaseReadinessHtml=/);
-  assert.match(html, /const qualitySignalsHtml=/);
-  assert.match(html, /const currentBatch=releaseReadiness\?\.currentBatch/);
-  assert.match(html, /const publishGate=releaseReadiness\?\.publishGate/);
-  assert.match(html, /const contractReview=releaseReadiness\?\.contractReview/);
-  assert.match(html, /releaseEvidence=releaseReadiness\?\.evidenceCommands/);
-  assert.match(html, /releaseFocus=releaseReadiness\?\.stabilizationFocus/);
-  assert.match(html, /Environment Protocol/);
-  assert.match(html, /broad install/);
-  assert.match(html, /\.card\.essential/);
-  assert.match(html, /const reviewTargets=\[\.\.\.new Set/);
-  assert.match(html, /\.control-card\.review/);
-  assert.match(html, /controlCard\('AI readiness'/);
-  assert.match(html, /controlCard\('Freshness'/);
-  assert.match(html, /controlCard\('Collaboration'/);
-  assert.match(html, /controlCard\('SBOM risk'/);
-  assert.match(html, /AI readiness/);
-  assert.match(html, /Collaboration/);
-  assert.match(html, /SBOM risk/);
-  assert.match(html, /sbomRiskValue\+sbomRiskScore/);
-  assert.match(html, /"score":80/);
-  assert.match(html, /aienvmap handoff --record --actor agent:id/);
-  assert.match(html, /Review dependency read set and topRisk/);
-  assert.match(html, /Review targets/);
-  assert.match(html, /Review target/);
-  assert.match(html, /Freshness/);
-  assert.match(html, /Local mode/);
-  assert.match(html, /AI decision/);
-  assert.match(html, /AI readiness/);
-  assert.match(html, /Review listed signals/);
-  assert.match(html, /Signals: /);
-  assert.match(html, /open intent conflicts/);
-  assert.match(html, /Runtime drift/);
-  assert.match(html, /Open env changes/);
-  assert.match(html, /Trust/);
-  assert.match(html, /AI Handoff/);
-  assert.match(html, /Read first/);
-  assert.match(html, /\.aienvmap\/status\.json/);
-  assert.match(dashboardLayoutClientScripts(), /const essentialSurfaces=/);
-  assert.match(dashboardLayoutClientScripts(), /function card\(/);
-  assert.match(dashboardLayoutClientScripts(), /const mainCards=/);
-  assert.match(dashboardLayoutClientScripts(), /const supportCards=/);
-  assert.match(html, /Dependency files/);
-  assert.match(html, /Conflicts/);
-  assert.match(html, /Recommended Actions/);
-  assert.match(html, /Review express/);
-  assert.match(html, /AI Intent Targets/);
-  assert.match(html, /Follow-ups/);
-  assert.match(html, /followUpPlan=manifest\.preflight\?\.followUpPlan/);
-  assert.match(html, /<th>Targets<\/th><td>\$\{esc\(\(followUpPlan\.targets/);
-  assert.match(html, /Run the follow-up command before another AI changes the same environment target/);
-  assert.match(html, /dependency-change/);
-  assert.match(html, /aienvmap status --write/);
-  assert.match(html, /Agent Activity/);
-  assert.match(html, /dependency remediation/);
-  assert.match(html, /multi-agent/);
-  assert.match(html, /AI Collaboration/);
-  assert.match(html, /review-before-env-change/);
-  assert.match(html, /intent-review-handoff-first/);
-  assert.match(html, /shared environment changes/);
-  assert.match(html, /AI Contract/);
-  assert.match(html, /aienvmap-preflight/);
-  assert.match(html, /nextAgent/);
-  assert.match(html, /dependency/);
-  assert.match(html, /planned-change --target dependency/);
-  assert.match(html, /Dependency Read Set/);
-  assert.match(html, /package-lock\.json/);
-  assert.match(html, /Dependency Protocol/);
-  assert.match(html, /checkpoint --actor agent:id --summary dependency-change --target dependency/);
-  assert.match(html, /AI Plan Artifacts/);
-  assert.match(html, /plan\.md/);
-  assert.match(html, /Remediation Steps/);
-  assert.match(html, /4\.17\.21/);
-  assert.match(html, /"level":"high"/);
-  assert.match(html, /"score":90/);
-  assert.match(html, /Environment Steps/);
-  assert.match(html, /node-version-mismatch/);
-  assert.match(html, /CI Readiness/);
-  assert.match(html, /Enforcement Mode/);
-  assert.match(html, /advisory/);
-  assert.match(html, /warn-only/);
-  assert.match(html, /Fail local/);
-  assert.match(html, /Recommended scope/);
-  assert.match(html, /Release/);
-  assert.match(html, /doctor --strict policy/);
-  assert.match(html, /aienvmap doctor --json/);
-  assert.match(html, /doctor --strict policy --json/);
-  assert.match(html, /doctor --strict all --json/);
-  assert.match(html, /Keep local operation advisory/);
-  assert.match(html, /security/);
-  assert.match(html, /policy/);
-  assert.match(html, /Global Inventory/);
-  assert.match(html, /Dependency Snapshot/);
-  assert.match(html, /Light SBOM/);
-  assert.match(html, /Light SBOM Artifact/);
-  assert.match(html, /sbom\.json/);
-  assert.match(html, /sbom\.cdx\.json/);
-  assert.match(html, /AI Review Plan/);
-  assert.match(html, /high\/80/);
-  assert.match(html, /AI Dependency Review/);
-  assert.match(html, /Security confidence/);
-  assert.match(html, /scanner-summary/);
-  assert.match(html, /requires dependency review/);
-  assert.match(html, /dependency-review --target dependency/);
-  assert.match(html, /checkpoint --actor agent:id --summary dependency-change --target dependency/);
-  assert.match(html, /Risk summary/);
-  assert.match(html, /vulnerable direct dependency/);
-  assert.match(html, /Direct vulnerable/);
-  assert.match(html, /Dependency change hints/);
-  assert.match(html, /Package manager policy/);
-  assert.match(html, /package-lock\.json/);
-  assert.match(html, /express/);
-  assert.match(html, /Security Summary/);
-  assert.match(html, /package\.json/);
-  assert.match(html, /express/);
-  assert.match(html, /Agent Pointers/);
-  assert.match(html, /<th>sessionUse<\/th><td><code>\$\{esc\(agentSessionUse\.proofCommand\|\|'aienvmap discover --json'\)\}<\/code>/);
-  assert.match(html, /<th>Decision<\/th><td><code>\$\{esc\(agentDiscoveryDecision\)\}<\/code><\/td>/);
-  assert.match(html, /<th>Setup<\/th><td><code>\$\{esc\(agentDiscoverySetup\)\}<\/code><\/td>/);
-  assert.match(html, /aienvmap pointer installed/);
-  assert.match(html, /file detected, pointer missing/);
-  assert.match(html, /aienvmap onboard/);
-  assert.match(html, /aienvmap snippet claude --write/);
+  assert.match(html, /Development environment/);
+  assert.match(html, /Environment overview/);
+  assert.match(html, /Planned environment changes/);
+  assert.match(html, /Detected development tools/);
+  assert.match(html, /id="panel-sbom"/);
+  assert.match(html, /function showDashboardTab\(name\)/);
+  assert.match(html, /Package risks by runtime/);
+  assert.doesNotMatch(html, /AI Collaboration|Release Readiness|Agent Pointers|AI Contract/);
+  assert.ok(Buffer.byteLength(html, "utf8") < 30000, "dashboard HTML should stay lightweight");
 });
 
-test("dashWorkspace links written plan artifacts", async () => {
+test("renderDashboard tolerates planned changes without timestamps", () => {
+  const manifest = {
+    generatedAt: new Date().toISOString(),
+    trust: { state: "observed" },
+    workspace: { name: "sample", path: "C:/sample" },
+    os: { platform: "win32", release: "11", arch: "x64" },
+    runtimes: { node: "22.0.0" },
+    packageManagers: {}, containers: {}, lightSbom: { summary: {} }, agentFiles: {}
+  };
+  const html = renderDashboard(manifest, [], [], [{ actor: "agent:test", action: "upgrade node", target: "node" }]);
+  const data = html.match(/<script type="application\/json" id="data">([\s\S]*?)<\/script>/)?.[1]
+    .replaceAll("&amp;", "&").replaceAll("&lt;", "<").replaceAll("&gt;", ">");
+  const clientScript = html.match(/<script>\s*([\s\S]*?)\s*<\/script>/)?.[1];
+  const app = { innerHTML: "" };
+  const overview = { innerHTML: "" };
+  const sbom = { innerHTML: "" };
+  const tab = { classList: { toggle() {} }, setAttribute() {} };
+  const document = { getElementById: (id) => ({ data: { textContent: data }, app, "panel-overview": overview, "panel-sbom": sbom, "tab-overview": tab, "tab-sbom": tab })[id] || null };
+  new Function("document", clientScript)(document);
+  assert.match(overview.innerHTML, /upgrade node/);
+  assert.match(html, /simple-item warning/);
+  assert.match(html, /severity-critical/);
+  assert.match(html, /severity-high/);
+  assert.match(html, /severity-moderate/);
+  assert.match(sbom.innerHTML, /Package risks by runtime/);
+});
+
+test("dashboard keeps SBOM available when overview rendering fails", () => {
+  const manifest = { generatedAt: "now", workspace: { name: "sample" }, lightSbom: { summary: { packages: 2 } } };
+  const html = renderDashboard(manifest).replace("const runtimeItems=", "throw new Error('overview failure');const runtimeItems=");
+  const data = html.match(/<script type="application\/json" id="data">([\s\S]*?)<\/script>/)?.[1];
+  const clientScript = html.match(/<script>\s*([\s\S]*?)\s*<\/script>/)?.[1];
+  const app = { innerHTML: "" };
+  const overview = { innerHTML: "" };
+  const sbom = { innerHTML: "" };
+  const tab = { classList: { toggle() {} }, setAttribute() {} };
+  const document = { getElementById: (id) => ({ data: { textContent: data }, app, "panel-overview": overview, "panel-sbom": sbom, "tab-overview": tab, "tab-sbom": tab })[id] || null };
+  new Function("document", clientScript)(document);
+  assert.match(overview.innerHTML, /Environment overview could not be displayed/);
+  assert.match(sbom.innerHTML, /Package risks by runtime/);
+  assert.match(sbom.innerHTML, />2</);
+});
+
+test("dashWorkspace renders a concise environment overview and separate SBOM tab", async () => {
   const dir = await fs.mkdtemp(path.join(os.tmpdir(), "aienvmap-dash-plan-"));
   await fs.mkdir(path.join(dir, ".aienvmap"), { recursive: true });
   await writeJson(path.join(dir, ".aienvmap", "manifest.json"), {
@@ -894,32 +600,11 @@ test("dashWorkspace links written plan artifacts", async () => {
   await dashWorkspace({ dir, quiet: true });
   const html = await fs.readFile(path.join(dir, ".aienvmap", "dashboard.html"), "utf8");
 
-  assert.match(html, /AI Plan Artifacts/);
-  assert.match(html, /AI Intent Targets/);
-  assert.match(html, /planned-change --target node/);
-  assert.match(html, /Dependency Read Set/);
-  assert.match(html, /Dependency Protocol/);
-  assert.match(html, /href="plan\.md"/);
-  assert.match(html, /href="plan\.json"/);
-  assert.match(html, /Remediation Steps/);
-  assert.match(html, /django/);
-  assert.match(html, /3\.2\.25/);
-  assert.match(html, /Environment Steps/);
-  assert.match(html, /mixed-node-lockfiles/);
-  assert.match(html, /CI Readiness/);
-  assert.match(html, /Enforcement Mode/);
-  assert.match(html, /doctor --strict policy/);
-  assert.match(html, /node-version-mismatch/);
-  assert.match(html, /Dependency Snapshot/);
-  assert.match(html, /Light SBOM/);
-  assert.match(html, /Scanner Guidance/);
-  assert.match(html, /optional-read-only/);
-  assert.match(html, /aienvmap sync --security/);
-  assert.match(html, /before security claims/);
-  assert.match(html, /Dependency change hints/);
+  assert.match(html, /Environment overview/);
+  assert.match(html, /id="panel-sbom"/);
+  assert.match(html, /showDashboardTab/);
   assert.match(html, /requirements\.txt/);
   assert.match(html, /uv\.lock/);
-  assert.match(html, /django/);
 
   const data = html.match(/<script type="application\/json" id="data">([\s\S]*?)<\/script>/)?.[1]
     .replaceAll("&amp;", "&")
@@ -927,16 +612,31 @@ test("dashWorkspace links written plan artifacts", async () => {
     .replaceAll("&gt;", ">");
   const clientScript = html.match(/<script>\s*([\s\S]*?)\s*<\/script>/)?.[1];
   const app = { innerHTML: "" };
+  const overview = { innerHTML: "" };
+  const sbom = { innerHTML: "" };
+  const tab = { classList: { toggle() {} }, setAttribute() {} };
   const document = {
     getElementById(id) {
       if (id === "data") return { textContent: data };
       if (id === "app") return app;
+      if (id === "panel-overview") return overview;
+      if (id === "panel-sbom") return sbom;
+      if (id === "tab-overview" || id === "tab-sbom") return tab;
       return null;
     }
   };
   new Function("document", clientScript)(document);
-  assert.match(app.innerHTML, /AI environment map/);
-  assert.match(app.innerHTML, /Environment Health/);
+  assert.match(app.innerHTML, /Development environment/);
+  assert.match(overview.innerHTML, /Environment status: review required/);
+  assert.match(overview.innerHTML, /Node\.js/);
+  assert.match(overview.innerHTML, /24\.0\.0/);
+  assert.match(overview.innerHTML, /Runtimes/);
+  assert.match(overview.innerHTML, /Package managers/);
+  assert.match(overview.innerHTML, /Containers/);
+  assert.match(sbom.innerHTML, /Package risks by runtime/);
+  assert.match(sbom.innerHTML, /requirements\.txt/);
+  assert.match(sbom.innerHTML, /uv\.lock/);
+  assert.doesNotMatch(app.innerHTML + overview.innerHTML + sbom.innerHTML, /AI Plan Artifacts|CI Readiness|Enforcement Mode|Agent Pointers/);
 });
 
 test("dashboard opener avoids a command shell and reports launch failure", async () => {

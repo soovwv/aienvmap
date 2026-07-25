@@ -426,10 +426,10 @@ test("statusWorkspace text prints a compact default decision", async () => {
     console.log = originalLog;
   }
 
-  assert.match(lines.join("\n"), /ready: ready \| collaboration: clear/);
-  assert.match(lines.join("\n"), /session: aienvmap status --json -> aienvmap context --json/);
-  assert.match(lines.join("\n"), /start: \.aienvmap\/README\.md/);
-  assert.match(lines.join("\n"), /discovery: fallback-required \/ missing: run aienvmap onboard/);
+  assert.match(lines.join("\n"), /Environment: clear/);
+  assert.match(lines.join("\n"), /Detected: runtimes 0 \| package managers 0 \| containers 0/);
+  assert.match(lines.join("\n"), /Review: warnings 0 \| planned changes 0/);
+  assert.match(lines.join("\n"), /Next: aienvmap intent/);
   assert.equal(lines.join("\n").split("\n").length, 5);
 });
 
@@ -472,7 +472,7 @@ test("renderStatusText stays compact for default human and AI scan", () => {
   const text = renderStatusText({
     state: "review-required",
     summary: "Review warnings before environment changes.",
-    counts: { warnings: 2, openIntents: 1 },
+    counts: { warnings: 2, openIntents: 1, runtimes: 3, packageManagers: 4, containers: 1 },
     aiReadiness: { level: "review" },
     collaboration: { status: "review-before-env-change" },
     sbomRisk: { level: "medium", score: 42 },
@@ -483,11 +483,11 @@ test("renderStatusText stays compact for default human and AI scan", () => {
   });
 
   assert.deepEqual(text.split("\n"), [
-    "review-required: Review warnings before environment changes.",
-    "ready: review | collaboration: review-before-env-change",
-    "sbom: medium (42) | external: no-external-evidence | warnings: 2 | intents: 1",
-    "next: aienvmap plan --write",
-    "session: aienvmap status --json -> aienvmap context --json | start: .aienvmap/README.md | summary: .aienvmap/summary.md | discovery: auto-ready / ready: codex"
+    "Environment: review-required",
+    "Detected: runtimes 3 | package managers 4 | containers 1",
+    "Review: warnings 2 | planned changes 1 | dependency risk medium (42)",
+    "Reason: Review warnings before environment changes.",
+    "Next: aienvmap plan --write"
   ]);
 });
 
@@ -572,5 +572,63 @@ test("statusWorkspace promotes external component drift into AI review", async (
   assert.equal(result.externalSbom.decision, "component-drift-review");
   assert.equal(result.counts.warnings, 1);
   assert.ok(result.intentTargets[0].sources.includes("external-sbom-component-drift"));
-  assert.match(renderStatusText(result), /external: component-drift-review/);
+  assert.doesNotMatch(renderStatusText(result), /external SBOM/);
+  assert.match(renderStatusText(result, { verbose: true }), /external SBOM: component-drift-review/);
+});
+
+test("statusWorkspace compact JSON prints a bounded first-decision projection", async () => {
+  const dir = await fs.mkdtemp(path.join(os.tmpdir(), "aienvmap-status-compact-"));
+  await fs.mkdir(path.join(dir, ".aienvmap"), { recursive: true });
+  await writeJson(path.join(dir, ".aienvmap", "manifest.json"), {
+    schemaVersion: 1,
+    generatedAt: new Date().toISOString(),
+    trust: { state: "observed", verified: false },
+    workspace: { path: dir, name: path.basename(dir) },
+    runtimes: {}, packageManagers: {}, containers: {}, projectHints: {},
+    dependencySnapshot: { summary: { packages: 0 } },
+    security: { enabled: false, summary: { total: 0 } }
+  });
+  const originalLog = console.log;
+  let output = "";
+  console.log = (value) => { output = value; };
+  try {
+    await statusWorkspace({ dir, json: true, compact: true });
+  } finally {
+    console.log = originalLog;
+  }
+
+  const json = JSON.parse(output);
+  assert.equal(json.schemaName, "aienvmap-compact-preflight");
+  assert.equal(json.source, "status");
+  assert.equal(json.decision.removalAuthorized, false);
+  assert.match(json.evidence.coordinationRevision, /^ir1:[a-f0-9]{16}$/);
+  assert.ok(output.length < 5000, `compact status output should stay below 5 KB, got ${output.length}`);
+});
+
+test("statusWorkspace promotes reconciliation declaration findings into the primary decision", async () => {
+  const dir = await fs.mkdtemp(path.join(os.tmpdir(), "aienvmap-status-reconciliation-"));
+  await fs.mkdir(path.join(dir, ".aienvmap"), { recursive: true });
+  await writeJson(path.join(dir, ".aienvmap", "manifest.json"), {
+    schemaVersion: 1,
+    generatedAt: new Date().toISOString(),
+    runtimes: {},
+    packageManagers: {},
+    containers: {},
+    dependencySnapshot: { summary: { packages: 0 } },
+    security: { enabled: false, summary: { total: 0 } }
+  });
+  await writeJson(path.join(dir, ".aienvmap", "reconcile.json"), {
+    generatedAt: new Date().toISOString(),
+    findings: [{
+      code: "node-project-declarations-conflict",
+      severity: "review",
+      message: "Project files contain incompatible node declarations.",
+      action: "Review project declarations."
+    }]
+  });
+  const result = await statusWorkspace({ dir, quiet: true });
+  assert.equal(result.state, "review-required");
+  assert.equal(result.counts.warnings, 1);
+  assert.ok(result.aiDecisionEnvelope.reasonCodes.includes("node-project-declarations-conflict"));
+  assert.match(renderStatusText(result), /Environment: review-required/);
 });

@@ -4,6 +4,17 @@
 
 - No changes yet.
 
+## 0.2.2 - 2026-07-26
+
+- Replaced the dense human dashboard with separate Environment Overview and SBOM tabs, grouped detected tools, severity-aware risk styling, and independent rendering error boundaries.
+- Added command-specific help and compact default start/status output with explicit performance budgets.
+- Improved project expectation, version constraint, runtime route, manager evidence, reason explanation, and reconciliation freshness handling.
+- Split large environment-discovery modules into focused compatibility-preserving modules while keeping zero runtime dependencies.
+- Added bounded retries for transient Windows atomic-write locks and retained conservative environment authority.
+- Simplified GitHub Action defaults while preserving machine-readable evidence.
+- Updated evidence-bounded market comparison and kept technical readiness separate from independent validation.
+- Extended installed-package verification to prove the packed npm CLI generates the simplified dashboard.
+
 ## 0.2.1 - 2026-07-17
 
 - Fixed the generated dashboard client script so card groups render only after their data dependencies are initialized, preventing a temporal-dead-zone exception that left the dashboard blank.

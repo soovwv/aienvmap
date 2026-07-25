@@ -58,6 +58,12 @@ Acceptance gates: cross-platform fixtures for every manager, no writes in defaul
 
 ## Near Term
 
+- Keep responsibility budgets enforced while splitting monoliths: package-manager orchestration below 1,500 lines, preflight orchestration below 900 lines, and extracted pure modules below 120 lines; preserve compatibility facades and contract output while lowering these budgets in later batches
+
+- Keep the default `start` and `status` output human-readable: detected categories, warnings, planned changes, reason, and next action; retain detailed AI contracts in JSON and verbose output
+- Normalize `.nvmrc`, `.node-version`, `.python-version`, `.tool-versions`, `mise.toml`, package-manager declarations, Devbox, and Dev Container signals into provenance-labelled project expectations before expanding to more formats
+- Show the running package version and an explicit `npx aienvmap@latest start` freshness command without silently updating or adding a network dependency to normal startup
+
 - Publish `0.2.0` as one stabilized AI workspace contract release, not a per-commit npm stream
 - Keep the reviewed 15-surface JSON root-field contract guarded by `npm run contract:check` from `0.2.0` onward
 - Use `releaseReadiness.contractReview` as the AI-readable checklist for root-field compatibility review

@@ -37,6 +37,15 @@ try {
   assert.equal(trial.artifacts.length, 4);
   for (const relative of trial.artifacts) await fs.access(path.join(consumer, relative));
 
+  await run(process.execPath, [cli, "sync", "--quiet"], consumer, 90_000);
+  await run(process.execPath, [cli, "dash", "--quiet"], consumer);
+  const dashboard = await fs.readFile(path.join(consumer, ".aienvmap", "dashboard.html"), "utf8");
+  assert.match(dashboard, />Environment overview</, "installed package must expose the simplified environment tab");
+  assert.match(dashboard, /id="panel-sbom"/, "installed package must expose the separate SBOM panel");
+  assert.match(dashboard, /function renderOverview\(\)/, "installed package must isolate overview rendering");
+  assert.match(dashboard, /function renderSbom\(\)/, "installed package must isolate SBOM rendering");
+  assert.match(dashboard, /Detected development tools/, "installed package must group detected tool evidence");
+
   console.log(JSON.stringify({
     schemaName: "aienvmap-installed-package-check",
     schemaVersion: 1,
@@ -46,7 +55,8 @@ try {
     unpackedBytes: packed.unpackedSize,
     runtimeDependencies: 0,
     trialStatus: trial.status,
-    projectWrappersExecuted: trial.safety.projectWrappersExecuted
+    projectWrappersExecuted: trial.safety.projectWrappersExecuted,
+    simplifiedDashboardVerified: true
   }, null, 2));
 } finally {
   await fs.rm(temporary, { recursive: true, force: true });

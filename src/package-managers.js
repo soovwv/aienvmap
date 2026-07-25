@@ -10,10 +10,30 @@ import { buildAiDecisionEnvelope } from "./ai-decision-envelope.js";
 import { analyzeCondaRouting, analyzeNodePackageManagers, analyzePythonToolEntryPoints } from "./tool-routing.js";
 import { classifyScope, classifySource, displayPath, namedFilesBelow, pathEntries } from "./path-evidence.js";
 import { findCondaCandidates, findPythonToolCandidates, inspectCondaCandidates, inspectPythonToolCandidates, parseCondaEnvironmentInfo } from "./python-tool-discovery.js";
-import { loadPolicy, runtimeVersionsMatchIntentionalPolicy } from "./policy.js";
+import { loadPolicy } from "./policy.js";
+import { parsePackageManager, projectExpectationFindings, readProjectExpectations } from "./project-expectations.js";
+import { analyzeRuntimeLinks, linkNodeNpmRuntimes, linkPythonPipRuntimes } from "./runtime-links.js";
+import { compareNpmGlobalPackages, comparePythonPackages, summarizePythonPackages } from "./package-comparison.js";
+import { applyIntentionalRuntimePolicy } from "./environment-decision.js";
+import { analyzeNodeInstallations, analyzeNpmInstallations, analyzePythonInstallations } from "./runtime-findings.js";
+import { buildAiDecision } from "./environment-assessment.js";
+import {
+  attachFnmManagerEvidence, attachMiseNodeEvidence, attachMisePythonEvidence, attachNvmManagerEvidence,
+  attachVoltaManagerEvidence, miseInventoryForRuntime, parseFnmNodeList, parseMiseRuntimeInventory, parseVoltaNodeList
+} from "./runtime-manager-evidence.js";
 
 export { analyzeCondaRouting, analyzeNodePackageManagers, analyzePythonToolEntryPoints } from "./tool-routing.js";
+export { parsePackageManager } from "./project-expectations.js";
+export { analyzeRuntimeLinks, linkNodeNpmRuntimes, linkPythonPipRuntimes } from "./runtime-links.js";
+export { compareNpmGlobalPackages, comparePythonPackages, summarizePythonPackages } from "./package-comparison.js";
 export { findCondaCandidates, findPythonToolCandidates, inspectCondaCandidates, inspectPythonToolCandidates, parseCondaEnvironmentInfo } from "./python-tool-discovery.js";
+export { applyIntentionalRuntimePolicy, buildConsolidationPlan, buildEnvironmentClarification } from "./environment-decision.js";
+export { analyzeNodeInstallations, analyzeNpmInstallations, analyzePythonInstallations } from "./runtime-findings.js";
+export { buildAiDecision } from "./environment-assessment.js";
+export {
+  attachFnmManagerEvidence, attachMiseNodeEvidence, attachMisePythonEvidence, attachNvmManagerEvidence,
+  attachVoltaManagerEvidence, miseInventoryForRuntime, parseFnmNodeList, parseMiseRuntimeInventory, parseVoltaNodeList
+} from "./runtime-manager-evidence.js";
 
 const npmNames = process.platform === "win32" ? ["npm.cmd", "npm.exe"] : ["npm"];
 const nodeNames = process.platform === "win32" ? ["node.exe"] : ["node"];
@@ -33,7 +53,7 @@ export async function inspectPackageManagers(dir, options = {}) {
     findPythonToolCandidates(options),
     findCondaCandidates(options),
     inspectCommonRuntimes({ ...options, projectDir: dir }),
-    readProjectExpectation(dir),
+    readProjectExpectations(dir),
     loadPolicy(dir),
     inspectUvPythonManager(options),
     inspectPyenvPythonManager(options),
@@ -80,6 +100,7 @@ export async function inspectPackageManagers(dir, options = {}) {
   const npmRuntimeLinks = linkNodeNpmRuntimes(nodeInstallations, installations);
   const pipRuntimeLinks = linkPythonPipRuntimes(pythonInstallations, pipCommands);
   const findings = applyIntentionalRuntimePolicy([
+    ...projectExpectationFindings(project),
     ...analyzeNodeInstallations(nodeInstallations, project),
     ...analyzeNpmInstallations(installations, project),
     ...analyzeNodePackageManagers(alternativeManagers, project),
@@ -189,24 +210,6 @@ export async function inspectNvmNodeManager(options = {}) {
   };
 }
 
-export function attachNvmManagerEvidence(nodeInstallations = [], nvm = {}) {
-  return nodeInstallations.map((node) => {
-    if (node.managerEvidence?.ownershipProven === true) return node;
-    const listed = nvm.collection === "collected" && (nvm.installations || []).find((item) => item.version === node.version);
-    const exact = listed?.canonicalInsideRoot && (pathContains(listed.installPath, node.reportedExecutable) || pathContains(listed.installPath, node.path));
-    const inferred = node.source === "nvm" || Boolean(nvm.managedRoot && (pathContains(nvm.managedRoot, node.path) || pathContains(nvm.managedRoot, node.reportedExecutable)));
-    if (exact) return { ...node, managerEvidence: {
-      manager: nvm.manager || "nvm", managerVersion: "", relationship: "configured-root-version-path-match", confidence: "strong", ownershipProven: true,
-      proofScope: "nvm-managed-runtime", matchedKey: listed.version, removalAuthorized: false
-    } };
-    if ((!listed && !inferred) || node.managerEvidence?.confidence === "medium") return node;
-    return { ...node, managerEvidence: {
-      manager: nvm.manager || "nvm", managerVersion: "", relationship: listed ? "inventory-version-match" : "managed-root-inference", confidence: "medium",
-      ownershipProven: false, proofScope: listed ? "version-and-routing-only" : "path-only", matchedKey: listed?.version || "", removalAuthorized: false
-    } };
-  });
-}
-
 export async function inspectFnmNodeManager(options = {}) {
   if (!options.fullPackages) return {
     collection: "not-requested",
@@ -234,36 +237,6 @@ export async function inspectFnmNodeManager(options = {}) {
     truncated: all.length > 100,
     semantics: "fnm local list plus exact version installation-path evidence; no shell activation, install, use, or uninstall command is run."
   };
-}
-
-export function parseFnmNodeList(raw) {
-  const runtimes = [];
-  for (const line of String(raw || "").split(/\r?\n/)) {
-    const match = line.trim().match(/^\*?\s*v(\d+\.\d+\.\d+)(?:\s+(.+))?$/i);
-    if (!match) continue;
-    const labels = String(match[2] || "").trim().split(/\s+/).filter(Boolean).slice(0, 10);
-    runtimes.push({ version: match[1], state: labels.includes("default") ? "default" : "installed", aliases: labels.filter((item) => item !== "default") });
-  }
-  return runtimes.filter((item, index) => runtimes.findIndex((other) => other.version === item.version) === index);
-}
-
-export function attachFnmManagerEvidence(nodeInstallations = [], fnm = {}) {
-  return nodeInstallations.map((node) => {
-    if (node.managerEvidence?.ownershipProven === true) return node;
-    const listed = fnm.collection === "collected" && (fnm.runtimes || []).find((item) => item.version === node.version);
-    const versionRoot = listed && fnm.managedRoot ? path.join(fnm.managedRoot, `v${listed.version}`, "installation") : "";
-    const exact = Boolean(versionRoot && pathContains(versionRoot, node.reportedExecutable));
-    const inferred = node.source === "fnm" || Boolean(fnm.managedRoot && (pathContains(fnm.managedRoot, node.path) || pathContains(fnm.managedRoot, node.reportedExecutable)));
-    if (exact) return { ...node, managerEvidence: {
-      manager: "fnm", managerVersion: fnm.version, relationship: "list-and-version-path-match", confidence: "strong", ownershipProven: true,
-      proofScope: "fnm-managed-runtime", matchedKey: listed.version, removalAuthorized: false
-    } };
-    if (!listed && !inferred || node.managerEvidence?.confidence === "medium") return node;
-    return { ...node, managerEvidence: {
-      manager: "fnm", managerVersion: fnm.version || "", relationship: listed ? "inventory-version-match" : "managed-root-inference",
-      confidence: "medium", ownershipProven: false, proofScope: listed ? "version-and-routing-only" : "path-only", matchedKey: listed?.version || "", removalAuthorized: false
-    } };
-  });
 }
 
 function defaultFnmDir(platform, env, home) {
@@ -303,91 +276,6 @@ export async function inspectMiseRuntimeManager(options = {}) {
   };
 }
 
-export function parseMiseRuntimeInventory(raw, options = {}) {
-  let value;
-  try { value = JSON.parse(String(raw || "")); } catch { return null; }
-  if (!value || typeof value !== "object" || Array.isArray(value)) return null;
-  const all = [];
-  for (const runtime of ["node", "python"]) {
-    const entries = Array.isArray(value[runtime]) ? value[runtime] : [];
-    for (const item of entries) {
-      const version = String(item?.version || "").replace(/^v/, "");
-      const installPath = String(item?.install_path || "");
-      if (!version || !path.isAbsolute(installPath)) continue;
-      all.push({
-        runtime,
-        version,
-        installPath: displayPath(installPath, options),
-        configured: Boolean(item?.source),
-        sourceType: String(item?.source?.type || "")
-      });
-    }
-  }
-  return { runtimes: all.slice(0, 100), truncated: all.length > 100 };
-}
-
-export function miseInventoryForRuntime(mise = {}, runtime) {
-  if (mise.collection !== "collected") return { ...mise };
-  const runtimes = (mise.runtimes || []).filter((item) => item.runtime === runtime);
-  return { ...mise, runtimes, runtimeCount: runtimes.length };
-}
-
-export function attachMiseNodeEvidence(nodeInstallations = [], mise = {}) {
-  return nodeInstallations.map((node) => {
-    if (node.managerEvidence?.ownershipProven === true) return node;
-    const matched = mise.collection === "collected" && (mise.runtimes || []).find((item) =>
-      item.runtime === "node" && item.version === node.version && pathContains(item.installPath, node.reportedExecutable)
-    );
-    const inferred = node.source === "mise" || (mise.runtimes || []).some((item) => item.runtime === "node" && (pathContains(item.installPath, node.path) || pathContains(item.installPath, node.reportedExecutable)));
-    if (!matched && !inferred) return node;
-    return {
-      ...node,
-      managerEvidence: matched ? miseManagerEvidence(mise, matched, "node") : miseInferenceEvidence(mise)
-    };
-  });
-}
-
-export function attachMisePythonEvidence(pythonInstallations = [], mise = {}) {
-  return pythonInstallations.map((python) => {
-    if (python.managerEvidence?.ownershipProven === true) return python;
-    const matched = mise.collection === "collected" && (mise.runtimes || []).find((item) =>
-      item.runtime === "python" && item.version === python.version && (normalizeCompare(item.installPath) === normalizeCompare(python.prefix) || normalizeCompare(item.installPath) === normalizeCompare(python.basePrefix))
-    );
-    const inferred = python.source === "mise" || (mise.runtimes || []).some((item) => item.runtime === "python" && (pathContains(item.installPath, python.prefix) || pathContains(item.installPath, python.basePrefix)));
-    if (!matched && !inferred) return python;
-    return {
-      ...python,
-      managerEvidence: matched ? miseManagerEvidence(mise, matched, "python") : miseInferenceEvidence(mise)
-    };
-  });
-}
-
-function miseManagerEvidence(mise, matched, runtime) {
-  return {
-    manager: "mise",
-    managerVersion: mise.version,
-    relationship: "installed-json-path-match",
-    confidence: "strong",
-    ownershipProven: true,
-    proofScope: `mise-managed-${runtime}`,
-    matchedKey: `${runtime}@${matched.version}`,
-    removalAuthorized: false
-  };
-}
-
-function miseInferenceEvidence(mise) {
-  return {
-    manager: "mise",
-    managerVersion: mise.version || "",
-    relationship: "managed-root-inference",
-    confidence: "medium",
-    ownershipProven: false,
-    proofScope: "path-only",
-    matchedKey: "",
-    removalAuthorized: false
-  };
-}
-
 export async function inspectVoltaNodeManager(options = {}) {
   if (!options.fullPackages) return {
     collection: "not-requested",
@@ -421,65 +309,6 @@ export async function inspectVoltaNodeManager(options = {}) {
     truncated: parsedRuntimes.length > 100,
     semantics: "Volta plain Node inventory; exact version plus reported executable inside the image root proves management, never removal authorization."
   };
-}
-
-export function parseVoltaNodeList(raw) {
-  const runtimes = [];
-  for (const line of String(raw || "").split(/\r?\n/)) {
-    const match = line.trim().match(/^runtime\s+node@([^\s]+)(?:\s+\((default|current\s+@\s+.+)\))?$/i);
-    if (!match) continue;
-    const state = !match[2] ? "installed" : match[2] === "default" ? "default" : "current-project";
-    runtimes.push({ version: match[1].replace(/^v/, ""), state });
-  }
-  return runtimes.filter((item, index) => runtimes.findIndex((other) => other.version === item.version && other.state === item.state) === index);
-}
-
-export function attachVoltaManagerEvidence(nodeInstallations = [], volta = {}) {
-  return nodeInstallations.map((node) => {
-    const listed = volta.collection === "collected" && (volta.runtimes || []).find((item) => item.version === node.version);
-    const exactRoot = listed && volta.managedRoot && pathContains(volta.managedRoot, node.reportedExecutable);
-    const inferred = node.source === "volta" || (volta.managedRoot && (pathContains(volta.managedRoot, node.path) || pathContains(volta.managedRoot, node.reportedExecutable)));
-    return {
-      ...node,
-      managerEvidence: exactRoot ? {
-        manager: "volta",
-        managerVersion: volta.version,
-        relationship: "inventory-and-image-path-match",
-        confidence: "strong",
-        ownershipProven: true,
-        proofScope: "volta-managed-runtime",
-        matchedKey: listed.version,
-        removalAuthorized: false
-      } : listed && inferred ? {
-        manager: "volta",
-        managerVersion: volta.version,
-        relationship: "inventory-version-match",
-        confidence: "medium",
-        ownershipProven: false,
-        proofScope: "version-and-routing-only",
-        matchedKey: listed.version,
-        removalAuthorized: false
-      } : inferred ? {
-        manager: "volta",
-        managerVersion: volta.version || "",
-        relationship: "managed-root-inference",
-        confidence: "medium",
-        ownershipProven: false,
-        proofScope: "path-only",
-        matchedKey: "",
-        removalAuthorized: false
-      } : {
-        manager: "unknown",
-        managerVersion: "",
-        relationship: "unconfirmed",
-        confidence: "none",
-        ownershipProven: false,
-        proofScope: "none",
-        matchedKey: "",
-        removalAuthorized: false
-      }
-    };
-  });
 }
 
 export async function inspectPyenvPythonManager(options = {}) {
@@ -649,66 +478,6 @@ export function attachPyenvManagerEvidence(pythonInstallations = [], pyenv = {})
   });
 }
 
-export function linkNodeNpmRuntimes(nodeInstallations = [], npmInstallations = []) {
-  return npmInstallations.map((npm) => {
-    const colocated = nodeInstallations.find((node) => sameDirectory(node.path, npm.path));
-    const active = nodeInstallations.find((node) => node.active);
-    const matched = colocated || (npm.active ? active : null);
-    return {
-      managerPath: npm.path,
-      managerVersion: npm.version,
-      runtimePath: matched?.path || "",
-      runtimeVersion: matched?.version || "",
-      relationship: colocated ? "co-located-executables" : matched ? "path-precedence-inference" : "unresolved",
-      confidence: colocated ? "strong" : matched ? "medium" : "none",
-      evidence: colocated
-        ? "npm and Node executables are in the same directory"
-        : matched ? "active npm is paired with the active PATH-precedence Node" : "no candidate Node runtime could be linked",
-      ownershipProven: false
-    };
-  });
-}
-
-export function linkPythonPipRuntimes(pythonInstallations = [], pipCommands = []) {
-  return pipCommands.map((pip) => {
-    const locationMatches = pythonInstallations.filter((python) => (python.packageLocations || []).some((location) => pathContains(location, pip.packageLocation)));
-    const versionMatches = pythonInstallations.filter((python) => majorMinor(python.version) && majorMinor(python.version) === majorMinor(pip.pythonVersion));
-    const matched = locationMatches.length === 1 ? locationMatches[0] : versionMatches.length === 1 ? versionMatches[0] : null;
-    return {
-      managerPath: pip.path,
-      managerVersion: pip.version,
-      runtimePath: matched?.path || "",
-      runtimeVersion: matched?.version || pip.pythonVersion || "",
-      relationship: locationMatches.length === 1 ? "package-location-match" : versionMatches.length === 1 ? "unique-version-match" : versionMatches.length > 1 ? "ambiguous-version-match" : "unresolved",
-      confidence: locationMatches.length === 1 ? "strong" : versionMatches.length === 1 ? "medium" : "none",
-      evidence: locationMatches.length === 1
-        ? "pip package location is inside a package location reported by this Python"
-        : versionMatches.length === 1 ? "exactly one detected Python has pip's reported major/minor version"
-          : versionMatches.length > 1 ? "multiple detected Python runtimes share pip's reported major/minor version" : "no detected Python matches pip's reported version or package location",
-      ownershipProven: false
-    };
-  });
-}
-
-export function analyzeRuntimeLinks(npmLinks = [], pipLinks = [], nodeInstallations = [], pythonInstallations = []) {
-  const findings = [];
-  const activeNpm = npmLinks[0];
-  if (activeNpm && nodeInstallations.length > 1 && activeNpm.confidence !== "strong") findings.push({
-    code: "npm-node-runtime-link-uncertain",
-    severity: "review",
-    message: "Active npm could not be strongly linked to one of the detected Node runtimes.",
-    action: "Review npm.runtimeLinks and the runtime manager before changing Node, npm, PATH, or global packages."
-  });
-  const activePip = pipLinks[0];
-  if (activePip && pythonInstallations.length > 1 && activePip.confidence !== "strong") findings.push({
-    code: "pip-python-runtime-link-uncertain",
-    severity: "review",
-    message: "Active pip could not be strongly linked to one of the detected Python runtimes.",
-    action: "Use the selected Python with `-m pip`; review python.runtimeLinks before changing or removing an interpreter."
-  });
-  return findings;
-}
-
 export async function findPipCandidates(options = {}) {
   const found = [];
   const seen = new Set();
@@ -804,26 +573,6 @@ export async function inspectNodeCandidates(candidates, options) {
   return inspected.filter(Boolean).map((item, index) => ({ ...item, active: options.executeCandidates === false ? false : index === 0 }));
 }
 
-export function analyzeNodeInstallations(installations, project = {}) {
-  const findings = [];
-  const versions = [...new Set(installations.filter((item) => item.versionVerified !== false).map((item) => item.version))];
-  if (installations.length > 1) findings.push({
-    code: "multiple-node-installations",
-    severity: versions.length > 1 ? "review" : "info",
-    message: `${installations.length} Node executables were detected${versions.length > 1 ? ` with versions ${versions.join(", ")}` : ""}.`,
-    action: "Select the project-preferred Node runtime and its paired npm; do not remove manager-owned versions automatically."
-  });
-  const active = installations.find((item) => item.active);
-  const expected = project.node?.versionFile;
-  if (expected && active && active.versionVerified !== false && !versionMatches(expected, active.version)) findings.push({
-    code: "active-node-project-mismatch",
-    severity: "review",
-    message: `Project .nvmrc declares ${expected}, but active Node is ${active.version}.`,
-    action: `Activate Node ${expected} with the project's runtime manager or explicitly review .nvmrc.`
-  });
-  return findings;
-}
-
 export async function findPythonCandidates(options = {}) {
   const found = [];
   const seen = new Set();
@@ -897,236 +646,36 @@ export async function inspectPythonCandidates(candidates, options) {
       pipAvailable: options.quick ? /^pip\s+/i.test(pipRaw) : packages.length > 0
     };
   }));
-  return inspected.filter(Boolean).map((item, index) => ({ ...item, active: options.executeCandidates === false ? false : index === 0 }));
+  return groupPythonInstallations(inspected.filter(Boolean), { executed: options.executeCandidates !== false });
 }
 
-export function analyzePythonInstallations(installations, project = {}) {
-  const findings = [];
-  const versions = [...new Set(installations.filter((item) => item.versionVerified !== false).map((item) => item.version))];
-  if (installations.length > 1) findings.push({
-    code: "multiple-python-installations",
-    severity: versions.length > 1 ? "review" : "info",
-    message: `${installations.length} Python executables were detected${versions.length > 1 ? ` with versions ${versions.join(", ")}` : ""}.`,
-    action: "Select a project-preferred Python runtime; preserve virtual environments and manager-owned runtimes until reviewed."
+export function groupPythonInstallations(installations = [], options = {}) {
+  const groups = new Map();
+  for (const item of installations) {
+    const verified = item.versionVerified !== false;
+    const prefix = normalizeCompare(item.prefix || "");
+    const basePrefix = normalizeCompare(item.basePrefix || "");
+    const key = verified && (prefix || basePrefix)
+      ? [item.version || "unknown", prefix, basePrefix, item.virtualEnvironment ? "venv" : "base"].join("|")
+      : `path:${normalizeCompare(item.path || "unknown")}`;
+    if (!groups.has(key)) groups.set(key, []);
+    groups.get(key).push(item);
+  }
+  return [...groups.values()].map((items, index) => {
+    const primary = items.find((item) => item.active) || items[0];
+    const aliases = [...new Set(items.map((item) => item.path).filter((value) => value && value !== primary.path))];
+    const verified = primary.versionVerified !== false;
+    return {
+      ...primary,
+      active: options.executed === false ? false : items.some((item) => item.active) || index === 0,
+      aliases,
+      commandEntryPointCount: items.length,
+      classification: !verified ? "needs-review" : aliases.length ? "likely-duplicate" : "confirmed",
+      identityEvidence: verified && (primary.prefix || primary.basePrefix)
+        ? "version and interpreter prefix"
+        : verified ? "resolved executable path" : "unverified executable path"
+    };
   });
-  const active = installations.find((item) => item.active);
-  const expected = project.python?.versionFile;
-  if (expected && active && active.versionVerified !== false && !versionMatches(expected, active.version)) findings.push({
-    code: "active-python-project-mismatch",
-    severity: "review",
-    message: `Project .python-version declares ${expected}, but active Python is ${active.version}.`,
-    action: `Activate Python ${expected} with the project's runtime manager or explicitly review the project declaration.`
-  });
-  if (!installations.length && project.python?.signals?.length) findings.push({
-    code: "python-not-detected",
-    severity: "review",
-    message: `Python project signals exist (${project.python.signals.join(", ")}), but no readable Python executable was detected.`,
-    action: "Review the project runtime declaration; aienvmap will not install Python automatically."
-  });
-  return findings;
-}
-
-export function buildAiDecision({ node = [], npm = [], python = [], java = {}, project = {}, policy = {}, findings = [], runtimeLinks = {} }) {
-  const actionCandidates = [];
-  for (const item of node.filter((entry) => !entry.active)) actionCandidates.push({
-    target: item.path,
-    kind: "node-installation",
-    recommendation: "review-candidate",
-    confidence: "low",
-    reasons: [`inactive Node ${item.version}`, `source=${item.source}`],
-    safeNext: "Confirm its owning runtime manager and paired npm/global tools before selecting a canonical Node.",
-    destructive: false,
-    requiresHumanApprovalBeforeRemoval: true
-  });
-  for (const item of npm.filter((entry) => !entry.active)) actionCandidates.push({
-    target: item.path,
-    kind: "npm-installation",
-    recommendation: "review-candidate",
-    confidence: "low",
-    reasons: [`inactive npm ${item.version}`, `source=${item.source}`, item.packageCollection === "skipped-quick" ? "globalPackages=not-collected" : `globalPackages=${item.globalPackages?.length || 0}`],
-    safeNext: "Compare its global packages and owning Node manager with the active/project-preferred toolchain.",
-    destructive: false,
-    requiresHumanApprovalBeforeRemoval: true
-  });
-  for (const item of python.filter((entry) => !entry.active)) actionCandidates.push({
-    target: item.path,
-    kind: "python-installation",
-    recommendation: item.virtualEnvironment ? "keep-until-project-owner-review" : "review-candidate",
-    confidence: item.virtualEnvironment ? "high" : "low",
-    reasons: [`inactive Python ${item.version}`, `source=${item.source}`, `virtualEnvironment=${item.virtualEnvironment}`, item.packageCollection === "skipped-quick" ? "packages=not-collected" : `packages=${item.packages?.length || item.packageCount || 0}`],
-    safeNext: item.virtualEnvironment ? "Identify the owning project before any cleanup." : "Compare projects and packages before selecting a canonical runtime.",
-    destructive: false,
-    requiresHumanApprovalBeforeRemoval: true
-  });
-  const canonicalCandidates = {
-    node: chooseCanonical(node, project.node?.versionFile || ""),
-    npm: chooseCanonical(npm, project.packageManager?.name === "npm" ? project.packageManager.version : ""),
-    python: chooseCanonical(python, project.python?.versionFile || "")
-  };
-  const clarification = buildEnvironmentClarification(actionCandidates, { node, python, java: java.installations || [] }, policy);
-  const consolidationCandidates = actionCandidates.filter((item) => !clarification.policyMatchedKinds.includes(item.kind));
-  return {
-    consumer: "AI agent",
-    decision: findings.some((item) => item.severity === "review") ? "review" : "clear",
-    readFirst: ["project", "node.active", "node.managerInventories", "npm.active", "npm.runtimeLinks", "python.active", "python.managerInventories", "python.runtimeLinks", "findings", "aiDecision.actionCandidates"],
-    canonicalCandidates,
-    actionCandidates,
-    clarification,
-    consolidationPlan: buildConsolidationPlan({ actionCandidates: consolidationCandidates, canonicalCandidates }),
-    runtimeLinkSummary: {
-      npm: summarizeRuntimeLinkConfidence(runtimeLinks.npm),
-      pip: summarizeRuntimeLinkConfidence(runtimeLinks.pip),
-      rule: "Runtime links are routing evidence, not proof of installation ownership or permission to remove software."
-    },
-    pythonInstallerEvidence: summarizeInstallerEvidence(python),
-    pythonManagerEvidence: summarizePythonManagerEvidence(python),
-    nodeManagerEvidence: summarizeNodeManagerEvidence(node),
-    javaManagerEvidence: {
-      managers: java.runtimeMetadata?.managers || [],
-      managedInstalls: java.runtimeMetadata?.managedInstallCount || 0,
-      routingManaged: java.runtimeMetadata?.routingManagedCount || 0,
-      removalAuthorized: false,
-      rule: "SDKMAN/mise canonical install roots may prove manager control; jenv and external registrations prove routing only, never removal permission."
-    },
-    safeCommands: {
-      pythonPackageCheck: "<selected-python> -m pip list --format=json",
-      pythonInstallRule: "Use <selected-python> -m pip instead of bare pip so the target interpreter is explicit.",
-      npmPackageCheck: "<selected-npm> list -g --depth=0 --json",
-      applyChanges: "No automatic apply command is provided; prepare a reviewed plan first."
-    },
-    rules: [
-      "Treat active as PATH precedence, not proof that it is canonical.",
-      "Treat runtimeLinks as routing evidence only; ownershipProven remains false until an external manager confirms ownership.",
-      "Do not delete, uninstall, rewrite PATH, change prefixes, or remove environments automatically.",
-      "A removal candidate requires project ownership checks, package comparison, a rollback plan, and explicit human approval.",
-      "If package digests differ and package-level evidence is needed, rerun `aienvmap reconcile --json --full-packages` before deciding."
-    ]
-  };
-}
-
-export function buildEnvironmentClarification(actionCandidates = [], installations = {}, policy = {}) {
-  const acknowledged = new Set([
-    ...(runtimeVersionsMatchIntentionalPolicy(installations.node, policy, "node") ? ["node-installation"] : []),
-    ...(runtimeVersionsMatchIntentionalPolicy(installations.python, policy, "python") ? ["python-installation"] : []),
-    ...(runtimeVersionsMatchIntentionalPolicy(installations.java, policy, "java") ? ["java-installation"] : [])
-  ]);
-  const allKinds = [...new Set([
-    ...actionCandidates.map((item) => item.kind).filter(Boolean),
-    ...((installations.java || []).length > 1 ? ["java-installation"] : [])
-  ])].sort();
-  const kinds = allKinds.filter((kind) => !acknowledged.has(kind));
-  const required = kinds.length > 0;
-  return {
-    required,
-    status: required ? "ask-user-before-consolidation" : acknowledged.size ? "intentional-versions-recorded" : "not-needed",
-    reason: required ? "Multiple or inactive installations are evidence of complexity, not proof that consolidation is wanted." : acknowledged.size ? "Every detected multi-version runtime is covered by an explicit project-local intentional-version policy." : "No inactive runtime or package-manager candidate requires an intent question.",
-    question: required ? "Are these installations intentionally retained for different projects or workflows, or should the AI prepare a reviewed consolidation proposal?" : "",
-    choices: required ? ["keep-intentional", "review-consolidation", "need-more-evidence"] : [],
-    defaultChoice: required ? "need-more-evidence" : "none",
-    affectedKinds: kinds,
-    policyMatchedKinds: [...acknowledged].sort(),
-    environmentChangesAuthorized: false,
-    removalAuthorized: false,
-    rule: "Do not infer cleanup intent from duplicate or inactive installations; ask the user and gather ownership, consumer, and rollback evidence before proposing a change."
-  };
-}
-
-export function applyIntentionalRuntimePolicy(findings = [], installations = {}, policy = {}) {
-  const matched = new Set([
-    ...(runtimeVersionsMatchIntentionalPolicy(installations.node, policy, "node") ? ["multiple-node-installations"] : []),
-    ...(runtimeVersionsMatchIntentionalPolicy(installations.python, policy, "python") ? ["multiple-python-installations"] : [])
-  ]);
-  return findings.map((finding) => matched.has(finding.code) ? { ...finding, severity: "info", action: "Keep the explicitly listed intentional versions; review again if a new version or routing mismatch appears.", intentionalPolicyMatched: true } : finding);
-}
-
-export function buildConsolidationPlan({ actionCandidates = [], canonicalCandidates = {} } = {}) {
-  const candidates = actionCandidates.map((item, index) => ({
-    id: `${item.kind || "installation"}:${index + 1}`,
-    target: item.target,
-    kind: item.kind,
-    recommendation: item.recommendation,
-    confidence: item.confidence,
-    evidenceRequired: [
-      "runtime-manager ownership or explicit unmanaged status",
-      "project references and active-process usage",
-      item.kind === "npm-installation" ? "global package inventory" : item.kind === "python-installation" ? "installed package inventory and virtual-environment owner" : "paired package-manager and global-tool inventory"
-    ],
-    stopWhen: ["ownership is unconfirmed", "an owning project is found", "rollback evidence is incomplete", "a human has not approved the exact target"],
-    proposedChange: "none; prepare a target-specific reviewed change outside aienvmap",
-    requiresHumanApproval: true,
-    removalAuthorized: false
-  }));
-  return {
-    schemaName: "aienvmap.consolidation-plan",
-    schemaVersion: 1,
-    mode: "proposal-only",
-    status: candidates.length ? "review" : "no-candidates",
-    canonicalCandidates,
-    phases: [
-      { id: "confirm-ownership", effect: "read-only", result: "manager ownership or unmanaged status for every target" },
-      { id: "confirm-consumers", effect: "read-only", result: "projects, services, shells, and CI jobs that reference each target" },
-      { id: "capture-rollback", effect: "read-only", result: "path, version, package inventory, manager metadata, and restoration procedure" },
-      { id: "request-approval", effect: "human-gate", result: "approval names the exact target and proposed environment change" }
-    ],
-    candidates,
-    applyCommand: null,
-    rollbackRequirements: ["exact original path and version", "owning manager and reinstall source", "package/global-tool inventory", "affected project and service references", "post-change verification commands"],
-    requiresHumanApprovalBefore: ["removal", "PATH-edit", "runtime-switch", "global-package-migration"],
-    environmentChangesAuthorized: false,
-    removalAuthorized: false,
-    nextSafeCommand: candidates.length ? "aienvmap reconcile --json --full-packages" : "aienvmap status --json",
-    rule: "This plan collects evidence and defines gates only; it never authorizes or executes uninstall, deletion, PATH edits, runtime switching, or global package migration."
-  };
-}
-
-function summarizeInstallerEvidence(installations = []) {
-  const evidence = installations.map((item) => item.installerEvidence || { collection: "not-requested" });
-  const installerCounts = {};
-  for (const item of evidence) for (const [name, count] of Object.entries(item.installerCounts || {})) installerCounts[name] = (installerCounts[name] || 0) + Number(count || 0);
-  return {
-    collectedRuntimes: evidence.filter((item) => item.collection === "collected").length,
-    notRequestedRuntimes: evidence.filter((item) => item.collection === "not-requested").length,
-    failedRuntimes: evidence.filter((item) => item.collection === "unsupported-or-failed").length,
-    installerCounts: Object.fromEntries(Object.entries(installerCounts).sort(([a], [b]) => a.localeCompare(b))),
-    requestedPackages: evidence.reduce((sum, item) => sum + Number(item.requestedCount || 0), 0),
-    editablePackages: evidence.reduce((sum, item) => sum + Number(item.editableCount || 0), 0),
-    rule: "Installer evidence describes Python distributions only; it does not prove who owns or may remove the interpreter."
-  };
-}
-
-function summarizePythonManagerEvidence(installations = []) {
-  const evidence = installations.map((item) => item.managerEvidence || {});
-  return {
-    total: evidence.length,
-    proven: evidence.filter((item) => item.ownershipProven === true).length,
-    inferred: evidence.filter((item) => item.confidence === "medium").length,
-    unconfirmed: evidence.filter((item) => item.confidence === "none" || !item.confidence).length,
-    managers: [...new Set(evidence.map((item) => item.manager).filter((item) => item && item !== "unknown"))].sort(),
-    removalAuthorized: false,
-    rule: "Manager-native ownership evidence may identify an interpreter owner, but aienvmap never turns it into removal authorization."
-  };
-}
-
-function summarizeNodeManagerEvidence(installations = []) {
-  const evidence = installations.map((item) => item.managerEvidence || {});
-  return {
-    total: evidence.length,
-    proven: evidence.filter((item) => item.ownershipProven === true).length,
-    inferred: evidence.filter((item) => item.confidence === "medium").length,
-    unconfirmed: evidence.filter((item) => item.confidence === "none" || !item.confidence).length,
-    managers: [...new Set(evidence.map((item) => item.manager).filter((item) => item && item !== "unknown"))].sort(),
-    removalAuthorized: false,
-    rule: "Volta image-path or mise installed-path evidence may prove Node manager control, but never removal authorization."
-  };
-}
-
-function summarizeRuntimeLinkConfidence(links = []) {
-  return {
-    total: links.length,
-    strong: links.filter((item) => item.confidence === "strong").length,
-    inferred: links.filter((item) => item.confidence === "medium").length,
-    unresolved: links.filter((item) => item.confidence === "none").length
-  };
 }
 
 export async function findNpmCandidates(options = {}) {
@@ -1251,96 +800,6 @@ function unverifiedExecutableFindings(groups, options) {
     message: `${unverified.length} executable files were discovered without invocation; versions and active routing are unverified.`,
     action: "Have the owning user run a normal reconciliation or provide reviewed portable evidence before any consolidation decision."
   }] : [];
-}
-
-export function analyzeNpmInstallations(installations, project = {}) {
-  const findings = [];
-  const versions = [...new Set(installations.filter((item) => item.versionVerified !== false).map((item) => item.version))];
-  const roots = [...new Set(installations.map((item) => item.globalRoot).filter(Boolean))];
-  if (installations.length > 1) findings.push({
-    code: "multiple-npm-installations",
-    severity: versions.length > 1 ? "review" : "info",
-    message: `${installations.length} npm executables were detected${versions.length > 1 ? ` with versions ${versions.join(", ")}` : ""}.`,
-    action: "Choose a project-preferred Node/npm toolchain; do not remove inactive installations automatically."
-  });
-  if (roots.length > 1) findings.push({
-    code: "multiple-npm-global-roots",
-    severity: "review",
-    message: `${roots.length} npm global package roots were detected.`,
-    action: "Review global tools per prefix before changing PATH or removing an installation."
-  });
-  if ((project.lockManagers || []).length > 1) findings.push({
-    code: "mixed-project-lockfiles",
-    severity: "review",
-    message: `Project lockfiles for ${project.lockManagers.join(", ")} coexist.`,
-    action: "Confirm the canonical package manager before regenerating or deleting any lockfile."
-  });
-  const expected = project.packageManager?.name === "npm" ? project.packageManager.version : "";
-  const active = installations.find((item) => item.active);
-  if (expected && active && active.versionVerified !== false && !versionMatches(expected, active.version)) findings.push({
-    code: "active-npm-project-mismatch",
-    severity: "review",
-    message: `Project declares npm@${expected}, but active npm is ${active.version}.`,
-    action: `Activate a Node toolchain that provides npm ${expected}, or explicitly update package.json after review.`
-  });
-  if (project.packageManager?.name && project.packageManager.name !== "npm" && active) findings.push({
-    code: "active-manager-differs-from-project",
-    severity: "info",
-    message: `Project declares ${project.packageManager.name}, while npm ${active.version} is also available.`,
-    action: `Use ${project.packageManager.name} for project dependency changes unless project policy says otherwise.`
-  });
-  if (!installations.length) findings.push({
-    code: "npm-not-detected",
-    severity: project.lockManagers?.includes("npm") ? "review" : "info",
-    message: "No readable npm executable was detected for the current user.",
-    action: "Review the project's Node toolchain declaration; aienvmap will not install npm automatically."
-  });
-  return findings;
-}
-
-async function readProjectExpectation(dir) {
-  let pkg = {};
-  try { pkg = JSON.parse(await fs.readFile(path.join(dir, "package.json"), "utf8")); } catch {}
-  const packageManager = parsePackageManager(pkg.packageManager);
-  const lockManagers = [];
-  if (await exists(path.join(dir, "package-lock.json"))) lockManagers.push("npm");
-  if (await exists(path.join(dir, "pnpm-lock.yaml"))) lockManagers.push("pnpm");
-  if (await exists(path.join(dir, "yarn.lock"))) lockManagers.push("yarn");
-  let pyproject = "";
-  try { pyproject = await fs.readFile(path.join(dir, "pyproject.toml"), "utf8"); } catch {}
-  let pythonVersion = "";
-  try { pythonVersion = (await fs.readFile(path.join(dir, ".python-version"), "utf8")).trim(); } catch {}
-  let nodeVersion = "";
-  try { nodeVersion = (await fs.readFile(path.join(dir, ".nvmrc"), "utf8")).trim(); } catch {}
-  const pythonSignals = [];
-  if (pyproject) pythonSignals.push("pyproject.toml");
-  if (await exists(path.join(dir, "requirements.txt"))) pythonSignals.push("requirements.txt");
-  if (pythonVersion) pythonSignals.push(".python-version");
-  return {
-    packageManager,
-    engines: compact({ node: pkg.engines?.node, npm: pkg.engines?.npm }),
-    lockManagers,
-    node: {
-      versionFile: nodeVersion,
-      signals: [nodeVersion ? ".nvmrc" : "", pkg.engines?.node ? "package.json#engines.node" : ""].filter(Boolean)
-    },
-    python: {
-      versionFile: pythonVersion,
-      requiresPython: pyproject.match(/requires-python\s*=\s*["']([^"']+)/)?.[1] || "",
-      signals: pythonSignals
-    }
-  };
-}
-
-export function parsePackageManager(value) {
-  const match = String(value || "").trim().match(/^(@?[^@]+)@(.+)$/);
-  return match ? { name: match[1], version: match[2] } : null;
-}
-
-function versionMatches(expected, actual) {
-  const clean = String(expected).replace(/^[=v]/, "");
-  if (/^\d+(?:\.\d+){0,2}$/.test(clean)) return actual === clean || actual.startsWith(`${clean}.`);
-  return true;
 }
 
 async function npmCandidateVersion(file) {
@@ -1473,75 +932,6 @@ export function summarizePipInspect(raw, options = {}) {
     digest: createHash("sha256").update(digestLines.join("\n")).digest("hex"),
     metadataSample: items.slice(0, 12),
     semantics: "Installer metadata reported by pip inspect; it describes distributions, not ownership of the Python runtime."
-  };
-}
-
-export function summarizePythonPackages(item, full) {
-  const packages = item.packages || [];
-  if (item.packageCollection === "skipped-quick" || item.versionVerified === false) return {
-    ...item,
-    packageCount: null,
-    packageDigest: "",
-    packageSample: [],
-    packages: undefined
-  };
-  const normalized = packages.map((entry) => `${entry.name.toLowerCase()}@${entry.version}`).sort();
-  const summary = {
-    packageCount: packages.length,
-    packageDigest: createHash("sha256").update(normalized.join("\n")).digest("hex"),
-    packageSample: packages.slice(0, 12)
-  };
-  return full ? { ...item, ...summary } : { ...item, ...summary, packages: undefined };
-}
-
-export function comparePythonPackages(installations) {
-  return comparePackageCollections(installations, "packages", "path");
-}
-
-export function compareNpmGlobalPackages(installations) {
-  return comparePackageCollections(installations, "globalPackages", "globalRoot");
-}
-
-function comparePackageCollections(installations, field, identityField) {
-  const comparisons = [];
-  for (let leftIndex = 0; leftIndex < installations.length; leftIndex++) {
-    for (let rightIndex = leftIndex + 1; rightIndex < installations.length; rightIndex++) {
-      const left = installations[leftIndex];
-      const right = installations[rightIndex];
-      const leftMap = new Map((left[field] || []).map((item) => [item.name.toLowerCase(), item.version]));
-      const rightMap = new Map((right[field] || []).map((item) => [item.name.toLowerCase(), item.version]));
-      const shared = [...leftMap.keys()].filter((name) => rightMap.has(name));
-      const versionConflicts = shared.filter((name) => leftMap.get(name) !== rightMap.get(name));
-      const onlyLeft = [...leftMap.keys()].filter((name) => !rightMap.has(name));
-      const onlyRight = [...rightMap.keys()].filter((name) => !leftMap.has(name));
-      comparisons.push({
-        left: left[identityField] || left.path,
-        right: right[identityField] || right.path,
-        sharedCount: shared.length,
-        versionConflictCount: versionConflicts.length,
-        onlyLeftCount: onlyLeft.length,
-        onlyRightCount: onlyRight.length,
-        versionConflictSample: versionConflicts.slice(0, 10).map((name) => ({ name, left: leftMap.get(name), right: rightMap.get(name) })),
-        onlyLeftSample: onlyLeft.slice(0, 10),
-        onlyRightSample: onlyRight.slice(0, 10),
-        interpretation: "Package comparison only; confirm runtime ownership before consolidation or removal."
-      });
-    }
-  }
-  return comparisons;
-}
-
-function chooseCanonical(installations, expected) {
-  const verified = installations.filter((item) => item.versionVerified !== false);
-  if (!verified.length) return null;
-  const exact = expected ? verified.find((item) => versionMatches(expected, item.version)) : null;
-  const item = exact || verified.find((entry) => entry.active) || verified[0];
-  return {
-    path: item.path,
-    version: item.version,
-    basis: exact ? "project-version-match" : item.active ? "PATH-active-fallback" : "first-readable-fallback",
-    confidence: exact ? "medium" : "low",
-    requiresReview: true
   };
 }
 

@@ -6,7 +6,7 @@ import { documentedRootFieldMap, verifyContractFreeze } from "../src/contract-fr
 
 const baselineUrl = new URL("../contracts/ai-json-root-fields.v1.json", import.meta.url);
 
-test("reviewed AI JSON root fields match the 0.2.0 freeze candidate", async () => {
+test("reviewed AI JSON root fields remain frozen for the 0.2.2 candidate", async () => {
   const baseline = JSON.parse(await fs.readFile(baselineUrl, "utf8"));
   const result = verifyContractFreeze(schemaContract(), baseline);
   assert.equal(result.pass, true);

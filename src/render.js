@@ -525,7 +525,14 @@ code{color:var(--code);background:#0a2017;border:1px solid #17462f;padding:2px 6
 .agents{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:8px}.agent{border:1px solid var(--line2);border-radius:8px;padding:10px;background:#0a1412}.agent strong{display:block}.agent span{color:var(--muted);font-size:12px}
 .timeline{display:grid;gap:10px}.event{display:grid;grid-template-columns:108px 1fr;gap:12px;border-top:1px solid var(--line2);padding-top:10px}.event time{color:var(--muted);font-size:12px}.event b{color:var(--green)}
 .path{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;color:var(--muted);font-size:12px;overflow-wrap:anywhere}
+.tabs{display:flex;gap:8px;margin:16px 0}
+.tab{appearance:none;border:1px solid var(--line);background:#0a1412;color:var(--muted);border-radius:8px;padding:10px 15px;font:inherit;font-weight:750;cursor:pointer}
+.tab.active{border-color:rgba(71,229,141,.5);background:var(--green2);color:var(--green)}
+.tab-panel[hidden]{display:none}.section-title{margin:22px 0 12px;font-size:19px}.summary-status{margin:14px 0;border:1px solid rgba(71,229,141,.32);background:rgba(71,229,141,.08);border-radius:8px;padding:16px}.summary-status.review{border-color:rgba(244,191,95,.42);background:rgba(244,191,95,.08)}
+.tool-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}.tool-card{border:1px solid var(--line);background:rgba(13,24,21,.9);border-radius:8px;padding:15px}.tool-name{font-size:16px;font-weight:800}.tool-version{margin-top:8px;color:var(--green);font-size:18px;font-weight:800}.tool-kind{margin-top:6px;color:var(--muted);font-size:12px}.simple-list{display:grid;gap:8px}.simple-item{border:1px solid var(--line2);background:rgba(9,19,16,.9);border-radius:8px;padding:12px}.empty{color:var(--muted)}
 @media (max-width:860px){header,.layout{grid-template-columns:1fr}.metrics{grid-template-columns:repeat(2,1fr)}.grid{grid-template-columns:1fr}.agents{grid-template-columns:1fr}}
+@media (max-width:860px){.tool-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:520px){.tool-grid{grid-template-columns:1fr}}
 @media (max-width:860px){.control{grid-template-columns:1fr}}
 @media (max-width:860px){.nextbar{grid-template-columns:1fr}}
 @media (max-width:860px){.cockpit-grid{grid-template-columns:1fr 1fr}}
@@ -537,7 +544,7 @@ code{color:var(--code);background:#0a2017;border:1px solid #17462f;padding:2px 6
 @media (max-width:520px){.audit{grid-template-columns:1fr}}`;
 }
 
-export function dashboardDocument(data, clientScript) {
+export function dashboardDocument(data, clientScript, style = dashboardStyle()) {
   return `<!doctype html>
 <html lang="en">
 <head>
@@ -545,7 +552,7 @@ export function dashboardDocument(data, clientScript) {
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>aienvmap dashboard</title>
 <style>
-${dashboardStyle()}
+${style}
 </style>
 </head>
 <body>
@@ -554,210 +561,72 @@ ${dashboardStyle()}
 <script>
 ${clientScript}
 </script>
-</main>
 </body>
 </html>`;
 }
 
 export function renderDashboard(manifest, timeline = [], warnings = [], intents = [], policy = {}) {
-  const data = JSON.stringify(dashboardPayload(manifest, timeline, warnings, intents, policy));
-  return dashboardDocument(data, `
-const {manifest,timeline,warnings,intents,policy,releaseReadiness,schemaQualitySignals,schemaAiAdoptionDecision,schemaAgentDiscovery}=JSON.parse(document.getElementById('data').textContent);
-function esc(s){return String(s).replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;')}
-const entries=o=>Object.entries(o||{});
-const rows=o=>entries(o).map(([k,v])=>\`<tr><th>\${esc(k)}</th><td><code>\${esc(String(v))}</code></td></tr>\`).join('')||'<tr><td colspan="2">None detected</td></tr>';
-const inventoryGroups=manifest.inventory?.tools||{};
-const inventoryCount=Object.values(inventoryGroups).reduce((sum,items)=>sum+(Array.isArray(items)?items.length:0),0);
-const inventoryHtml=manifest.inventory?.enabled?('<table>'+Object.entries(inventoryGroups).map(([k,v])=>\`<tr><th>\${esc(k)}</th><td><code>\${Array.isArray(v)?v.length:0} tools</code></td></tr>\`).join('')+'</table>'):'<div class="okline">Deep global inventory is off. Run <code>aienvmap sync --deep</code> when an AI needs global tool awareness.</div>';
-const deps=manifest.dependencySnapshot||{};
-const depSummary=deps.summary||{ecosystems:[],manifests:0,packages:0};
-const depPackages=deps.packages||[];
-const depHtml=depPackages.length?'<table><tr><th>Packages</th><td><code>'+esc(depSummary.packages||0)+'</code></td></tr><tr><th>Ecosystems</th><td><code>'+esc((depSummary.ecosystems||[]).join(', ')||'none')+'</code></td></tr><tr><th>Manifests</th><td><code>'+esc((deps.manifests||[]).join(', ')||'none')+'</code></td></tr></table><div class="timeline">'+depPackages.slice(0,8).map(p=>\`<div class="event"><time>\${esc(p.ecosystem)}</time><div><b>\${esc(p.name)}</b> <code>\${esc(p.version)}</code><div class="path">\${esc(p.manifest)} / \${esc(p.group)}</div></div></div>\`).join('')+'</div>':'<div class="okline">No project dependency manifests detected.</div>';
-const lightSbom=manifest.lightSbom||{};
-const lightSbomSummary=lightSbom.summary||{};
-const pmPolicy=lightSbom.packageManagerPolicy||{};
-const topRisk=lightSbom.topRisk||[];
-const riskSummary=lightSbom.riskSummary||{};
-const dependencyHints=lightSbom.dependencyChangeHints||[];
-const aiDependencyReview=lightSbom.aiDependencyReview||{};
-${dashboardSbomClientScripts()}
-const lightSbomHtml=\`<table><tr><th>Packages</th><td><code>\${esc(lightSbomSummary.packages||0)}</code></td></tr><tr><th>Vulnerabilities</th><td><code>\${esc(lightSbomSummary.vulnerabilities||0)}</code></td></tr><tr><th>Direct vulnerable</th><td><code>\${esc(lightSbomSummary.directVulnerablePackages||0)}</code></td></tr><tr><th>Manifests</th><td><code>\${esc((lightSbomSummary.manifests||[]).join(', ')||'none')}</code></td></tr><tr><th>Lockfiles</th><td><code>\${esc((lightSbomSummary.lockfiles||[]).map(l=>l.file).join(', ')||'none')}</code></td></tr></table><h3 style="margin-top:12px">AI Use</h3>\${aiUseHtml}<h3 style="margin-top:12px">Dependency Quick Check</h3>\${dependencyQuickCheckHtml}<h3 style="margin-top:12px">Dependency Coordination</h3>\${dependencyCoordinationHtml}<h3 style="margin-top:12px">Scanner Guidance</h3>\${scannerGuidanceHtml}<h3 style="margin-top:12px">AI Review Plan</h3>\${aiReviewPlanHtml}<h3 style="margin-top:12px">AI Dependency Review</h3>\${aiDependencyReviewHtml}<h3 style="margin-top:12px">Risk summary</h3>\${riskSummaryHtml}<h3 style="margin-top:12px">Package manager policy</h3>\${pmPolicyHtml}\${topRisk.length?'<div class="timeline">'+topRisk.slice(0,5).map(p=>\`<div class="event"><time>\${esc(p.priority)}</time><div><b>\${esc(p.name)}</b> \${esc(p.severity)} \${p.directDependency?'<code>direct</code>':'<code>transitive</code>'}<div class="path">\${esc(p.manifest||p.ecosystem)} \${esc(p.version||'')}</div></div></div>\`).join('')+'</div>':'<div class="okline">No high-risk package summary in the current light SBOM.</div>'}<h3 style="margin-top:12px">Dependency change hints</h3>\${dependencyHintsHtml}\`;
-const sec=manifest.security||{};
-const secSummary=sec.summary||{total:0,critical:0,high:0,moderate:0,low:0,info:0};
-const secPackages=sec.topPackages||[];
-const securityFix=p=>p.fixVersions?.length?\`fix \${p.fixVersions.slice(0,3).join(', ')}\`:(p.fixAvailable?'fix available':'review required');
-const securityRefs=p=>p.advisories?.length?\` - \${p.advisories.map(a=>a.id||a.title).filter(Boolean).slice(0,2).join(', ')}\`:'';
-const securityDep=p=>p.directDependency&&p.dependency?\`<div class="path">\${esc(p.dependency.manifest)} / \${esc(p.dependency.group)} / \${esc(p.dependency.version)}</div>\`:'<div class="path">not found in dependency snapshot</div>';
-const securityPriority=p=>p.remediationPriority?\`<code>\${esc(p.remediationPriority.level)} \${esc(p.remediationPriority.score)}</code> \`:'';
-const securityHtml=sec.enabled?\`<table><tr><th>Total</th><td><code>\${esc(secSummary.total||0)}</code></td></tr><tr><th>Critical</th><td><code>\${esc(secSummary.critical||0)}</code></td></tr><tr><th>High</th><td><code>\${esc(secSummary.high||0)}</code></td></tr><tr><th>Moderate</th><td><code>\${esc(secSummary.moderate||0)}</code></td></tr><tr><th>Low</th><td><code>\${esc(secSummary.low||0)}</code></td></tr></table>\${secPackages.length?'<div class="timeline">'+secPackages.slice(0,5).map(p=>\`<div class="event"><time>\${esc(p.severity)}</time><div><b>\${esc(p.name)}</b> \${securityPriority(p)}\${esc(securityFix(p))}\${esc(securityRefs(p))}\${securityDep(p)}</div></div>\`).join('')+'</div>':'<div class="okline" style="margin-top:10px">No vulnerable packages reported.</div>'}\`:'<div class="okline">Security scan is off. Run <code>aienvmap sync --security</code> for read-only vulnerability summary.</div>';
-const change=c=>c.type==='changed'?\`\${c.scope} \${c.key}: \${c.before} -> \${c.after}\`:\`\${c.scope} \${c.key}: \${c.type} \${c.after||c.before}\`;
-const timelineLabel=t=>t.change?change(t.change):(t.summary||t.action||t.type||'recorded change');
-${dashboardAgentClientScript()}
-const warnHtml=warnings.length?'<div class="warnings">'+warnings.map(w=>\`<div class="warning">\${esc(w.message)}</div>\`).join('')+'</div>':'<div class="okline">No blocking environment warnings detected.</div>';
-const timelineHtml=timeline.length?'<div class="timeline">'+timeline.slice(-8).reverse().map(t=>\`<div class="event"><time>\${esc(t.at.replace('T',' ').slice(0,16))}</time><div><b>\${esc(t.actor||'system')}</b> \${esc(timelineLabel(t))}</div></div>\`).join('')+'</div>':'<div class="okline">No previous environment changes recorded.</div>';
-const intentsHtml=intents.length?'<div class="timeline">'+intents.slice(-6).reverse().map(i=>\`<div class="event"><time>\${esc(i.at.replace('T',' ').slice(0,16))}</time><div><b>\${esc(i.actor)}</b> plans \${esc(i.action)}</div></div>\`).join('')+'</div>':'<div class="okline">No pending agent intents recorded.</div>';
-const policyHtml=entries(policy).length?\`<table>\${rows(policy)}</table>\`:'<div class="okline">No explicit version policy set.</div>';
-const actions=manifest.recommendedActions||[];
-const actionsHtml=actions.length?'<div class="timeline">'+actions.slice(0,6).map(a=>\`<div class="event"><time>\${esc(a.priority)}</time><div><b>\${esc(a.category)}</b> \${esc(a.summary)}\${a.command?\`<div class="path">\${esc(a.command)}</div>\`:''}</div></div>\`).join('')+'</div>':'<div class="okline">No recommended actions. Continue project-local work.</div>';
-const topAction=actions[0]||{};
-const plan=manifest.planArtifacts||{};
-const planHtml=plan.markdown||plan.json?\`<table><tr><th>Markdown</th><td>\${plan.markdown?'<a href="plan.md">plan.md</a>':'not written'}</td></tr><tr><th>JSON</th><td>\${plan.json?'<a href="plan.json">plan.json</a>':'not written'}</td></tr></table>\`:'<div class="okline">No plan artifacts yet. Run <code>aienvmap plan --write</code>.</div>';
-const sbomArtifactHtml='<table><tr><th>JSON</th><td><a href="sbom.json">sbom.json</a></td></tr><tr><th>CDX Lite</th><td><a href="sbom.cdx.json">sbom.cdx.json</a></td></tr><tr><th>Command</th><td><code>aienvmap sbom --write</code></td></tr></table>';
-const remediation=manifest.planRemediation||[];
-const remediationFix=r=>r.fixVersions?.length?\`fix \${r.fixVersions.join(', ')}\`:(r.fixAvailable?'fix available':'review required');
-const remediationRefs=r=>r.advisories?.length?\` - \${r.advisories.join(', ')}\`:'';
-const remediationHtml=remediation.length?'<div class="timeline">'+remediation.map(r=>\`<div class="event"><time>\${esc(r.severity)}</time><div><b>\${esc(r.package)}</b> \${esc(remediationFix(r))}\${esc(remediationRefs(r))}</div></div>\`).join('')+'</div>':'<div class="okline">No remediation steps in the current plan.</div>';
-const envSteps=manifest.planEnvironment||[];
-const envStepsHtml=envSteps.length?'<div class="timeline">'+envSteps.map(s=>\`<div class="event"><time>\${esc(s.category)}</time><div><b>\${esc(s.code)}</b> \${esc(s.summary)}</div></div>\`).join('')+'</div>':'<div class="okline">No environment steps in the current plan.</div>';
-const ciReadiness=manifest.ciReadiness||[];
-const ciHasFailure=ciReadiness.some(s=>s.status==='fail');
-const ciReadinessHtml=ciReadiness.length?'<table>'+ciReadiness.map(s=>\`<tr><th>\${esc(s.scope)}</th><td><code>\${esc(s.status)}</code>\${s.matchedWarningCodes?.length?\` \${esc(s.matchedWarningCodes.join(', '))}\`:''}</td></tr>\`).join('')+'</table>':'<div class="okline">Run <code>aienvmap doctor --strict security|policy|coordination|all</code> to choose CI enforcement scope.</div>';
-const enforcementProfile=manifest.preflight?.enforcementProfile||{};
-const strictCommands=enforcementProfile.strictCommands||[];
-const gate=enforcementProfile.gate||{};
-const strictPlan=enforcementProfile.strictPlan||{};
-const strictDecision=enforcementProfile.strictDecision||{};
-const strictRecommendation=manifest.preflight?.strictRecommendation||{};
-const enforcementHtml=\`<table><tr><th>Default</th><td><code>\${esc(gate.defaultMode||enforcementProfile.defaultMode||'advisory')}</code> \${esc(gate.localDefault||'warn-only')}</td></tr><tr><th>Local</th><td><code>\${esc(strictRecommendation.localCommand||strictDecision.localCommand||'aienvmap doctor --json')}</code> \${esc(strictRecommendation.localBehavior||strictDecision.local||'warn-only')}</td></tr><tr><th>Fail local</th><td><code>\${esc(strictRecommendation.shouldFailLocal?'yes':'no')}</code></td></tr><tr><th>Recommended scope</th><td><code>\${esc(strictRecommendation.recommendedScope||strictDecision.recommendedScope||strictPlan.recommendedStrictScope||'all')}</code></td></tr><tr><th>CI</th><td><code>\${esc(strictRecommendation.ciCommand||strictDecision.ciCommand||strictPlan.ciCommand||'aienvmap doctor --strict all --json')}</code></td></tr><tr><th>Release</th><td><code>\${esc(strictRecommendation.releaseCommand||'aienvmap doctor --strict all --json')}</code></td></tr></table><div class="timeline">\${strictCommands.slice(0,4).map(cmd=>\`<div class="event"><time>CI</time><div><code>\${esc(cmd)}</code></div></div>\`).join('')}</div><div class="path">\${esc(strictRecommendation.rule||strictDecision.rule||strictPlan.rule||gate.rule||enforcementProfile.reason||'Warnings stay advisory unless strict mode is requested.')}</div>\`;
-const contract=manifest.preflight?.contract||{};
-const contractHtml=contract.name?\`<table><tr><th>Name</th><td><code>\${esc(contract.name)}</code></td></tr><tr><th>Version</th><td><code>\${esc(contract.version||1)}</code></td></tr><tr><th>Stability</th><td><code>\${esc(contract.stability||'additive')}</code></td></tr><tr><th>AI fields</th><td>\${esc((contract.aiEntryFields||[]).join(', ')||'none')}</td></tr></table><div class="path">\${esc(contract.rule||'Ignore unknown fields.')}</div>\`:'<div class="okline">Run <code>aienvmap status --write</code> to include AI contract metadata.</div>';
-const intentTargets=manifest.preflight?.intentTargets||[];
-const intentTargetsHtml=intentTargets.length?'<div class="timeline">'+intentTargets.slice(0,5).map(t=>\`<div class="event"><time>\${esc(t.target)}</time><div><b>\${esc(t.target)}</b> \${esc(t.reason||'Record this target before environment changes.')}\${t.command?\`<div class="path">\${esc(t.command)}</div>\`:''}</div></div>\`).join('')+'</div>':'<div class="okline">No specific target recommendation. Use <code>aienvmap intent --actor agent:id --action planned-change</code>.</div>';
-const followUps=manifest.preflight?.followUps||[];
-const followUpPlan=manifest.preflight?.followUpPlan||{};
-const followUpPlanHtml=followUpPlan.status?\`<table><tr><th>Status</th><td><code>\${esc(followUpPlan.status)}</code></td></tr><tr><th>Targets</th><td>\${esc((followUpPlan.targets||[]).join(', ')||'none')}</td></tr><tr><th>Next</th><td><code>\${esc(followUpPlan.nextCommand||'aienvmap status --json')}</code></td></tr></table><div class="path">\${esc(followUpPlan.rule||followUpPlan.reason||'Resolve follow-ups before shared environment changes.')}</div>\`:'';
-const followUpsHtml=(followUpPlanHtml||'')+(followUps.length?'<div class="timeline">'+followUps.slice(0,5).map(f=>\`<div class="event"><time>\${esc(f.target||'env')}</time><div><b>\${esc(f.summary||'follow-up')}</b> \${esc(f.reason||'Refresh shared context.')}\${f.commands?.length?\`<div class="path">\${esc(f.commands.join(' -> '))}</div>\`:''}</div></div>\`).join('')+'</div>':'<div class="okline">No pending follow-ups after environment records.</div>');
-const agentActivity=manifest.preflight?.agentActivity||{};
-const activityTargets=agentActivity.targets||[];
-const activityHtml=activityTargets.length?'<div class="timeline">'+activityTargets.slice(0,5).map(a=>\`<div class="event"><time>\${esc(a.target||'env')}</time><div><b>\${esc((a.actors||[]).join(', ')||'unknown')}</b> \${esc(a.count||0)} record(s) \${a.multiActor?'<code>multi-agent</code>':'<code>single-agent</code>'}\${a.latestSummary?\`<div class="path">\${esc(a.latestSummary)}</div>\`:''}</div></div>\`).join('')+'</div><div class="path">'+esc(agentActivity.next||'Review activity before environment changes.')+'</div>':'<div class="okline">No recorded environment activity needs coordination.</div>';
-const collaboration=manifest.preflight?.collaboration||{};
-const collaborationHtml=\`<table><tr><th>Status</th><td><code>\${esc(collaboration.status||'unknown')}</code> \${esc(collaboration.mode||'advisory')}</td></tr><tr><th>Targets</th><td>\${esc((collaboration.activeTargets||[]).join(', ')||'none')}</td></tr><tr><th>Project work</th><td><code>\${esc(collaboration.projectLocalWork||'allowed')}</code></td></tr><tr><th>Env changes</th><td><code>\${esc(collaboration.environmentChanges||'intent-first')}</code></td></tr><tr><th>Next</th><td><code>\${esc(collaboration.nextCommand||'aienvmap status --json')}</code></td></tr></table><div class="timeline">\${(collaboration.reviewSignals||[]).slice(0,4).map(signal=>\`<div class="event"><time>review</time><div>\${esc(signal)}</div></div>\`).join('')}</div><div class="path">\${esc(collaboration.rule||'Record intent before shared environment changes.')}</div>\`;
-const maintenanceLoop=manifest.preflight?.maintenanceLoop||{};
-${dashboardEnvironmentProtocolClientScript()}
-const dependencyReadSet=manifest.preflight?.dependencyReadSet||[];
-const dependencyProtocol=manifest.preflight?.dependencyChangeProtocol||{};
-${dashboardDependencyReadSetClientScript()}
-${dashboardDependencyProtocolClientScript()}
+  const data = JSON.stringify({ manifest, warnings, intents });
+  return dashboardDocument(data, dashboardHumanClientScript(), dashboardHumanStyle());
+}
+
+function dashboardHumanStyle() {
+  return `:root{color-scheme:dark;--bg:#08110f;--panel:#0d1815;--line:#214138;--line2:#172b26;--text:#eefcf5;--muted:#91aa9d;--green:#47e58d;--green2:#133d2a;--amber:#f4bf5f;--orange:#ff9364;--red:#ff4f5e;--code:#d7ffe9}*{box-sizing:border-box}body{margin:0;font-family:Inter,ui-sans-serif,system-ui,-apple-system,Segoe UI,sans-serif;background:var(--bg);color:var(--text)}body:before{content:"";position:fixed;inset:0;pointer-events:none;background:linear-gradient(180deg,rgba(71,229,141,.12),transparent 38%)}.shell{position:relative;max-width:1180px;margin:0 auto;padding:26px 22px 36px}header{border:1px solid var(--line);background:rgba(13,24,21,.96);border-radius:8px;padding:22px;display:grid;grid-template-columns:1fr auto;gap:18px}.eyebrow{color:var(--green);font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.08em}h1,h2,p{margin:0}h1{font-size:clamp(28px,4vw,46px);margin-top:8px}.sub{color:var(--muted);margin-top:12px;max-width:680px;line-height:1.55}.stamp{min-width:220px;border:1px solid var(--line2);background:#091310;border-radius:8px;padding:14px}.stamp b{display:block;color:var(--green);font-size:24px}.stamp span{display:block;color:var(--muted);font-size:12px;overflow-wrap:anywhere}.tabs{display:flex;gap:8px;margin:16px 0}.tab{border:1px solid var(--line);background:#0a1412;color:var(--muted);border-radius:8px;padding:10px 15px;font:inherit;font-weight:750;cursor:pointer}.tab.active{border-color:rgba(71,229,141,.5);background:var(--green2);color:var(--green)}.tab-panel[hidden]{display:none}.summary-status{margin:14px 0;border:1px solid rgba(71,229,141,.32);background:rgba(71,229,141,.08);border-radius:8px;padding:16px}.summary-status.review{border-color:rgba(244,191,95,.5);background:rgba(244,191,95,.08)}.summary-status.review b,.metric.alert .num{color:var(--amber)}.summary-status.danger{border-color:rgba(255,79,94,.6);background:rgba(255,79,94,.1)}.summary-status.danger b{color:var(--red)}.metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin:14px 0 18px}.metric,.tool-card{border:1px solid var(--line);background:rgba(13,24,21,.9);border-radius:8px}.metric{padding:14px}.num{font-size:28px;font-weight:800;color:var(--green)}.label,.tool-kind{margin-top:7px;color:var(--muted);font-size:12px}.section-title{margin:22px 0 12px;font-size:19px}.environment-groups{display:grid;gap:16px}.environment-group{border:1px solid var(--line);background:rgba(9,19,16,.72);border-radius:8px;padding:14px}.environment-group-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}.environment-group-head h3{margin:0;font-size:15px}.group-count{color:var(--green);background:var(--green2);border:1px solid rgba(71,229,141,.32);border-radius:999px;padding:3px 9px;font-size:12px;font-weight:800}.tool-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}.tool-card{padding:15px}.tool-name{font-size:16px;font-weight:800}.tool-version{margin-top:8px;color:var(--green);font-size:18px;font-weight:800}.simple-list{display:grid;gap:8px}.simple-item{border:1px solid var(--line2);background:rgba(9,19,16,.9);border-radius:8px;padding:12px}.simple-item.warning{border-color:rgba(244,191,95,.38);background:rgba(244,191,95,.07);color:#ffe0a3}.simple-item.risk-critical{border-color:rgba(255,79,94,.65);background:rgba(255,79,94,.12)}.simple-item.risk-critical b{color:var(--red)}.simple-item.risk-high{border-color:rgba(255,147,100,.55);background:rgba(255,147,100,.09)}.simple-item.risk-high b{color:var(--orange)}.simple-item.risk-moderate{border-color:rgba(244,191,95,.42);background:rgba(244,191,95,.07)}.simple-item.risk-moderate b{color:var(--amber)}.severity{float:right;border:1px solid currentColor;border-radius:999px;padding:2px 8px;font-size:11px;font-weight:850;text-transform:uppercase;letter-spacing:.05em}.severity-critical{color:var(--red);background:rgba(255,79,94,.12)}.severity-high{color:var(--orange);background:rgba(255,147,100,.1)}.severity-moderate{color:var(--amber);background:rgba(244,191,95,.1)}.severity-review{color:var(--muted)}.empty{color:var(--muted)}code{color:var(--code);background:#0a2017;border:1px solid #17462f;padding:2px 6px;border-radius:5px}@media(max-width:860px){header{grid-template-columns:1fr}.metrics,.tool-grid{grid-template-columns:repeat(2,1fr)}}@media(max-width:520px){.shell{padding:14px}.metrics,.tool-grid{grid-template-columns:1fr}h1{font-size:32px}}`;
+}
+
+function dashboardHumanClientScript() {
+  return `
+const payload=JSON.parse(document.getElementById('data').textContent);
+const manifest=payload.manifest||{};
+const warnings=Array.isArray(payload.warnings)?payload.warnings:[];
+const intents=Array.isArray(payload.intents)?payload.intents:[];
+const esc=value=>String(value??'').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;');
+const entries=value=>value&&typeof value==='object'?Object.entries(value):[];
+const list=value=>Array.isArray(value)?value:[];
+const app=document.getElementById('app');
+const workspace=manifest.workspace||{};
 const reviewRequired=warnings.length>0||intents.length>0;
-const recentChanges=timeline.slice(-8).length;
-const trustState=manifest.trust?.state||'observed';
-const nextAction=reviewRequired?'Review before environment changes':'Proceed with project-local work';
-const auditItem=(key,value,hint,klass='')=>\`<div class="audit-item \${klass}"><div class="audit-k">\${key}</div><div class="audit-v">\${value}</div><div class="audit-hint">\${hint}</div></div>\`;
-const controlCard=(label,value,next,klass='')=>\`<div class="control-card \${klass}"><div class="control-label">\${label}</div><div class="control-value">\${esc(value)}</div><div class="control-next">\${esc(next)}</div></div>\`;
-const driftLabel=warnings.length?'detected':'none';
-const aiSession=manifest.preflight?.aiSession||{};
-const aiSessionStart=aiSession.start||['aienvmap status --json','aienvmap context --json'];
-const aiBootstrap=manifest.preflight?.aiBootstrap||{};
-const artifactFreshness=manifest.preflight?.artifactFreshness||{};
-const nextAgent=manifest.preflight?.nextAgent||{};
-const aiReadiness=manifest.preflight?.aiReadiness||{};
-const aiReadinessSignals=(aiReadiness.signals||[]).slice(0,3);
-const aiReadinessHint=(aiReadiness.next||'Run aienvmap context --json for details.')+(aiReadinessSignals.length?' Signals: '+aiReadinessSignals.join('; '):'');
-const aiReadyValue=aiReadiness.level||'unknown';
-const aiReadyClass=aiReadyValue==='ready'?'ready':'review';
-const artifactFreshnessValue=artifactFreshness.state||'unknown';
-const artifactFreshnessClass=artifactFreshnessValue==='fresh'?'ready':'review';
-const artifactFreshnessNext=artifactFreshness.nextCommand||artifactFreshness.refreshCommand||'aienvmap sync';
-const collaborationValue=collaboration.status||'unknown';
-const collaborationClass=collaborationValue==='clear'?'ready':'review';
-const sbomRiskValue=riskSummary.level||'unknown';
-const sbomRiskClass=['urgent','high','medium'].includes(sbomRiskValue)?'review':'ready';
-const sbomRiskScore=riskSummary.score!==undefined?' ('+riskSummary.score+')':'';
-const sbomRiskNext=riskSummary.next||aiDependencyReview.beforeDependencyChange?.[0]||'Run aienvmap sbom --json for dependency context.';
-const nextCommand=aiBootstrap.nextSafeCommand||manifest.preflight?.nextSafeCommand||manifest.preflight?.nextCommand||maintenanceLoop.nextCommand||topAction.command||collaboration.nextCommand||'aienvmap status --json';
-const nextReason=topAction.summary||aiBootstrap.rule||maintenanceLoop.rule||collaboration.rule||riskSummary.next||'Read status/context before changing shared environment state.';
-const maintenanceNext=maintenanceLoop.nextCommand||nextCommand;
-const coordination=manifest.preflight?.coordination||{};
-const conflictTargets=coordination.conflictTargets||[];
-const handoffFiles=nextAgent.dependencyFiles?.length?nextAgent.dependencyFiles:(dependencyReadSet[0]?[dependencyReadSet[0].manifest,...(dependencyReadSet[0].lockfiles||[])].filter(Boolean):[]);
-const handoffNext=nextAgent.rule||(reviewRequired?'Review warnings and open intents':'Continue project-local work');
-const aiEntry=manifest.preflight?.artifacts?.discovery||'.aienvmap/discovery.json';
-const startHere=manifest.preflight?.artifacts?.startHere||'.aienvmap/README.md';
-const firstRead=aiBootstrap.readFirst||nextAgent.readFirst||'.aienvmap/status.json';
-const reviewTargets=[...new Set([...(conflictTargets||[]),...(collaboration.activeTargets||[]),...(riskSummary.reviewTargets||[])].filter(Boolean))];
-const primaryReviewTarget=reviewTargets[0]||'none';
-const safeMode=aiBootstrap.localMode||enforcementProfile.gate?.localDefault||enforcementProfile.localOperation||'warn-only';
-const bootstrapState=[aiBootstrap.projectLocalWork||'allowed',aiBootstrap.environmentChanges||'intent-first'].join(' / ');
-const agentDiscovery=manifest.preflight?.agentPointers?.discovery||((agentPointerCount||0)>0?'ready':'missing: run aienvmap onboard');
-const agentDiscoveryNext=manifest.preflight?.agentPointers?.next||'Run aienvmap onboard to install AI instruction-file pointers.';
-const briefItem=(key,value)=>\`<div class="brief-item"><div class="brief-k">\${key}</div><div class="brief-v">\${esc(value)}</div></div>\`;
-const handoffHtml=\`<table><tr><th>Status</th><td>\${reviewRequired?'review-required':'clear'}</td></tr><tr><th>Trust</th><td><code>\${esc(trustState)}</code></td></tr><tr><th>Read first</th><td><code>\${esc(firstRead)}</code></td></tr><tr><th>Dependency files</th><td>\${handoffFiles.length?'<code>'+esc(handoffFiles.join(', '))+'</code>':'none'}</td></tr><tr><th>Conflicts</th><td>\${conflictTargets.length?'<code>'+esc(conflictTargets.join(', '))+'</code>':'none'}</td></tr><tr><th>Next</th><td>\${esc(handoffNext)}</td></tr></table>\`;
-const aiSessionHtml=\`<table><tr><th>Start</th><td><code>\${esc(aiSessionStart.join(' -> '))}</code></td></tr><tr><th>If stale</th><td><code>\${esc(aiSession.ifMissingOrStale||'aienvmap sync')}</code></td></tr><tr><th>Before env</th><td><code>\${esc(aiSession.beforeEnvironmentChange||'aienvmap intent --actor agent:id --action planned-change --target environment')}</code></td></tr><tr><th>After env</th><td><code>\${esc(aiSession.afterEnvironmentChange||'aienvmap checkpoint --actor agent:id --summary what-changed --target environment')}</code></td></tr><tr><th>Handoff</th><td><code>\${esc(aiSession.handoff||'aienvmap handoff --record --actor agent:id')}</code></td></tr><tr><th>Avoid</th><td>\${esc((aiSession.avoid||[]).slice(0,2).join('; ')||'No extra avoid guidance.')}</td></tr></table><div class="path">\${esc(aiSession.rule||'Read status first, sync only when stale or missing, and record intent before shared environment changes.')}</div>\`;
-${dashboardReleaseClientScripts()}
-${dashboardLayoutClientScripts()}
-${dashboardStateCardsClientScript()}
-document.getElementById('app').innerHTML=\`
-<header>
-  <div>
-    <div class="eyebrow">aienvmap dashboard</div>
-    <h1>AI environment map</h1>
-    <p class="sub">An AI-first environment map and change ledger for agents that share one development machine.</p>
-  </div>
-  <div class="stamp"><b>\${warnings.length?'review':'clear'}</b><span>\${esc(manifest.workspace.name)}</span><span>\${esc(manifest.generatedAt)}</span></div>
-</header>
-<section class="control" aria-label="AI control strip">
-  \${controlCard('AI readiness',aiReadyValue,aiReadiness.next||'Run aienvmap context --json for details.',aiReadyClass)}
-  \${controlCard('Freshness',artifactFreshnessValue,artifactFreshnessNext,artifactFreshnessClass)}
-  \${controlCard('Collaboration',collaborationValue,collaboration.nextCommand||'aienvmap status --json',collaborationClass)}
-  \${controlCard('SBOM risk',sbomRiskValue+sbomRiskScore,sbomRiskNext,sbomRiskClass)}
-</section>
-<section class="nextbar" aria-label="Next command">
-  <b>Next command</b>
-  <code>\${esc(nextCommand)}</code>
-  <span>\${esc(nextReason)}</span>
-</section>
-<section class="cockpit" aria-label="10-second review">
-  <div class="cockpit-head">
-    <div class="cockpit-title">10-second review</div>
-    <div class="cockpit-rule">For humans: check this before any shared environment change.</div>
-  </div>
-  <div class="cockpit-grid">
-    <div class="cockpit-item"><div class="cockpit-k">AI entry</div><div class="cockpit-v">\${esc(aiEntry)}</div></div>
-    <div class="cockpit-item"><div class="cockpit-k">Next command</div><div class="cockpit-v"><code>\${esc(nextCommand)}</code></div></div>
-    <div class="cockpit-item"><div class="cockpit-k">Review target</div><div class="cockpit-v">\${esc(primaryReviewTarget)}</div></div>
-    <div class="cockpit-item"><div class="cockpit-k">Mode</div><div class="cockpit-v">\${esc(safeMode)}</div></div>
-  </div>
-</section>
-<section class="brief" aria-label="First read">
-  \${briefItem('AI bootstrap',bootstrapState)}
-  \${briefItem('Status',reviewRequired?'review required':'clear')}
-  \${briefItem('Freshness',artifactFreshnessValue+' / '+artifactFreshnessNext)}
-  \${briefItem('AI entry',aiEntry)}
-  \${briefItem('Maintenance',maintenanceNext)}
-  \${briefItem('Start here',startHere)}
-  \${briefItem('Read first',firstRead)}
-  \${briefItem('AI discovery',agentDiscoveryDecision+' / '+agentDiscovery)}
-  \${briefItem('Review targets',reviewTargets.length?reviewTargets.slice(0,4).join(', '):'none')}
-  \${briefItem('Local mode',safeMode)}
-</section>
-<section class="audit" aria-label="Audit summary">
-  \${auditItem('AI decision',reviewRequired?'review required':'can proceed',nextAction,reviewRequired?'review':'primary')}
-  \${auditItem('AI readiness',aiReadiness.level||'unknown',aiReadinessHint,aiReadiness.level==='ready'?'primary':'review')}
-  \${auditItem('Runtime drift',driftLabel,warnings.length?'Policy, runtime, or coordination warning detected':'No drift warnings detected',warnings.length?'review':'')}
-  \${auditItem('Open env changes',String(intents.length),intents.length?'Resolve or coordinate before changes':'No pending env changes')}
-  \${auditItem('Trust',trustState,trustState==='verified'?'Human or CI verified':'Machine observed; not AI-verified')}
-</section>
-<section class="metrics">
-  <div class="metric"><div class="num">\${entries(manifest.runtimes).length}</div><div class="label">runtimes</div></div>
-  <div class="metric"><div class="num">\${entries(manifest.packageManagers).length}</div><div class="label">package managers</div></div>
-  <div class="metric"><div class="num">\${warnings.length}</div><div class="label">warnings</div></div>
-  <div class="metric"><div class="num">\${intents.length}</div><div class="label">open intents</div></div>
-</section>
-<section class="layout">
-  <div class="grid">
-    \${mainCardsHtml}
-  </div>
-  <aside>
-    \${supportCardsHtml}
-    <div style="height:14px"></div>
-    \${operationalCardsHtml}
-    <div style="height:14px"></div>
-    \${stateCardsHtml}
-  </aside>
-</section>
-<section style="margin-top:14px">\${card('Environment Ledger','',timelineHtml)}</section>
-\`;
-`);
+app.innerHTML=\`<header><div><div class="eyebrow">aienvmap dashboard</div><h1>Development environment</h1><p class="sub">A read-only snapshot of detected runtimes, package managers, warnings, and planned environment changes.</p></div><div class="stamp"><b>\${reviewRequired?'review':'clear'}</b><span>\${esc(workspace.name||'workspace')}</span><span>Last checked: \${esc(manifest.generatedAt||'not recorded')}</span></div></header><nav class="tabs" role="tablist" aria-label="Dashboard sections"><button class="tab active" id="tab-overview" role="tab" aria-selected="true" onclick="showDashboardTab('overview')">Environment overview</button><button class="tab" id="tab-sbom" role="tab" aria-selected="false" onclick="showDashboardTab('sbom')">SBOM</button></nav><section class="tab-panel" id="panel-overview" role="tabpanel" aria-labelledby="tab-overview"></section><section class="tab-panel" id="panel-sbom" role="tabpanel" aria-labelledby="tab-sbom" hidden></section>\`;
+function panelFailure(title){return \`<div class="summary-status review"><b>\${esc(title)} could not be displayed.</b><div class="tool-kind">The rest of the dashboard is still available. Run <code>aienvmap sync</code> to refresh this snapshot.</div></div>\`}
+function renderOverview(){
+  const panel=document.getElementById('panel-overview');
+  try{
+    const runtimeItems=entries(manifest.runtimes).map(([name,version])=>({name,version,kind:'runtime'}));
+    const managerItems=entries(manifest.packageManagers).map(([name,version])=>({name,version,kind:'package manager'}));
+    const containerItems=entries(manifest.containers).filter(([,available])=>Boolean(available)).map(([name])=>({name,version:'available',kind:'container'}));
+    const labels={node:'Node.js',python:'Python',ruby:'Ruby',java:'Java',go:'Go',rust:'Rust',npm:'npm',pnpm:'pnpm',yarn:'Yarn',pip:'pip',poetry:'Poetry',uv:'uv',docker:'Docker',podman:'Podman'};
+    const cards=items=>items.map(item=>\`<article class="tool-card"><div class="tool-name">\${esc(labels[String(item.name).toLowerCase()]||item.name)}</div><div class="tool-version">\${esc(item.version||'detected')}</div></article>\`).join('')||'<div class="empty">None detected.</div>';
+    const group=(title,items)=>\`<section class="environment-group"><div class="environment-group-head"><h3>\${esc(title)}</h3><span class="group-count">\${items.length}</span></div><div class="tool-grid">\${cards(items)}</div></section>\`;
+    const warningList=warnings.length?warnings.map(item=>\`<div class="simple-item warning">\${esc(item?.message||item?.code||'Review required')}</div>\`).join(''):'<div class="empty">No warnings.</div>';
+    const intentList=intents.length?intents.map(item=>\`<div class="simple-item"><b>\${esc(item?.target||'environment')}</b> - \${esc(item?.action||item?.summary||'planned change')}<div class="tool-kind">\${esc(item?.actor||'unknown actor')}</div></div>\`).join(''):'<div class="empty">No planned environment changes.</div>';
+    panel.innerHTML=\`<div class="summary-status \${reviewRequired?'review':''}"><b>Environment status: \${reviewRequired?'review required':'clear'}</b><div class="tool-kind">This is a generated snapshot. Run <code>aienvmap sync</code> to refresh it.</div></div><section class="metrics" aria-label="Environment counts"><div class="metric"><div class="num">\${runtimeItems.length}</div><div class="label">runtimes</div></div><div class="metric"><div class="num">\${managerItems.length}</div><div class="label">package managers</div></div><div class="metric \${warnings.length?'alert':''}"><div class="num">\${warnings.length}</div><div class="label">warnings</div></div><div class="metric"><div class="num">\${intents.length}</div><div class="label">planned changes</div></div></section><h2 class="section-title">Warnings</h2><div class="simple-list">\${warningList}</div><h2 class="section-title">Planned environment changes</h2><div class="simple-list">\${intentList}</div><h2 class="section-title">Detected development tools</h2><div class="environment-groups">\${group('Runtimes',runtimeItems)}\${group('Package managers',managerItems)}\${group('Containers',containerItems)}</div>\`;
+  }catch(error){panel.innerHTML=panelFailure('Environment overview')}
+}
+function renderSbom(){
+  const panel=document.getElementById('panel-sbom');
+  try{
+    const sbom=manifest.lightSbom||{};
+    const summary=sbom.summary||{};
+    const manifests=list(summary.manifests);
+    const lockfiles=list(summary.lockfiles);
+    const risks=list(sbom.topRisk);
+    const riskSummary=sbom.riskSummary||{};
+    const lockfileNames=lockfiles.map(item=>item&&typeof item==='object'?item.file:item).filter(Boolean);
+    const riskCard=item=>{const severity=String(item?.severity||item?.priority||'review').toLowerCase();const level=['critical','high','moderate'].includes(severity)?severity:'review';return \`<div class="simple-item risk-\${level}"><div><b>\${esc(item?.name||'unknown package')}</b><span class="severity severity-\${level}">\${esc(severity)}</span></div><div class="tool-kind">\${esc(item?.version||'version not recorded')}</div></div>\`};
+    const groupedRisks=new Map();
+    for(const item of risks.slice(0,36)){const ecosystem=String(item?.ecosystem||'Other');if(!groupedRisks.has(ecosystem))groupedRisks.set(ecosystem,[]);groupedRisks.get(ecosystem).push(item)}
+    const riskGroups=groupedRisks.size?[...groupedRisks].map(([ecosystem,items])=>\`<section class="environment-group"><div class="environment-group-head"><h3>\${esc(ecosystem)}</h3><span class="group-count">\${items.length}</span></div><div class="simple-list">\${items.map(riskCard).join('')}</div></section>\`).join(''):'<section class="environment-group"><div class="environment-group-head"><h3>Package risks</h3><span class="group-count">0</span></div><div class="empty">No highlighted package risk in the current light SBOM.</div></section>';
+    const vulnerabilities=Number(summary.vulnerabilities)||0;
+    const riskLevel=String(riskSummary.level||'unknown').toLowerCase();
+    const danger=['critical','high'].includes(riskLevel);
+    const sbomNeedsReview=vulnerabilities>0||danger;
+    panel.innerHTML=\`<div class="summary-status \${danger?'danger':sbomNeedsReview?'review':''}"><b>SBOM status: \${danger?'high risk':sbomNeedsReview?'review required':'clear'}</b><div class="tool-kind">Dependency and security data from the same generated environment snapshot.</div></div><section class="metrics" aria-label="SBOM counts"><div class="metric"><div class="num">\${Number(summary.packages)||0}</div><div class="label">packages</div></div><div class="metric \${vulnerabilities?'alert':''}"><div class="num">\${vulnerabilities}</div><div class="label">vulnerabilities</div></div><div class="metric"><div class="num">\${manifests.length}</div><div class="label">manifests</div></div><div class="metric"><div class="num">\${lockfiles.length}</div><div class="label">lockfiles</div></div></section><h2 class="section-title">Dependency files</h2><div class="environment-groups"><section class="environment-group"><div class="environment-group-head"><h3>Manifests and lockfiles</h3><span class="group-count">\${manifests.length+lockfiles.length}</span></div><div class="simple-list"><div class="simple-item"><b>Risk</b>: \${esc(riskLevel)} \${esc(riskSummary.score??'')}</div><div class="simple-item"><b>Manifests</b>: \${esc(manifests.join(', ')||'none')}</div><div class="simple-item"><b>Lockfiles</b>: \${esc(lockfileNames.join(', ')||'none')}</div></div></section></div><h2 class="section-title">Package risks by runtime</h2><div class="environment-groups">\${riskGroups}</div>\`;
+  }catch(error){panel.innerHTML=panelFailure('SBOM')}
+}
+function showDashboardTab(name){for(const id of ['overview','sbom']){const panel=document.getElementById('panel-'+id);const button=document.getElementById('tab-'+id);if(panel)panel.hidden=id!==name;if(button){button.classList.toggle('active',id===name);button.setAttribute('aria-selected',String(id===name))}}}
+renderOverview();
+renderSbom();
+`;
 }
 
 function pushMap(lines, title, obj = {}) {

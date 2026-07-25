@@ -100,6 +100,7 @@ export async function buildManifest(dir, options = {}) {
       },
       projectHints: [
         ".nvmrc",
+        ".node-version",
         ".python-version",
         "mise.toml",
         ".tool-versions",
@@ -175,6 +176,7 @@ async function scanProjectHints(dir) {
   const hints = {};
   for (const [key, file] of [
     ["nvmrc", ".nvmrc"],
+    ["nodeVersion", ".node-version"],
     ["pythonVersion", ".python-version"],
     ["mise", "mise.toml"],
     ["toolVersions", ".tool-versions"],
@@ -188,7 +190,7 @@ async function scanProjectHints(dir) {
   ]) {
     const full = path.join(dir, file);
     if (!(await exists(full))) continue;
-    if (["nvmrc", "pythonVersion"].includes(key)) {
+    if (["nvmrc", "nodeVersion", "pythonVersion"].includes(key)) {
       hints[key] = (await fs.readFile(full, "utf8")).trim();
     } else {
       hints[key] = true;

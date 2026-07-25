@@ -17,17 +17,17 @@ test("current release metadata stays aligned across package, APM, contracts, and
   const result = productScorecard();
   const surfaceCount = Object.keys(freeze.surfaceFieldCounts).length;
 
-  assert.equal(pkg.version, "0.2.1");
+  assert.equal(pkg.version, "0.2.2");
   assert.match(apm, new RegExp(`^version: ${pkg.version.replaceAll(".", "\\.")}$`, "m"));
   assert.match(scorecard, new RegExp(`\\| Technical readiness \\| ${result.technicalReadiness.score}/100 \\|`));
   assert.match(scorecard, new RegExp(`\\| Market readiness \\| ${result.marketReadiness.score}/100 \\|`));
   assert.match(scorecard, new RegExp(`\\| Market validation \\| ${result.marketValidation.score}/100 \\|`));
   assert.match(scorecard, new RegExp(`\\| Weighted release readiness \\| ${result.overall.score}/100 \\|`));
   assert.equal(result.releaseAssessment.qualified, true);
-  assert.equal(result.releaseAssessment.releaseStatus, "published");
-  assert.equal(result.releaseAssessment.publishReady, false);
-  assert.equal(result.releaseAssessment.publishEligibility, "not-applicable-already-published");
-  assert.match(scorecard, /release engineering gates passed for v0\.2\.0/);
+  assert.equal(result.releaseAssessment.releaseStatus, "release-candidate");
+  assert.equal(result.releaseAssessment.publishReady, true);
+  assert.equal(result.releaseAssessment.publishEligibility, "eligible-after-immutable-tag-and-ci");
+  assert.match(scorecard, /local v0\.2\.2 candidate passes the engineering gates/i);
   assert.doesNotMatch(scorecard, /external-confirmation-required/);
   assert.match(readme, new RegExp(`${surfaceCount} documented AI JSON root-field surfaces`));
   assert.equal(surfaceCount, 15);
@@ -41,7 +41,7 @@ test("current release metadata stays aligned across package, APM, contracts, and
 test("CHANGELOG reserves semantic-version release headings for real package versions", async () => {
   const changelog = await fs.readFile(path.join(root, "CHANGELOG.md"), "utf8");
   const releases = [...changelog.matchAll(/^## (\d+\.\d+\.\d+)(?:\s|$)/gm)].map((match) => match[1]);
-  assert.deepEqual(releases, ["0.2.1", "0.2.0", "0.1.1", "0.1.0"]);
+  assert.deepEqual(releases, ["0.2.2", "0.2.1", "0.2.0", "0.1.1", "0.1.0"]);
   assert.match(changelog, /^## Pre-release development history$/m);
   assert.match(changelog, /^### Internal batch 69$/m);
   assert.doesNotMatch(changelog, /^## 0\.1\.(?:[2-9]|[1-6]\d)$/m);

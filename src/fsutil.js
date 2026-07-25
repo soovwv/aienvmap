@@ -116,11 +116,13 @@ export async function withFileLock(file, operation, options = {}) {
       await handle.writeFile(JSON.stringify({ pid: process.pid, at: new Date().toISOString() }));
       break;
     } catch (error) {
-      if (error?.code !== "EEXIST") throw error;
-      try {
-        const stat = await fs.stat(lock);
-        if (Date.now() - stat.mtimeMs > staleMs) await fs.rm(lock, { force: true });
-      } catch {}
+      if (!isRetryableLockError(error)) throw error;
+      if (error?.code === "EEXIST") {
+        try {
+          const stat = await fs.stat(lock);
+          if (Date.now() - stat.mtimeMs > staleMs) await fs.rm(lock, { force: true });
+        } catch {}
+      }
       if (attempt === attempts - 1) throw new Error(`timed out waiting for ${path.basename(file)} write lock`);
       await new Promise((resolve) => setTimeout(resolve, retryMs));
     }
@@ -131,6 +133,11 @@ export async function withFileLock(file, operation, options = {}) {
     await handle?.close().catch(() => {});
     await fs.rm(lock, { force: true }).catch(() => {});
   }
+}
+
+function isRetryableLockError(error) {
+  if (error?.code === "EEXIST") return true;
+  return process.platform === "win32" && ["EPERM", "EACCES"].includes(error?.code);
 }
 
 export async function replaceMarkerBlock(file, begin, end, block) {
