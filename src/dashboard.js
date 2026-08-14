@@ -1,5 +1,6 @@
 import { aiFallbackRead, aiSessionUseContract, aiStartupChecklist } from "./ai-contract.js";
 import { schemaContract } from "./contract.js";
+import { releaseState } from "./release-state.js";
 
 export const dashboardEssentialCards = Object.freeze([
   "AI Session",
@@ -43,11 +44,11 @@ export const dashboardDiscoveryFallback = Object.freeze({
 });
 
 export const dashboardReleaseDefaults = Object.freeze({
-  target: "0.2.0",
-  status: "release-candidate",
+  target: releaseState.version,
+  status: releaseState.status,
   decision: "hold",
-  next: "Run the final release checks and verify npm-side trusted publishing.",
-  batchStatus: "reviewed",
+  next: "Keep the published version immutable and batch future changes.",
+  batchStatus: "published",
   batchType: "stability-batch",
   gate: "npm run release:check passes locally",
   evidence: "npm run release:check",
@@ -62,7 +63,7 @@ export const dashboardReleaseDefaults = Object.freeze({
 });
 
 export const dashboardQualityDefaults = Object.freeze({
-  status: "release-candidate",
+  status: "published-hardening",
   principles: ["AI-friendly", "simple", "lightweight", "advisory-first", "batched-release"],
   firstCheck: "AI entry path",
   evidence: "aienvmap start --json && aienvmap context --json",
@@ -133,7 +134,7 @@ export function dashboardOperationalCardsClientScript() {
     "const operationalCards=[",
     "['Enforcement Mode','<span class=\"pill\">advisory</span>',enforcementHtml],",
     "['Release Readiness','<span class=\"pill warn\">'+esc(releaseReadiness?.target||'0.2.0')+'</span>',releaseReadinessHtml],",
-    "['Quality Signals','<span class=\"pill\">'+esc(qualitySignals.status||'release-candidate')+'</span>',qualitySignalsHtml],",
+    "['Quality Signals','<span class=\"pill\">'+esc(qualitySignals.status||'unknown')+'</span>',qualitySignalsHtml],",
     "['CI Readiness',ciHasFailure?'<span class=\"pill warn\">review</span>':'<span class=\"pill\">ready</span>',ciReadinessHtml]",
     "];",
     "const operationalCardsHtml=operationalCards.map(([title,badge,body])=>card(title,badge,body)).join('<div style=\"height:14px\"></div>');"

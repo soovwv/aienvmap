@@ -172,7 +172,7 @@ test("renderSummary keeps the AI handoff compact and actionable", () => {
   assert.match(markdown, /CI strict: aienvmap doctor --strict security --json/);
   assert.match(markdown, /release strict: aienvmap doctor --strict all --json/);
   assert.match(markdown, /quality signals: prototype-hardening \/ AI-friendly, simple, lightweight, advisory-first, batched-release/);
-  assert.match(markdown, /release readiness: 0\.2\.2 \/ release-candidate \/ ready-for-final-check \/ reviewed \/ npm run release:check passes locally/);
+  assert.match(markdown, /release readiness: 0\.2\.2 \/ published \/ published-verified \/ published \/ npm run release:check passes locally/);
   assert.match(markdown, /collaboration rule: Do not install shared tools/);
   assert.match(markdown, /resolution rule:/);
   assert.match(markdown, /maintenance rule: Keep local operation advisory and lightweight/);
@@ -203,11 +203,11 @@ test("renderSummary keeps the AI handoff compact and actionable", () => {
   assert.match(markdown, /## Release readiness/);
   assert.match(markdown, /target: 0\.2\.2/);
   assert.match(markdown, /default decision: hold/);
-  assert.match(markdown, /publish gate: ready-for-final-check \/ Run npm run release:check/);
-  assert.match(markdown, /current batch: reviewed \/ compatible-patch-batch \/ human dashboard simplification, command-specific help, environment evidence accuracy/);
+  assert.match(markdown, /publish gate: published-verified \/ Keep 0\.2\.2 immutable/);
+  assert.match(markdown, /current batch: published \/ compatible-patch-batch \/ human dashboard simplification, command-specific help, environment evidence accuracy/);
   assert.match(markdown, /next stabilization: keep the reviewed JSON root-field freeze candidate unchanged/);
   assert.match(markdown, /contract review: freeze-candidate-verified \/ npm run contract:check \/ discover, start, discovery, onboard, status, context/);
-  assert.match(markdown, /batch reason: The dashboard, CLI, evidence accuracy, reliability, and maintainability changes are grouped/);
+  assert.match(markdown, /batch reason: The dashboard, CLI, evidence accuracy, reliability, and maintainability batch was published as 0\.2\.2/);
   assert.match(markdown, /publish when: meaningful AI contract/);
   assert.match(markdown, /hold when: only one small documentation/);
   assert.match(markdown, /publish: Accumulate several meaningful AI-contract, dashboard, SBOM, release-gate, and bugfix changes before one npm publish/);
@@ -242,8 +242,8 @@ test("summaryWorkspace writes summary.md after sync", async () => {
   assert.match(summary, /discovery: fallback-required \/ missing: run aienvmap onboard \/ aienvmap onboard/);
   assert.match(summary, /aiEntry: aienvmap start --json \/ read aiEntry/);
   assert.match(summary, /## Quality signals/);
-  assert.match(summary, /quality signals: release-candidate/);
+  assert.match(summary, /quality signals: published-hardening/);
   assert.match(summary, /## Release readiness/);
-  assert.match(summary, /release readiness: 0\.2\.2 \/ release-candidate \/ ready-for-final-check/);
+  assert.match(summary, /release readiness: 0\.2\.2 \/ published \/ published-verified/);
   assert.match(summary, /next:/);
 });

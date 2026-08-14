@@ -1,0 +1,32 @@
+{
+  "schemaName": "aienvmap-market-snapshot",
+  "schemaVersion": 1,
+  "collectedAt": "2026-08-15T00:00:00+09:00",
+  "observationDate": "2026-08-15",
+  "method": "Official GitHub repository and latest-release APIs, npm registry metadata, npm downloads point API, and official product documentation. Counts are mutable reach signals, not quality, unique users, retention, or successful-use evidence.",
+  "aienvmap": {
+    "github": { "stars": 0, "forks": 0, "latestRelease": "v0.2.2" },
+    "npm": { "downloads": 586, "start": "2026-07-11", "end": "2026-08-09", "latest": "0.2.2" },
+    "publicEnvironmentSubmissions": 2,
+    "independentOutcomeVerifiedCases": 0
+  },
+  "repositories": {
+    "jdx/mise": { "stars": 32422, "forks": 1361, "latestRelease": "v2026.8.6" },
+    "microsoft/apm": { "stars": 3540, "forks": 324, "latestRelease": "v0.28.0" },
+    "jetify-com/devbox": { "stars": 12272, "forks": 354, "latestRelease": "0.17.5" },
+    "cachix/devenv": { "stars": 7296, "forks": 541, "latestRelease": "v2.2.2" },
+    "flox/flox": { "stars": 4090, "forks": 127, "latestRelease": "v1.14.1" },
+    "tabrindle/envinfo": { "stars": 793, "forks": 61, "latestRelease": "v7.22.0" },
+    "asdf-vm/asdf": { "stars": 25524, "forks": 934, "latestRelease": "v0.20.0" },
+    "renovatebot/renovate": { "stars": 22265, "forks": 3255, "latestRelease": "44.30.2" },
+    "anchore/syft": { "stars": 9400, "forks": 924, "latestRelease": "v1.51.0" },
+    "aquasecurity/trivy": { "stars": 37405, "forks": 589, "latestRelease": "v0.74.0" },
+    "CycloneDX/cyclonedx-cli": { "stars": 532, "forks": 81, "latestRelease": "v0.33.1" }
+  },
+  "sources": {
+    "githubRepositoryTemplate": "https://api.github.com/repos/{owner}/{repo}",
+    "githubLatestReleaseTemplate": "https://api.github.com/repos/{owner}/{repo}/releases/latest",
+    "npmDownloads": "https://api.npmjs.org/downloads/point/2026-07-11:2026-08-09/aienvmap",
+    "npmPackage": "https://registry.npmjs.org/aienvmap"
+  }
+}

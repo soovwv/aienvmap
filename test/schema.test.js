@@ -213,7 +213,7 @@ test("schemaContract describes stable AI output contracts", () => {
   assert.match(schema.operationalSafety.mustNotDo.join(" "), /audit fix/);
   assert.ok(schema.operationalSafety.allowedWithoutIntent.includes("read generated artifacts"));
   assert.ok(schema.operationalSafety.requireIntentBefore.includes("dependency or lockfile changes"));
-  assert.equal(schema.qualitySignals.status, "release-candidate");
+  assert.equal(schema.qualitySignals.status, "published-hardening");
   assert.ok(schema.qualitySignals.principles.includes("AI-friendly"));
   assert.ok(schema.qualitySignals.principles.includes("batched-release"));
   assert.match(schema.qualitySignals.checks.map((item) => item.name).join(" "), /Operational safety/);
@@ -284,8 +284,8 @@ test("schemaContract describes stable AI output contracts", () => {
   assert.match(schema.releaseGate.provenance.trustedPublishing, /reverify registry attestations/);
   assert.match(schema.releaseGate.rule, /batch meaningful changes/);
   assert.equal(schema.releaseReadiness.target, "0.2.2");
-  assert.equal(schema.releaseReadiness.status, "release-candidate");
-  assert.equal(schema.releaseReadiness.currentBatch.status, "reviewed");
+  assert.equal(schema.releaseReadiness.status, "published");
+  assert.equal(schema.releaseReadiness.currentBatch.status, "published");
   assert.equal(schema.releaseReadiness.currentBatch.releaseType, "compatible-patch-batch");
   assert.ok(schema.releaseReadiness.currentBatch.themes.includes("human dashboard simplification"));
   assert.ok(schema.releaseReadiness.currentBatch.themes.includes("command-specific help"));
@@ -297,7 +297,7 @@ test("schemaContract describes stable AI output contracts", () => {
   assert.match(schema.releaseReadiness.currentBatch.changes.join(" "), /command-specific help/);
   assert.match(schema.releaseReadiness.currentBatch.changes.join(" "), /mise, fnm, nvm, and Volta/);
   assert.match(schema.releaseReadiness.currentBatch.changes.join(" "), /installed npm tarball/);
-  assert.match(schema.releaseReadiness.currentBatch.reason, /one intentional compatible patch release/);
+  assert.match(schema.releaseReadiness.currentBatch.reason, /published as 0\.2\.2/);
   assert.equal(schema.releaseReadiness.publishDecision.default, "hold");
   assert.match(schema.releaseReadiness.publishDecision.batchThreshold, /Hold by default/);
   assert.match(schema.releaseReadiness.publishDecision.publishCandidateSignals.join(" "), /dashboard changes/);
@@ -305,9 +305,9 @@ test("schemaContract describes stable AI output contracts", () => {
   assert.match(schema.releaseReadiness.publishDecision.publishWhen.join(" "), /meaningful AI contract/);
   assert.match(schema.releaseReadiness.publishDecision.holdWhen.join(" "), /small documentation/);
   assert.match(schema.releaseReadiness.publishDecision.emergencyException, /Security/);
-  assert.equal(schema.releaseReadiness.publishGate.status, "ready-for-final-check");
+  assert.equal(schema.releaseReadiness.publishGate.status, "published-verified");
   assert.match(schema.releaseReadiness.publishGate.reason, /compatible patch batch/);
-  assert.match(schema.releaseReadiness.publishGate.nextAction, /installed-package dashboard/);
+  assert.match(schema.releaseReadiness.publishGate.nextAction, /Keep 0\.2\.2 immutable/);
   assert.ok(schema.releaseReadiness.publishGate.requiredEvidence.includes("npm run release:check"));
   assert.match(schema.releaseReadiness.publishGate.readyWhen.join(" "), /release note group/);
   assert.match(schema.releaseReadiness.publishGate.readyWhen.join(" "), /simplified overview and SBOM tabs/);
@@ -358,7 +358,9 @@ test("schemaContract describes stable AI output contracts", () => {
   assert.equal(schema.dashboard.discoveryFallback.sessionUse.fallbackPromptField, "copyPastePrompt");
   assert.match(schema.dashboard.discoveryFallback.startupChecklist.join(" "), /record intent before/);
   assert.deepEqual(schema.dashboard.discoveryFallback.read, [".aienvmap/discovery.json", ".aienvmap/README.md", ".aienvmap/status.json", ".aienvmap/summary.md", "aienvmap context --json"]);
-  assert.equal(schema.dashboard.releaseDefaults.target, "0.2.0");
+  assert.equal(schema.dashboard.releaseDefaults.target, "0.2.2");
+  assert.equal(schema.dashboard.releaseDefaults.status, "published");
+  assert.equal(schema.dashboard.qualityDefaults.status, "published-hardening");
   assert.equal(schema.dashboard.releaseDefaults.evidence, "npm run release:check");
   assert.equal(schema.dashboard.qualityDefaults.evidence, "aienvmap start --json && aienvmap context --json");
   assert.deepEqual(schema.dashboard.essentialSurfaces.controlStrip, ["AI readiness", "Freshness", "Collaboration", "SBOM risk"]);
@@ -644,7 +646,7 @@ test("schemaWorkspace prints JSON without requiring a workspace", async () => {
   assert.equal(schema.demo.command, "aienvmap demo");
   assert.equal(schema.releaseGate.localCommand, "npm run release:check");
   assert.equal(schema.releaseReadiness.target, "0.2.2");
-  assert.equal(schema.releaseReadiness.currentBatch.decision, "release-candidate");
+  assert.equal(schema.releaseReadiness.currentBatch.decision, "published");
   assert.ok(schema.releaseReadiness.evidenceCommands.includes("npm pack --dry-run"));
   assert.ok(schema.releaseReadiness.nextStabilizationTasks.some((item) => item.includes("root-field freeze candidate")));
   assert.ok(schema.releaseReadiness.contractReview.surfaces.includes("context"));

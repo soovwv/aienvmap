@@ -23,7 +23,7 @@ test("dashboardPayload centralizes schema-backed dashboard data", () => {
   assert.equal(payload.intents.length, 1);
   assert.equal(payload.policy.node, "24");
   assert.equal(payload.releaseReadiness.target, "0.2.2");
-  assert.equal(payload.schemaQualitySignals.status, "release-candidate");
+  assert.equal(payload.schemaQualitySignals.status, "published-hardening");
   assert.equal(payload.schemaAiAdoptionDecision.proofCommand, "aienvmap demo --json");
   assert.match(payload.schemaAiAdoptionDecision.position, /Environment map and explicit change handoff/);
   assert.equal(payload.schemaAgentDiscovery.sessionUse.decisionField, "aiDiscovery.decision");
