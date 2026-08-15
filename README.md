@@ -1,8 +1,8 @@
 # aienvmap
+[![CI](https://github.com/soovwv/aienvmap/actions/workflows/ci.yml/badge.svg)](https://github.com/soovwv/aienvmap/actions/workflows/ci.yml) [![License](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE) [![Node](https://img.shields.io/badge/node-%3E%3D18-339933.svg)](package.json)
 
-[![CI](https://github.com/soovwv/aienvmap/actions/workflows/ci.yml/badge.svg)](https://github.com/soovwv/aienvmap/actions/workflows/ci.yml)
-[![License](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
-[![Node](https://img.shields.io/badge/node-%3E%3D18-339933.svg)](package.json) / [Website](https://aienvmap.svwvs.com/)
+[Website](https://aienvmap.svwvs.com/) | [Documentation](https://github.com/soovwv/aienvmap#readme) | [npm](https://www.npmjs.com/package/aienvmap)
+
 **Know the development environment before an AI changes it.**
 `aienvmap` provides dependency-free local environment evidence and explicit change handoff across AI coding agents. It gives Codex, Claude, Gemini, Cursor, and Copilot a read-only preflight for the runtimes they are about to rely on and the environment changes another session already plans - before either agent guesses or changes the machine.
 
