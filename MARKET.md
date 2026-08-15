@@ -1,18 +1,18 @@
 # aienvmap market snapshot
 
-Observed 2026-07-25 from public GitHub repository metadata, the npm registry, the npm downloads API, and official product documentation. The timestamped API values and source URLs are preserved in `evidence/market-snapshot-2026-07-25.json`. Counts may change after collection; this is not live telemetry or proof of unique users.
+Observed 2026-08-15 from public GitHub repository metadata, the npm registry, the npm downloads API, and official product documentation. The timestamped API values and source URLs are preserved in `evidence/market-snapshot-2026-08-15.json`. Counts may change after collection; this is not live telemetry or proof of unique users.
 
 ## Current traction
 
-As of 2026-07-25, two public submissions are in review (`#95` and `#96`); neither is outcome-verified. Individual submissions remain excluded from promotional material before the five-public-submission threshold.
+As of 2026-08-15, two public submissions remain in review (`#95` and `#96`); neither is outcome-verified. No new public case, star, fork, or longitudinal-use evidence has appeared since the previous snapshot. Individual submissions remain excluded from promotional material before the five-public-submission threshold.
 
 | Signal | Observed | Interpretation |
 | --- | ---: | --- |
 | GitHub stars | 0 | no public repository endorsement yet |
 | GitHub forks | 0 | no visible downstream development yet |
 | Public environment submissions | 2 | awaiting evidence-maturity review; neither is outcome-verified and individual cases are not promoted until at least 5 have been collected |
-| npm downloads, 2026-06-25 through 2026-07-24 | 637 | requests, not unique people; may include bots, CI, maintainer use, and reinstalls |
-| Published npm versions | 4 | latest is 0.2.1; version count is release history, not adoption evidence |
+| npm downloads, 2026-07-11 through 2026-08-09 | 586 | requests, not unique people; may include bots, CI, maintainer use, and reinstalls |
+| Published npm versions | 5 | latest is 0.2.2; version count is release history, not adoption evidence |
 
 Do not convert downloads into users, retention, successful setups, or recommendation evidence. Market readiness is 73/100, while independent market validation remains 2/100.
 
@@ -20,16 +20,16 @@ Do not convert downloads into users, retention, successful setups, or recommenda
 
 | Product | Public GitHub signal at observation | Primary job | Relationship to aienvmap |
 | --- | ---: | --- | --- |
-| [mise](https://github.com/jdx/mise) | 31,118 stars; latest v2026.7.13 | manage dev tools, environment variables, tasks, and config trust; its MCP server exposes tools, tasks, environment variables, and config to AI assistants | direct AI-workspace adjacency, but aienvmap observes mixed active routing and coordinates changes rather than trusting config, installing, or switching tools |
-| [Microsoft APM](https://github.com/microsoft/apm) | 3,360 stars; latest v0.26.0 | declare, lock, audit, govern, and reproduce agent context; export agent-package SBOMs | distribution channel for aienvmap's bounded skill; aienvmap remains the observed host-runtime evidence and review-first coordination layer |
-| [Devbox](https://github.com/jetify-com/devbox) | 12,201 stars; latest 0.17.5 | create isolated, reproducible development environments | adjacent declarative environment; aienvmap focuses on existing non-clean machines without replacing the shell |
-| [Flox](https://github.com/flox/flox) | 4,063 stars; latest v1.13.2 | define and activate reusable environments and deterministic AI toolchains | closer AI/environment adjacency, but declarative activation differs from aienvmap's read-only host evidence and change coordination |
-| [envinfo](https://github.com/tabrindle/envinfo) | 794 stars; latest v7.22.0 | report common active development binaries and system information | closest lightweight inventory substitute; aienvmap adds multi-path evidence, AI decisions, and change handoff |
-| [asdf](https://github.com/asdf-vm/asdf) | 25,485 stars; latest v0.20.0 | extensible multi-runtime version management | adjacent runtime manager with a mature plugin ecosystem |
-| [Renovate](https://github.com/renovatebot/renovate) | 22,096 stars; latest 43.280.4 | automate dependency updates | complementary automation; aienvmap records AI intent, evidence, approval, and handoff |
-| [Syft](https://github.com/anchore/syft) | 9,295 stars; latest v1.49.0 | generate full SBOMs from images and filesystems | complementary evidence generator imported by aienvmap |
-| [Trivy](https://github.com/aquasecurity/trivy) | 37,075 stars; latest v0.72.0 | scan vulnerabilities, misconfiguration, secrets, and SBOMs | complementary security scanner; intentionally outside the lightweight default |
-| [CycloneDX CLI](https://github.com/CycloneDX/cyclonedx-cli) | 523 stars; latest v0.33.1 | analyze, merge, diff, and convert SBOMs | complementary SBOM workflow; aienvmap emits/imports bounded coordination evidence |
+| [mise](https://github.com/jdx/mise) | 32,422 stars; latest v2026.8.6 | manage dev tools, environment variables, tasks, and config trust; its MCP server exposes tools, tasks, environment variables, and config to AI assistants | direct AI-workspace adjacency, but aienvmap observes mixed active routing and coordinates changes rather than trusting config, installing, or switching tools |
+| [Microsoft APM](https://github.com/microsoft/apm) | 3,540 stars; latest v0.28.0 | declare, lock, audit, govern, and reproduce agent context; export agent-package SBOMs | distribution channel for aienvmap's bounded skill; aienvmap remains the observed host-runtime evidence and review-first coordination layer |
+| [Devbox](https://github.com/jetify-com/devbox) | 12,272 stars; latest 0.17.5 | create isolated, reproducible development environments | adjacent declarative environment; aienvmap focuses on existing non-clean machines without replacing the shell |
+| [Flox](https://github.com/flox/flox) | 4,090 stars; latest v1.14.1 | define and activate reusable environments and deterministic AI toolchains | closer AI/environment adjacency, but declarative activation differs from aienvmap's read-only host evidence and change coordination |
+| [envinfo](https://github.com/tabrindle/envinfo) | 793 stars; latest v7.22.0 | report common active development binaries and system information | closest lightweight inventory substitute; aienvmap adds multi-path evidence, AI decisions, and change handoff |
+| [asdf](https://github.com/asdf-vm/asdf) | 25,524 stars; latest v0.20.0 | extensible multi-runtime version management | adjacent runtime manager with a mature plugin ecosystem |
+| [Renovate](https://github.com/renovatebot/renovate) | 22,265 stars; latest 44.30.2 | automate dependency updates | complementary automation; aienvmap records AI intent, evidence, approval, and handoff |
+| [Syft](https://github.com/anchore/syft) | 9,400 stars; latest v1.51.0 | generate full SBOMs from images and filesystems | complementary evidence generator imported by aienvmap |
+| [Trivy](https://github.com/aquasecurity/trivy) | 37,405 stars; latest v0.74.0 | scan vulnerabilities, misconfiguration, secrets, and SBOMs | complementary security scanner; intentionally outside the lightweight default |
+| [CycloneDX CLI](https://github.com/CycloneDX/cyclonedx-cli) | 532 stars; latest v0.33.1 | analyze, merge, diff, and convert SBOMs | complementary SBOM workflow; aienvmap emits/imports bounded coordination evidence |
 | [Dev Containers](https://containers.dev/) | not compared by repository stars | define and run containerized development environments from structured metadata | complementary environment construction; aienvmap observes an existing host and shared change intent without requiring a container |
 | [GitHub Copilot repository instructions](https://docs.github.com/en/copilot/how-tos/copilot-on-github/customize-copilot/add-custom-instructions/add-repository-instructions) | not compared by repository stars | give an AI static repository, path, and agent guidance | complementary instruction layer; aienvmap adds generated environment evidence and session-to-session intent rather than coding conventions |
 

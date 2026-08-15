@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import fs from "node:fs/promises";
 import path from "node:path";
 import { productScorecard } from "../src/scorecard.js";
+import { releaseState } from "../src/release-state.js";
 
 const root = path.resolve(".");
 
@@ -24,10 +25,14 @@ test("current release metadata stays aligned across package, APM, contracts, and
   assert.match(scorecard, new RegExp(`\\| Market validation \\| ${result.marketValidation.score}/100 \\|`));
   assert.match(scorecard, new RegExp(`\\| Weighted release readiness \\| ${result.overall.score}/100 \\|`));
   assert.equal(result.releaseAssessment.qualified, true);
-  assert.equal(result.releaseAssessment.releaseStatus, "release-candidate");
-  assert.equal(result.releaseAssessment.publishReady, true);
-  assert.equal(result.releaseAssessment.publishEligibility, "eligible-after-immutable-tag-and-ci");
-  assert.match(scorecard, /local v0\.2\.2 candidate passes the engineering gates/i);
+  assert.equal(releaseState.version, pkg.version);
+  assert.equal(releaseState.sourceTag, `v${pkg.version}`);
+  assert.equal(result.releaseAssessment.releaseStatus, "published");
+  assert.equal(result.releaseAssessment.publishReady, false);
+  assert.equal(result.releaseAssessment.publishEligibility, "not-applicable-already-published");
+  assert.deepEqual(result.releaseAssessment.publishBlockers, []);
+  assert.ok(result.releaseAssessment.releaseEvidence.every((item) => item.status === "verified"));
+  assert.match(scorecard, /v0\.2\.2 release passed the engineering gates/i);
   assert.doesNotMatch(scorecard, /external-confirmation-required/);
   assert.match(readme, new RegExp(`${surfaceCount} documented AI JSON root-field surfaces`));
   assert.equal(surfaceCount, 15);

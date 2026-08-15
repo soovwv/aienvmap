@@ -1,3 +1,5 @@
+import { publishedReleaseEvidence, releaseState } from "./release-state.js";
+
 const technicalDimensions = [
   dimension("lightweight-runtime", 15, 15, ["package.json#dependencies", "npm pack --dry-run"], "Keep zero runtime dependencies and a bounded package."),
   dimension("ai-readable-contract", 14, 15, ["aienvmap schema --json", "src/ai-decision-envelope.js"], "Stabilize the additive contract at 0.2.0."),
@@ -63,20 +65,16 @@ export function productScorecard() {
   const marketValidation = category("marketValidation", marketValidationDimensions);
   const overall = Math.round(technical.score * 0.7 + marketReadiness.score * 0.3);
   const releaseAssessment = {
-    target: "0.2.2",
-    releaseStatus: "release-candidate",
+    target: releaseState.version,
+    releaseStatus: releaseState.status,
     qualified: releaseAxes.every((axis) => axis.pass),
-    qualificationScope: "local release-candidate engineering evidence",
-    publishReady: true,
-    publishEligibility: "eligible-after-immutable-tag-and-ci",
-    publishBlockers: ["merge the reviewed candidate to current main", "create v0.2.2 on that exact commit", "pass the manual trusted-publishing workflow"],
-    releaseEvidence: [
-      { id: "npm-trusted-publisher", status: "verified", rule: "Publish through the configured npm trusted publisher without long-lived publish credentials." },
-      { id: "immutable-release-source", status: "pending", rule: "v0.2.2 must identify the exact CI-passing current main release source." },
-      { id: "npm-provenance", status: "pending", rule: "Verify npm publish and SLSA provenance statements after publication." }
-    ],
+    qualificationScope: "published code-and-repository release",
+    publishReady: false,
+    publishEligibility: "not-applicable-already-published",
+    publishBlockers: [],
+    releaseEvidence: publishedReleaseEvidence(),
     axes: releaseAxes,
-    rule: "Every code-quality axis must meet its threshold. Candidate engineering readiness, immutable release publication, and independent market validation remain separate."
+    rule: "Every code-quality axis must meet its threshold. Published engineering integrity and independent market validation remain separate."
   };
   return {
     schemaName: "aienvmap-product-scorecard",
@@ -88,7 +86,7 @@ export function productScorecard() {
     marketValidation,
     releaseAssessment,
     capabilityAssessment: {
-      observedAt: "2026-07-25",
+      observedAt: "2026-08-15",
       basis: "Repository capability evidence only; these scores do not measure adoption, retention, or product-market fit.",
       dimensions: capabilityAssessment,
       rule: "Raise implementation scores only with cited regression evidence and raise market validation only with independent outcomes."
@@ -96,10 +94,10 @@ export function productScorecard() {
     positioning: "Cross-host local environment evidence and explicit change handoff for coding agents; not a package manager, vulnerability scanner, or full SBOM generator.",
     marketResearch: {
       report: "MARKET.md",
-      observedAt: "2026-07-25",
-      snapshot: "evidence/market-snapshot-2026-07-25.json",
-      publicSignals: { githubStars: 0, githubForks: 0, publicEnvironmentSubmissions: 2, independentOutcomeVerifiedCases: 0, npmDownloadsWindow: { requests: 637, start: "2026-06-25", end: "2026-07-24" } },
-      adjacentSignals: { observedAt: "2026-07-25", microsoftApmStars: 3360, microsoftApmRelease: "v0.26.0", devboxStars: 12201, devboxRelease: "0.17.5", floxStars: 4063, floxRelease: "v1.13.2", miseStars: 31118, miseRelease: "v2026.7.13", syftStars: 9295, syftRelease: "v1.49.0", envinfoStars: 794, envinfoRelease: "v7.22.0" },
+      observedAt: "2026-08-15",
+      snapshot: "evidence/market-snapshot-2026-08-15.json",
+      publicSignals: { githubStars: 0, githubForks: 0, publicEnvironmentSubmissions: 2, independentOutcomeVerifiedCases: 0, npmDownloadsWindow: { requests: 586, start: "2026-07-11", end: "2026-08-09" } },
+      adjacentSignals: { observedAt: "2026-08-15", microsoftApmStars: 3540, microsoftApmRelease: "v0.28.0", devboxStars: 12272, devboxRelease: "0.17.5", floxStars: 4090, floxRelease: "v1.14.1", miseStars: 32422, miseRelease: "v2026.8.6", syftStars: 9400, syftRelease: "v1.51.0", envinfoStars: 793, envinfoRelease: "v7.22.0" },
       interpretation: "npm downloads are requests, not unique users, retention, successful setups, or recommendation evidence.",
       scoreImpact: "none until independent outcome-verified evidence exists"
     },
